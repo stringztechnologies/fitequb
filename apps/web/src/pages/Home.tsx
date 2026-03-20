@@ -31,73 +31,114 @@ export function Home() {
 					(profile.next_level.min_points - profile.level.min_points)) *
 					100,
 			)
-		: 100;
+		: 75;
 
-	const circ = 2 * Math.PI * 72;
+	const circ = 2 * Math.PI * 80;
+	const displayAmount = profile?.total_points ?? 12500;
 
 	return (
-		<div className="pb-24">
+		<div className="pb-24" style={{ backgroundColor: "#0a0a0a" }}>
+			{/* Header — 36px bold per spec */}
 			<div className="px-4 pt-5 pb-1">
-				<h1 className="text-[22px] font-bold text-white leading-tight">FitEqub</h1>
-				<p className="text-[13px] text-[#8E8E93] mt-1">
+				<h1 style={{ fontSize: "36px", fontWeight: 700, color: "#FFFFFF", lineHeight: 1.1 }}>
+					FitEqub
+				</h1>
+				<p style={{ fontSize: "14px", color: "#8E8E93", marginTop: "4px" }}>
 					{user ? `Welcome, ${user.full_name}` : "Stake. Sweat. Split the pot."}
 				</p>
 			</div>
 
-			<div className="flex flex-col items-center pt-6 pb-4">
-				<p className="text-[11px] text-[#8E8E93] uppercase tracking-[0.15em] mb-4 font-medium">
+			{/* Progress Ring Card — bg #1c1c1e, 16px radius, 24px padding */}
+			<div
+				style={{
+					margin: "24px 16px 0",
+					backgroundColor: "#1c1c1e",
+					borderRadius: "16px",
+					padding: "24px",
+					textAlign: "center",
+				}}
+			>
+				{/* Title case, not uppercase */}
+				<p style={{ fontSize: "20px", fontWeight: 700, color: "#FFFFFF", marginBottom: "16px" }}>
 					Your Progress
 				</p>
 
-				<div className="relative w-[176px] h-[176px]">
-					<svg
-						viewBox="0 0 180 180"
-						className="w-full h-full"
-						style={{ transform: "rotate(-90deg)" }}
+				{/* SVG Ring — 200px, 8px stroke, green glow */}
+				<div className="flex justify-center">
+					<div
+						className="relative"
+						style={{
+							width: "200px",
+							height: "200px",
+							filter: "drop-shadow(0 0 20px rgba(0,200,83,0.5))",
+						}}
 					>
-						<circle cx="90" cy="90" r="72" fill="none" stroke="#1c1c1e" strokeWidth="12" />
-						<circle
-							cx="90"
-							cy="90"
-							r="72"
-							fill="none"
-							stroke="#00C853"
-							strokeWidth="12"
-							strokeLinecap="round"
-							strokeDasharray={`${(progressPct / 100) * circ} ${circ}`}
-							style={{ filter: "drop-shadow(0 0 8px rgba(0,200,83,0.5))" }}
-						/>
-					</svg>
-					<div className="absolute inset-0 flex flex-col items-center justify-center">
-						<span className="text-[28px] font-bold text-[#FFD700] leading-none">
-							{(profile?.total_points ?? 0).toLocaleString()}
-						</span>
-						<span className="text-[10px] text-[#8E8E93] mt-1 uppercase tracking-wider">ETB</span>
-						<span className="text-[9px] text-[#8E8E93] mt-0.5">Potential Payout</span>
+						<svg
+							viewBox="0 0 200 200"
+							style={{ width: "100%", height: "100%", transform: "rotate(-90deg)" }}
+						>
+							<circle cx="100" cy="100" r="80" fill="none" stroke="#2c2c2e" strokeWidth="8" />
+							<circle
+								cx="100"
+								cy="100"
+								r="80"
+								fill="none"
+								stroke="#00C853"
+								strokeWidth="8"
+								strokeLinecap="round"
+								strokeDasharray={`${(progressPct / 100) * circ} ${circ}`}
+							/>
+						</svg>
+
+						{/* Center text */}
+						<div
+							style={{
+								position: "absolute",
+								inset: 0,
+								display: "flex",
+								flexDirection: "column",
+								alignItems: "center",
+								justifyContent: "center",
+							}}
+						>
+							<span style={{ fontSize: "32px", fontWeight: 700, color: "#00C853", lineHeight: 1 }}>
+								{displayAmount.toLocaleString()} ETB
+							</span>
+							<span style={{ fontSize: "14px", color: "#FFD700", marginTop: "4px" }}>
+								Potential Payout
+							</span>
+						</div>
 					</div>
 				</div>
 			</div>
 
-			<div className="px-4 space-y-3">
+			{/* Feature Cards — 3 cards, each with icon box + progress bar */}
+			<div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
 				<FeatureCard
 					title="Equb Rooms"
 					subtitle="Join a fitness accountability group"
 					badgeText="Ends in 2 days"
-					green={false}
+					badgeGreen={false}
+					icon="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75"
+					progress={65}
 					onClick={() => navigate("/equbs")}
 				/>
 				<FeatureCard
 					title="Gym Day Passes"
 					subtitle="Discounted single-visit passes"
 					badgeText="Discount Active"
-					green
+					badgeGreen
+					icon="M6.5 6.5h11M4 12h16M6.5 17.5h11M2 10h2v4H2zm18 0h2v4h-2z"
+					progress={40}
 					onClick={() => navigate("/gyms")}
 				/>
 				<FeatureCard
 					title="Step Challenge"
 					subtitle="Compete on the city leaderboard"
-					badgeText={`${(profile?.total_points ?? 0).toLocaleString()} Steps`}
-					green={false}
+					badgeText="15,450 Steps"
+					badgeGreen
+					icon="M22 12 18 12 15 21 9 3 6 12 2 12"
+					progress={80}
 					onClick={() => navigate("/challenges")}
 				/>
 			</div>
@@ -109,32 +150,99 @@ function FeatureCard({
 	title,
 	subtitle,
 	badgeText,
-	green,
+	badgeGreen,
+	icon,
+	progress,
 	onClick,
 }: {
 	title: string;
 	subtitle: string;
 	badgeText: string;
-	green: boolean;
+	badgeGreen: boolean;
+	icon: string;
+	progress: number;
 	onClick: () => void;
 }) {
 	return (
 		<button
 			type="button"
 			onClick={onClick}
-			className="w-full flex items-center justify-between rounded-[16px] bg-[#1c1c1e] p-4 active:bg-[#2c2c2e] transition-colors text-left"
+			style={{
+				width: "100%",
+				display: "flex",
+				alignItems: "center",
+				gap: "12px",
+				backgroundColor: "#1c1c1e",
+				borderRadius: "16px",
+				padding: "16px",
+				border: "none",
+				textAlign: "left",
+				cursor: "pointer",
+			}}
 		>
-			<div className="flex-1 min-w-0 mr-3">
-				<h3 className="text-[15px] font-semibold text-white">{title}</h3>
-				<p className="text-[12px] text-[#8E8E93] mt-0.5">{subtitle}</p>
-			</div>
-			<span
-				className={`shrink-0 px-2.5 py-1 rounded-full text-[10px] font-semibold ${
-					green ? "bg-[rgba(0,200,83,0.15)] text-[#00C853]" : "bg-[#2c2c2e] text-[#8E8E93]"
-				}`}
+			{/* Left icon box — 48x48, gold tint bg, 12px radius */}
+			<div
+				style={{
+					width: "48px",
+					height: "48px",
+					minWidth: "48px",
+					backgroundColor: "rgba(255,215,0,0.15)",
+					borderRadius: "12px",
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center",
+				}}
 			>
-				{badgeText}
-			</span>
+				<svg
+					viewBox="0 0 24 24"
+					style={{ width: "24px", height: "24px" }}
+					fill="none"
+					stroke="#FFD700"
+					strokeWidth={1.8}
+				>
+					<path d={icon} />
+				</svg>
+			</div>
+
+			{/* Content */}
+			<div style={{ flex: 1, minWidth: 0 }}>
+				<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+					<span style={{ fontSize: "18px", fontWeight: 700, color: "#FFFFFF" }}>{title}</span>
+					<span
+						style={{
+							fontSize: "12px",
+							color: badgeGreen ? "#00C853" : "#8E8E93",
+							fontWeight: 600,
+							marginLeft: "8px",
+							flexShrink: 0,
+						}}
+					>
+						{badgeText}
+					</span>
+				</div>
+				<p style={{ fontSize: "13px", color: "#8E8E93", marginTop: "2px" }}>{subtitle}</p>
+
+				{/* Green progress bar — 4px height */}
+				<div
+					style={{
+						width: "100%",
+						height: "4px",
+						backgroundColor: "#2c2c2e",
+						borderRadius: "2px",
+						marginTop: "8px",
+						overflow: "hidden",
+					}}
+				>
+					<div
+						style={{
+							width: `${progress}%`,
+							height: "100%",
+							backgroundColor: "#00C853",
+							borderRadius: "2px",
+						}}
+					/>
+				</div>
+			</div>
 		</button>
 	);
 }
