@@ -1,0 +1,147 @@
+{
+	"name": "FitEqub — Equb Settlement",
+	"nodes": [
+		{
+			"parameters": {
+				"rule": {
+					"interval": [
+						{
+							"field": "cronExpression",
+							"expression": "0 0 * * *"
+						}
+					]
+				}
+			},
+			"name": "Daily Midnight",
+			"type": "n8n-nodes-base.scheduleTrigger",
+			"typeVersion": 1.2,
+			"position": [250, 300]
+		},
+		{
+			"parameters": {
+				"method": "POST",
+				"url": "={{$env.FITEQUB_API_URL}}/cron/settle",
+				"sendHeaders": true,
+				"headerParameters": {
+					"parameters": [
+						{
+							"name": "x-cron-secret",
+							"value": "={{$env.FITEQUB_CRON_SECRET}}"
+						},
+						{
+							"name": "Content-Type",
+							"value": "application/json"
+						}
+					]
+				},
+				"options": {
+					"timeout": 30000
+				}
+			},
+			"name": "Settle Expired Equbs",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 4.2,
+			"position": [470, 300]
+		},
+		{
+			"parameters": {
+				"conditions": {
+					"options": {
+						"caseSensitive": true,
+						"leftValue": "",
+						"typeValidation": "strict"
+					},
+					"conditions": [
+						{
+							"id": "settle-check",
+							"leftValue": "={{ $json.data.settled }}",
+							"rightValue": 0,
+							"operator": {
+								"type": "number",
+								"operation": "gt"
+							}
+						}
+					],
+					"combinator": "and"
+				}
+			},
+			"name": "Any Settled?",
+			"type": "n8n-nodes-base.if",
+			"typeVersion": 2,
+			"position": [690, 300]
+		},
+		{
+			"parameters": {
+				"method": "POST",
+				"url": "={{$env.FITEQUB_API_URL}}/cron/payouts",
+				"sendHeaders": true,
+				"headerParameters": {
+					"parameters": [
+						{
+							"name": "x-cron-secret",
+							"value": "={{$env.FITEQUB_CRON_SECRET}}"
+						},
+						{
+							"name": "Content-Type",
+							"value": "application/json"
+						}
+					]
+				},
+				"options": {
+					"timeout": 60000
+				}
+			},
+			"name": "Process Payouts",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 4.2,
+			"position": [910, 200]
+		}
+	],
+	"connections": {
+		"Daily Midnight": {
+			"main": [
+				[
+					{
+						"node": "Settle Expired Equbs",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Settle Expired Equbs": {
+			"main": [
+				[
+					{
+						"node": "Any Settled?",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Any Settled?": {
+			"main": [
+				[
+					{
+						"node": "Process Payouts",
+						"type": "main",
+						"index": 0
+					}
+				],
+				[]
+			]
+		}
+	},
+	"settings": {
+		"executionOrder": "v1"
+	},
+	"tags": [
+		{
+			"name": "fitequb"
+		},
+		{
+			"name": "cron"
+		}
+	]
+}

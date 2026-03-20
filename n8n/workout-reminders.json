@@ -1,0 +1,71 @@
+{
+	"name": "FitEqub — Workout Reminders",
+	"nodes": [
+		{
+			"parameters": {
+				"rule": {
+					"interval": [
+						{
+							"field": "cronExpression",
+							"expression": "0 4 * * *"
+						}
+					]
+				}
+			},
+			"name": "Daily 7am EAT",
+			"type": "n8n-nodes-base.scheduleTrigger",
+			"typeVersion": 1.2,
+			"position": [250, 300]
+		},
+		{
+			"parameters": {
+				"method": "POST",
+				"url": "={{$env.FITEQUB_API_URL}}/cron/reminders",
+				"sendHeaders": true,
+				"headerParameters": {
+					"parameters": [
+						{
+							"name": "x-cron-secret",
+							"value": "={{$env.FITEQUB_CRON_SECRET}}"
+						},
+						{
+							"name": "Content-Type",
+							"value": "application/json"
+						}
+					]
+				},
+				"options": {
+					"timeout": 60000
+				}
+			},
+			"name": "Send Workout Reminders",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 4.2,
+			"position": [470, 300]
+		}
+	],
+	"connections": {
+		"Daily 7am EAT": {
+			"main": [
+				[
+					{
+						"node": "Send Workout Reminders",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		}
+	},
+	"settings": {
+		"executionOrder": "v1"
+	},
+	"tags": [
+		{
+			"name": "fitequb"
+		},
+		{
+			"name": "cron"
+		}
+	]
+}

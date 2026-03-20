@@ -6,6 +6,7 @@ import { initSentry } from "./lib/sentry.js";
 import { telegramAuth } from "./middleware/telegram-auth.js";
 import { auth } from "./routes/auth.js";
 import { challenges } from "./routes/challenges.js";
+import { cron } from "./routes/cron.js";
 import { equbRooms } from "./routes/equb-rooms.js";
 import { gyms } from "./routes/gyms.js";
 import { health } from "./routes/health.js";
@@ -28,9 +29,10 @@ app.use(
 	}),
 );
 
-// Public routes
+// Public routes (protected by their own auth)
 app.route("/health", health);
 app.route("/webhooks", webhooks);
+app.route("/cron", cron);
 
 // Authenticated routes
 app.use("/api/*", telegramAuth);

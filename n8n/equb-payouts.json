@@ -1,0 +1,71 @@
+{
+	"name": "FitEqub — Equb Payout Processor",
+	"nodes": [
+		{
+			"parameters": {
+				"rule": {
+					"interval": [
+						{
+							"field": "cronExpression",
+							"expression": "30 0 * * *"
+						}
+					]
+				}
+			},
+			"name": "Daily 12:30am (after settlement)",
+			"type": "n8n-nodes-base.scheduleTrigger",
+			"typeVersion": 1.2,
+			"position": [250, 300]
+		},
+		{
+			"parameters": {
+				"method": "POST",
+				"url": "={{$env.FITEQUB_API_URL}}/cron/payouts",
+				"sendHeaders": true,
+				"headerParameters": {
+					"parameters": [
+						{
+							"name": "x-cron-secret",
+							"value": "={{$env.FITEQUB_CRON_SECRET}}"
+						},
+						{
+							"name": "Content-Type",
+							"value": "application/json"
+						}
+					]
+				},
+				"options": {
+					"timeout": 120000
+				}
+			},
+			"name": "Process Pending Payouts",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 4.2,
+			"position": [470, 300]
+		}
+	],
+	"connections": {
+		"Daily 12:30am (after settlement)": {
+			"main": [
+				[
+					{
+						"node": "Process Pending Payouts",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		}
+	},
+	"settings": {
+		"executionOrder": "v1"
+	},
+	"tags": [
+		{
+			"name": "fitequb"
+		},
+		{
+			"name": "cron"
+		}
+	]
+}
