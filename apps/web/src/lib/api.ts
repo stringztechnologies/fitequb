@@ -7,14 +7,18 @@ function getInitData(): string {
 }
 
 export async function api<T>(path: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-	const res = await fetch(`${API_URL}${path}`, {
-		...options,
-		headers: {
-			"Content-Type": "application/json",
-			Authorization: `tma ${getInitData()}`,
-			...options.headers,
-		},
-	});
+	try {
+		const res = await fetch(`${API_URL}${path}`, {
+			...options,
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `tma ${getInitData()}`,
+				...options.headers,
+			},
+		});
 
-	return res.json() as Promise<ApiResponse<T>>;
+		return res.json() as Promise<ApiResponse<T>>;
+	} catch {
+		return { data: null as T, error: "Network error" } as ApiResponse<T>;
+	}
 }

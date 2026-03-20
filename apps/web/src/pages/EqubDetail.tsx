@@ -183,6 +183,11 @@ export function EqubDetail() {
 
 	async function handleJoin() {
 		if (!id) return;
+		// Demo rooms — navigate to payment page instead of calling API
+		if (id.startsWith("demo-")) {
+			navigate("/payment");
+			return;
+		}
 		setJoining(true);
 		const res = await api<{ checkout_url: string | null }>(`/api/equb-rooms/${id}/join`, {
 			method: "POST",
