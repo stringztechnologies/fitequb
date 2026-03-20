@@ -58,6 +58,27 @@ const DEMO_DETAILS: Record<string, RoomDetail> = {
 				qualified: null,
 				users: { full_name: "Dawit Mekonnen", username: "dawit_m" },
 			},
+			{
+				id: "m4",
+				user_id: "u4",
+				completed_days: 3,
+				qualified: null,
+				users: { full_name: "Marali A.", username: null },
+			},
+			{
+				id: "m5",
+				user_id: "u5",
+				completed_days: 8,
+				qualified: null,
+				users: { full_name: "Hana A.", username: null },
+			},
+			{
+				id: "m6",
+				user_id: "u6",
+				completed_days: 6,
+				qualified: null,
+				users: { full_name: "Pagra C.", username: null },
+			},
 		],
 	},
 	"demo-2": {
@@ -177,13 +198,18 @@ export function EqubDetail() {
 
 	const { room, members } = detail;
 	const daysLeft = room.status === "active" ? calculateDaysRemaining(room.end_date) : null;
+	const daysElapsed = daysLeft !== null ? room.duration_days - daysLeft : 0;
 	const target = room.is_tsom
 		? (room.tsom_workout_target ?? room.workout_target)
 		: room.workout_target;
+	const pct = room.is_tsom
+		? (room.tsom_completion_pct ?? room.completion_pct)
+		: room.completion_pct;
+	const payout = room.stake_amount * room.max_members;
+	const myProgress = 34000; // Demo: user's current progress toward payout
 
 	async function handleJoin() {
 		if (!id) return;
-		// Demo rooms — navigate to payment page instead of calling API
 		if (id.startsWith("demo-")) {
 			navigate("/payment");
 			return;
@@ -201,197 +227,234 @@ export function EqubDetail() {
 	}
 
 	return (
-		<div className="px-5 pt-6 pb-24">
-			{/* Header */}
-			<div className="flex items-center gap-3 mb-5">
-				<div className="flex-1">
-					<div className="flex items-center gap-2">
-						<h1 className="text-xl font-bold text-white">{room.name}</h1>
-						{room.is_tsom && (
-							<span className="px-2 py-0.5 rounded-full bg-[rgba(0,200,83,0.15)] text-[#00C853] text-[10px] font-bold">
-								TSOM
-							</span>
-						)}
-					</div>
-					<StatusText status={room.status} />
-				</div>
-			</div>
-
-			{/* Stats Grid */}
-			<div className="grid grid-cols-2 gap-3">
-				<StatCard
-					label="Stake"
-					value={room.stake_amount > 0 ? `${room.stake_amount}` : "Free"}
-					unit={room.stake_amount > 0 ? "ETB" : ""}
-					accent="gold"
-				/>
-				<StatCard label="Duration" value={`${room.duration_days}`} unit="days" />
-				<StatCard label="Target" value={`${target}`} unit="workouts" accent="green" />
-				<StatCard
-					label="Threshold"
-					value={`${Math.round((room.is_tsom ? (room.tsom_completion_pct ?? room.completion_pct) : room.completion_pct) * 100)}`}
-					unit="%"
-				/>
-			</div>
-
-			{/* Threshold Explanation */}
-			<div className="mt-3 rounded-[12px] bg-[rgba(255,215,0,0.08)] border border-[rgba(255,215,0,0.2)] p-3">
-				<p className="text-[11px] text-[#8E8E93] m-0">
-					<span className="text-[#FFD700] font-bold">
-						Threshold{" "}
-						{Math.round(
-							(room.is_tsom
-								? (room.tsom_completion_pct ?? room.completion_pct)
-								: room.completion_pct) * 100,
-						)}
-						%
-					</span>{" "}
-					= Complete at least{" "}
-					{Math.ceil(
-						target *
-							(room.is_tsom
-								? (room.tsom_completion_pct ?? room.completion_pct)
-								: room.completion_pct),
-					)}{" "}
-					of {target} workouts to qualify for the payout
+		<div style={{ backgroundColor: "#0a0a0a", paddingBottom: "96px" }}>
+			{/* Header — room name + payout */}
+			<div style={{ textAlign: "center", padding: "24px 16px 0" }}>
+				<h1 style={{ fontSize: "22px", fontWeight: 700, color: "#FFF", margin: 0 }}>{room.name}</h1>
+				<p style={{ fontSize: "36px", fontWeight: 700, color: "#FFD700", margin: "4px 0 0" }}>
+					{payout.toLocaleString()} ETB
 				</p>
 			</div>
 
-			{/* Days Remaining with progress bar */}
-			{daysLeft !== null && (
-				<div className="mt-4 rounded-[16px] bg-[#1c1c1e] border border-[#2c2c2e] p-4">
-					<div className="flex items-center justify-between mb-2">
-						<span className="text-sm text-[#8E8E93]">Days remaining</span>
-						<span className="text-2xl font-bold text-[#00C853]">{daysLeft}</span>
-					</div>
-					<div className="w-full h-1.5 rounded-full bg-[#0a0a0a] overflow-hidden">
-						<div
-							className="h-full rounded-full bg-[#00C853] transition-all"
-							style={{
-								width: `${Math.max(0, Math.min(100, ((room.duration_days - daysLeft) / room.duration_days) * 100))}%`,
-							}}
-						/>
-					</div>
-					<p className="text-[10px] text-[#8E8E93] mt-1 text-right">
-						Day {room.duration_days - daysLeft} of {room.duration_days}
-					</p>
+			{/* Rules Section */}
+			<div style={{ padding: "20px 16px 0" }}>
+				<h2 style={{ fontSize: "18px", fontWeight: 700, color: "#FFF", margin: "0 0 12px" }}>
+					Rules
+				</h2>
+				<div
+					style={{
+						display: "flex",
+						flexDirection: "column",
+						gap: "10px",
+					}}
+				>
+					<RuleItem
+						icon="M22 12 18 12 15 21 9 3 6 12 2 12"
+						title={`${room.workout_target} Workouts in ${room.duration_days} Days`}
+						subtitle={`Complete at least ${Math.ceil(target * pct)} of ${target} to qualify (${Math.round(pct * 100)}% threshold)`}
+					/>
+					<RuleItem
+						icon="M6.5 6.5h11M4 12h16M6.5 17.5h11M2 10h2v4H2zm18 0h2v4h-2z"
+						title="Gym Check-ins Count"
+						subtitle="Check-ins at partner gyms count toward your target"
+					/>
 				</div>
-			)}
+			</div>
 
-			{/* Members */}
-			<div className="mt-5">
-				<div className="flex items-center justify-between mb-3">
-					<h2 className="text-sm font-semibold text-white">
-						Members ({members.length}/{room.max_members})
-					</h2>
-					{room.status === "active" && (
-						<button
-							type="button"
-							onClick={() => navigate(`/equbs/${id}/log`)}
-							className="text-[#00C853] text-xs font-semibold"
+			{/* Member List — grid layout like Stitch */}
+			<div style={{ padding: "20px 16px 0" }}>
+				<h2 style={{ fontSize: "18px", fontWeight: 700, color: "#FFF", margin: "0 0 12px" }}>
+					Member List
+				</h2>
+				<div
+					style={{
+						display: "grid",
+						gridTemplateColumns: "1fr 1fr",
+						gap: "10px",
+					}}
+				>
+					{members.map((m) => {
+						const memberPct = target > 0 ? m.completed_days / target : 0;
+						const onTrack = memberPct >= (daysElapsed / room.duration_days) * 0.8;
+						return (
+							<div
+								key={m.id}
+								style={{
+									backgroundColor: "#1c1c1e",
+									borderRadius: "12px",
+									padding: "12px",
+									display: "flex",
+									flexDirection: "column",
+									alignItems: "center",
+									gap: "6px",
+								}}
+							>
+								<span
+									style={{
+										fontSize: "10px",
+										fontWeight: 600,
+										color: onTrack ? "#00C853" : "#FF9500",
+									}}
+								>
+									{onTrack ? "On Track" : "Warning"}
+								</span>
+								<div
+									style={{
+										width: "48px",
+										height: "48px",
+										borderRadius: "50%",
+										border: `2px solid ${onTrack ? "#00C853" : "#FF9500"}`,
+										backgroundColor: "#2c2c2e",
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "center",
+									}}
+								>
+									<span style={{ fontSize: "20px", fontWeight: 700, color: "#FFF" }}>
+										{m.users.full_name.charAt(0)}
+									</span>
+								</div>
+								<p
+									style={{
+										fontSize: "13px",
+										fontWeight: 600,
+										color: "#FFF",
+										margin: 0,
+										textAlign: "center",
+									}}
+								>
+									{m.users.full_name
+										.split(" ")
+										.map((n) => `${n.charAt(0)}.`)
+										.slice(0, 2)
+										.join(" ")
+										.replace(/\.\s/, ". ")}
+								</p>
+								<p style={{ fontSize: "11px", color: "#8E8E93", margin: 0 }}>
+									Next Payout in {daysLeft ?? 0} Days
+								</p>
+							</div>
+						);
+					})}
+				</div>
+			</div>
+
+			{/* My Progress — bottom bar like Stitch */}
+			<div
+				style={{
+					margin: "20px 16px 0",
+					backgroundColor: "#1c1c1e",
+					borderRadius: "16px",
+					padding: "16px",
+				}}
+			>
+				<h2 style={{ fontSize: "16px", fontWeight: 700, color: "#FFF", margin: "0 0 10px" }}>
+					My Progress
+				</h2>
+				<div
+					style={{
+						width: "100%",
+						height: "8px",
+						backgroundColor: "#2c2c2e",
+						borderRadius: "4px",
+						overflow: "hidden",
+					}}
+				>
+					<div
+						style={{
+							width: `${Math.min(100, (myProgress / payout) * 100)}%`,
+							height: "100%",
+							backgroundColor: "#00C853",
+							borderRadius: "4px",
+						}}
+					/>
+				</div>
+				<div
+					style={{
+						display: "flex",
+						justifyContent: "space-between",
+						marginTop: "6px",
+					}}
+				>
+					<span style={{ fontSize: "13px", color: "#8E8E93" }}>
+						{myProgress.toLocaleString()} / {payout.toLocaleString()} ETB Goal
+					</span>
+					<span style={{ fontSize: "13px", color: "#FFD700", fontWeight: 600 }}>
+						Rank: 3rd of {members.length}
+					</span>
+				</div>
+			</div>
+
+			{/* Join CTA */}
+			{(room.status === "pending" || room.status === "active") && (
+				<div style={{ padding: "20px 16px 0" }}>
+					<button
+						type="button"
+						onClick={handleJoin}
+						disabled={joining}
+						style={{
+							width: "100%",
+							padding: "16px",
+							borderRadius: "16px",
+							backgroundColor: "#00C853",
+							color: "#0a0a0a",
+							fontSize: "16px",
+							fontWeight: 700,
+							border: "none",
+							cursor: "pointer",
+							boxShadow: "0 0 20px rgba(0,200,83,0.4)",
+							opacity: joining ? 0.5 : 1,
+						}}
+					>
+						{joining
+							? "Processing..."
+							: room.stake_amount > 0
+								? `Join This Equb \u2014 ${room.stake_amount} ETB`
+								: "Join This Equb \u2014 Free"}
+					</button>
+					{room.status === "pending" && members.length < room.max_members && (
+						<p
+							style={{ fontSize: "11px", color: "#8E8E93", textAlign: "center", marginTop: "6px" }}
 						>
-							Log Workout
-						</button>
+							{room.max_members - members.length} spots remaining
+						</p>
 					)}
 				</div>
+			)}
+		</div>
+	);
+}
 
-				{members.length === 0 ? (
-					<p className="text-sm text-[#8E8E93] bg-[#1c1c1e] rounded-xl p-4 text-center">
-						No members yet. Be the first!
-					</p>
-				) : (
-					<div className="space-y-2">
-						{members.map((m, i) => {
-							const pct = target > 0 ? Math.round((m.completed_days / target) * 100) : 0;
-							return (
-								<div
-									key={m.id}
-									className="flex items-center gap-3 bg-[#1c1c1e] border border-[#2c2c2e] rounded-xl p-3"
-								>
-									<div className="w-8 h-8 rounded-full bg-[rgba(0,200,83,0.1)] flex items-center justify-center text-[#00C853] text-xs font-bold">
-										{i + 1}
-									</div>
-									<div className="flex-1 min-w-0">
-										<p className="text-sm text-white font-medium truncate">{m.users.full_name}</p>
-										<div className="flex items-center gap-2 mt-1">
-											<div className="flex-1 h-1 rounded-full bg-[#0a0a0a] overflow-hidden">
-												<div
-													className="h-full rounded-full bg-[#00C853] transition-all"
-													style={{ width: `${Math.min(100, pct)}%` }}
-												/>
-											</div>
-											<span className="text-[10px] text-[#8E8E93] font-medium w-12 text-right">
-												{m.completed_days}/{target}
-											</span>
-										</div>
-									</div>
-								</div>
-							);
-						})}
-					</div>
-				)}
-			</div>
-
-			{/* Join / CTA Button */}
-			{(room.status === "pending" || room.status === "active") && (
-				<button
-					type="button"
-					onClick={handleJoin}
-					disabled={joining}
-					className="w-full mt-6 py-4 rounded-[16px] font-bold text-[16px] disabled:opacity-50 bg-[#00C853] text-black shadow-[0_0_20px_rgba(0,200,83,0.4)] active:scale-[0.98] transition-transform"
+function RuleItem({ icon, title, subtitle }: { icon: string; title: string; subtitle: string }) {
+	return (
+		<div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+			<div
+				style={{
+					width: "36px",
+					height: "36px",
+					minWidth: "36px",
+					borderRadius: "10px",
+					backgroundColor: "rgba(0,200,83,0.1)",
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center",
+				}}
+			>
+				<svg
+					viewBox="0 0 24 24"
+					style={{ width: "18px", height: "18px" }}
+					fill="none"
+					stroke="#00C853"
+					strokeWidth={2}
 				>
-					{joining
-						? "Processing..."
-						: room.stake_amount > 0
-							? `Join This Equb \u2014 ${room.stake_amount} ETB`
-							: "Join This Equb \u2014 Free"}
-				</button>
-			)}
-			{room.status === "pending" && members.length < room.max_members && (
-				<p className="text-[11px] text-[#8E8E93] text-center mt-2">
-					{room.max_members - members.length} spots remaining
-				</p>
-			)}
+					<path d={icon} />
+				</svg>
+			</div>
+			<div>
+				<p style={{ fontSize: "15px", fontWeight: 600, color: "#FFF", margin: 0 }}>{title}</p>
+				<p style={{ fontSize: "12px", color: "#8E8E93", margin: "2px 0 0" }}>{subtitle}</p>
+			</div>
 		</div>
-	);
-}
-
-function StatCard({
-	label,
-	value,
-	unit,
-	accent,
-}: {
-	label: string;
-	value: string;
-	unit?: string;
-	accent?: "green" | "gold";
-}) {
-	const valueColor =
-		accent === "green" ? "text-[#00C853]" : accent === "gold" ? "text-[#FFD700]" : "text-white";
-	return (
-		<div className="rounded-[16px] bg-[#1c1c1e] border border-[#2c2c2e] p-3">
-			<p className="text-[10px] text-[#8E8E93] uppercase tracking-wider font-medium">{label}</p>
-			<p className={`text-lg font-bold mt-0.5 ${valueColor}`}>
-				{value}
-				{unit && <span className="text-xs text-[#8E8E93] font-normal ml-1">{unit}</span>}
-			</p>
-		</div>
-	);
-}
-
-function StatusText({ status }: { status: string }) {
-	const colors: Record<string, string> = {
-		pending: "text-[#FFD700]",
-		active: "text-[#00C853]",
-		settling: "text-blue-400",
-		settled: "text-[#8E8E93]",
-		cancelled: "text-red-400",
-	};
-	return (
-		<p className={`text-xs font-medium mt-0.5 ${colors[status] ?? "text-[#8E8E93]"}`}>
-			{status.charAt(0).toUpperCase() + status.slice(1)}
-		</p>
 	);
 }
 

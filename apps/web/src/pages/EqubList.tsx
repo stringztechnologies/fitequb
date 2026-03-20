@@ -61,7 +61,14 @@ export function EqubList() {
 				<p style={{ fontSize: "16px", color: "#FFFFFF", marginTop: "4px" }}>Equb Rooms</p>
 			</div>
 
-			<div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+			<div
+				style={{
+					padding: "0 16px",
+					display: "flex",
+					flexDirection: "column",
+					gap: "12px",
+				}}
+			>
 				{hasReal
 					? rooms.map((r) => (
 							<RealCard key={r.id} room={r} onClick={() => navigate(`/equbs/${r.id}`)} />
@@ -74,7 +81,13 @@ export function EqubList() {
 	);
 }
 
-function DemoCard({ room, onClick }: { room: (typeof DEMO_ROOMS)[number]; onClick: () => void }) {
+function DemoCard({
+	room,
+	onClick,
+}: {
+	room: (typeof DEMO_ROOMS)[number];
+	onClick: () => void;
+}) {
 	const end = new Date(Date.now() + room.endMs).toISOString();
 	const countdown = useCd(end);
 	const fillPct = Math.round((room.filled / room.max) * 100);
@@ -98,40 +111,62 @@ function DemoCard({ room, onClick }: { room: (typeof DEMO_ROOMS)[number]; onClic
 						padding: "8px 12px",
 					}}
 				>
-					<p style={{ fontSize: "15px", fontWeight: 700, color: "#FFF", margin: 0 }}>
+					<p
+						style={{
+							fontSize: "15px",
+							fontWeight: 700,
+							color: "#FFF",
+							margin: 0,
+						}}
+					>
 						Entry: <span style={{ color: "#FFD700" }}>{room.stake} ETB</span>
 					</p>
-					<p style={{ fontSize: "15px", fontWeight: 700, color: "#FFF", margin: "2px 0 0" }}>
+					<p
+						style={{
+							fontSize: "15px",
+							fontWeight: 700,
+							color: "#FFF",
+							margin: "2px 0 0",
+						}}
+					>
 						Payout: <span style={{ color: "#FFD700" }}>{room.payout.toLocaleString()} ETB</span>
 					</p>
 				</div>
-				{countdown ? (
-					<div style={{ textAlign: "right" }}>
-						<p
-							style={{
-								fontSize: "10px",
-								color: "#FF9500",
-								textTransform: "uppercase",
-								letterSpacing: "0.05em",
-								margin: 0,
-							}}
-						>
-							Closes in
-						</p>
-						<p
-							style={{
-								fontSize: "24px",
-								fontWeight: 700,
-								color: cdColor(end),
-								fontFamily: "monospace",
-								fontVariantNumeric: "tabular-nums",
-								margin: "2px 0 0",
-							}}
-						>
-							{countdown}
-						</p>
-					</div>
-				) : (
+				<div
+					style={{
+						display: "flex",
+						flexDirection: "column",
+						alignItems: "flex-end",
+						gap: "6px",
+					}}
+				>
+					{countdown && (
+						<div style={{ textAlign: "right" }}>
+							<p
+								style={{
+									fontSize: "10px",
+									color: "#FF9500",
+									textTransform: "uppercase",
+									letterSpacing: "0.05em",
+									margin: 0,
+								}}
+							>
+								Closes in
+							</p>
+							<p
+								style={{
+									fontSize: "24px",
+									fontWeight: 700,
+									color: cdColor(end),
+									fontFamily: "monospace",
+									fontVariantNumeric: "tabular-nums",
+									margin: "2px 0 0",
+								}}
+							>
+								{countdown}
+							</p>
+						</div>
+					)}
 					<span
 						style={{
 							padding: "6px 16px",
@@ -144,9 +179,16 @@ function DemoCard({ room, onClick }: { room: (typeof DEMO_ROOMS)[number]; onClic
 					>
 						Join Now
 					</span>
-				)}
+				</div>
 			</div>
-			<div style={{ padding: "4px 16px 8px", display: "flex", alignItems: "center", gap: "6px" }}>
+			<div
+				style={{
+					padding: "4px 16px 8px",
+					display: "flex",
+					alignItems: "center",
+					gap: "6px",
+				}}
+			>
 				<span style={{ color: "#00C853", fontSize: "14px" }}>&#9679;</span>
 				<span style={{ fontSize: "14px", color: "#FFF" }}>{room.req}</span>
 			</div>
@@ -182,9 +224,22 @@ function RealCard({ room, onClick }: { room: EqubRoom; onClick: () => void }) {
 	const countdown = useCd(room.end_date);
 	return (
 		<button type="button" onClick={onClick} style={cardStyle}>
-			<div style={{ padding: "16px", display: "flex", justifyContent: "space-between" }}>
+			<div
+				style={{
+					padding: "16px",
+					display: "flex",
+					justifyContent: "space-between",
+				}}
+			>
 				<div>
-					<p style={{ fontSize: "15px", fontWeight: 700, color: "#FFF", margin: 0 }}>
+					<p
+						style={{
+							fontSize: "15px",
+							fontWeight: 700,
+							color: "#FFF",
+							margin: 0,
+						}}
+					>
 						Entry:{" "}
 						<span style={{ color: "#FFD700" }}>
 							{room.stake_amount > 0 ? `${room.stake_amount} ETB` : "Free"}
@@ -196,7 +251,12 @@ function RealCard({ room, onClick }: { room: EqubRoom; onClick: () => void }) {
 				</div>
 				{countdown && (
 					<span
-						style={{ fontSize: "20px", fontWeight: 700, color: "#FFD700", fontFamily: "monospace" }}
+						style={{
+							fontSize: "20px",
+							fontWeight: 700,
+							color: "#FFD700",
+							fontFamily: "monospace",
+						}}
 					>
 						{countdown}
 					</span>
