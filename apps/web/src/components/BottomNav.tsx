@@ -43,7 +43,14 @@ export function BottomNav() {
 	const navigate = useNavigate();
 
 	return (
-		<nav className="fixed bottom-0 left-0 right-0 glass border-t border-[rgba(255,255,255,0.08)] z-50">
+		<nav
+			className="fixed bottom-0 left-1/2 glass border-t border-[rgba(255,255,255,0.08)] z-50"
+			style={{
+				maxWidth: "430px",
+				transform: "translateX(-50%)",
+				width: "100%",
+			}}
+		>
 			<div className="flex justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
 				{tabs.map((tab) => {
 					const active =

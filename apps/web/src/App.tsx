@@ -20,7 +20,15 @@ import { WinCelebration } from "./pages/WinCelebration.js";
 export function App() {
 	return (
 		<BrowserRouter>
-			<div className="min-h-screen bg-[#0a0a0a]">
+			<div
+				style={{
+					minHeight: "100vh",
+					backgroundColor: "#0a0a0a",
+					maxWidth: "430px",
+					margin: "0 auto",
+					position: "relative",
+				}}
+			>
 				<Routes>
 					<Route path="/" element={<Home />} />
 					<Route path="/equbs" element={<EqubList />} />
