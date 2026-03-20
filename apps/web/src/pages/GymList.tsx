@@ -3,34 +3,65 @@ import { useEffect, useState } from "react";
 import { Loading } from "../components/Loading.js";
 import { api } from "../lib/api.js";
 
-const filters = ["Near Me", "Top Rated", "Cheapest"] as const;
+const DEMO_GYMS = [
+	{ id: "d1", name: "Kuriftu Gym", location: "Bole", price: 150, equbEligible: true },
+	{ id: "d2", name: "Zebra Fitness", location: "Lideta", price: 180, equbEligible: true },
+	{ id: "d3", name: "O-Zone Gym", location: "Kazanchis", price: 200, equbEligible: true },
+	{ id: "d4", name: "Golden Gym", location: "Bole", price: 120, equbEligible: false },
+	{ id: "d5", name: "Fitness Point", location: "Sarbet", price: 160, equbEligible: false },
+];
+
+const FILTERS = ["Near Me", "Top Rated", "Cheapest"] as const;
 
 export function GymList() {
 	const [gyms, setGyms] = useState<PartnerGym[]>([]);
 	const [loading, setLoading] = useState(true);
-	const [activeFilter, setActiveFilter] = useState<string>("Near Me");
+	const [filter, setFilter] = useState("Near Me");
 
 	useEffect(() => {
 		api<PartnerGym[]>("/api/gyms")
 			.then((res) => {
-				if (res.data) setGyms(res.data);
+				if (res.data && res.data.length > 0) setGyms(res.data);
 			})
 			.finally(() => setLoading(false));
 	}, []);
 
 	if (loading) return <Loading />;
 
-	return (
-		<div className="px-4 pt-5 pb-24">
-			<h1 className="text-[20px] font-bold text-white text-center mb-4">Gym Day Passes List</h1>
+	const hasReal = gyms.length > 0;
 
-			{/* Search Bar */}
-			<div className="flex items-center gap-3 bg-[#2c2c2e] border border-[rgba(255,215,0,0.3)] rounded-[10px] px-4 py-3 mb-4">
+	return (
+		<div style={{ backgroundColor: "#0a0a0a", paddingBottom: "96px" }}>
+			<h1
+				style={{
+					fontSize: "22px",
+					fontWeight: 700,
+					color: "#FFF",
+					textAlign: "center",
+					padding: "20px 16px 12px",
+				}}
+			>
+				Gym Day Passes List
+			</h1>
+
+			{/* Search bar */}
+			<div
+				style={{
+					margin: "0 16px 12px",
+					display: "flex",
+					alignItems: "center",
+					gap: "10px",
+					backgroundColor: "#2c2c2e",
+					border: "1px solid rgba(255,215,0,0.3)",
+					borderRadius: "10px",
+					padding: "12px 16px",
+				}}
+			>
 				<svg
 					viewBox="0 0 24 24"
-					className="w-4 h-4 text-[#8E8E93] shrink-0"
+					style={{ width: "16px", height: "16px", flexShrink: 0 }}
 					fill="none"
-					stroke="currentColor"
+					stroke="#8E8E93"
 					strokeWidth={2}
 				>
 					<circle cx="11" cy="11" r="8" />
@@ -39,56 +70,135 @@ export function GymList() {
 				<input
 					type="text"
 					placeholder="Search gyms, locations..."
-					className="flex-1 bg-transparent text-[14px] text-white outline-none placeholder:text-[#636366]"
+					style={{
+						flex: 1,
+						backgroundColor: "transparent",
+						border: "none",
+						outline: "none",
+						color: "#FFF",
+						fontSize: "14px",
+					}}
 				/>
 				<svg
 					viewBox="0 0 24 24"
-					className="w-4 h-4 text-[#8E8E93] shrink-0"
+					style={{ width: "16px", height: "16px", flexShrink: 0 }}
 					fill="none"
-					stroke="currentColor"
+					stroke="#8E8E93"
 					strokeWidth={2}
 				>
 					<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
 					<path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-					<line x1="12" y1="19" x2="12" y2="23" />
 				</svg>
 			</div>
 
-			{/* Filter Chips */}
-			<div className="flex gap-2 mb-5 overflow-x-auto pb-1">
-				{filters.map((f) => (
+			{/* Filter chips */}
+			<div style={{ display: "flex", gap: "8px", padding: "0 16px 16px", overflowX: "auto" }}>
+				{FILTERS.map((f) => (
 					<button
 						key={f}
 						type="button"
-						onClick={() => setActiveFilter(f)}
-						className={`px-4 py-1.5 rounded-[20px] text-[13px] font-medium shrink-0 transition-colors ${
-							activeFilter === f
-								? "border border-[#FFD700] text-[#FFD700]"
-								: "border border-[rgba(255,255,255,0.15)] text-white"
-						}`}
+						onClick={() => setFilter(f)}
+						style={{
+							padding: "6px 16px",
+							borderRadius: "20px",
+							fontSize: "13px",
+							fontWeight: 500,
+							border: filter === f ? "1px solid #FFD700" : "1px solid rgba(255,255,255,0.15)",
+							color: filter === f ? "#FFD700" : "#FFF",
+							backgroundColor: "transparent",
+							cursor: "pointer",
+							flexShrink: 0,
+						}}
 					>
 						{f}
 					</button>
 				))}
 			</div>
 
-			{/* Gym Cards */}
-			{gyms.length === 0 ? (
-				<p className="text-[#8E8E93] text-[14px] text-center mt-8">No partner gyms available.</p>
-			) : (
-				<div className="space-y-3">
-					{gyms.map((gym) => (
-						<GymCard key={gym.id} gym={gym} />
-					))}
-				</div>
-			)}
+			{/* Gym cards */}
+			<div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+				{hasReal
+					? gyms.map((g) => <RealGymCard key={g.id} gym={g} />)
+					: DEMO_GYMS.map((g) => <DemoGymCard key={g.id} gym={g} />)}
+			</div>
 		</div>
 	);
 }
 
-function GymCard({ gym }: { gym: PartnerGym }) {
-	const [buying, setBuying] = useState(false);
+function DemoGymCard({ gym }: { gym: (typeof DEMO_GYMS)[number] }) {
+	return (
+		<div
+			style={{
+				position: "relative",
+				borderRadius: "12px",
+				border: "1px solid rgba(255,215,0,0.3)",
+				overflow: "hidden",
+				minHeight: "110px",
+				backgroundColor: "#1c1c1e",
+			}}
+		>
+			{/* Content */}
+			<div
+				style={{
+					position: "relative",
+					padding: "14px 16px",
+					display: "flex",
+					justifyContent: "space-between",
+					zIndex: 1,
+				}}
+			>
+				<div>
+					<h3 style={{ fontSize: "18px", fontWeight: 700, color: "#FFF", margin: 0 }}>
+						{gym.name}
+					</h3>
+					<p style={{ fontSize: "12px", color: "#8E8E93", margin: "2px 0 0" }}>{gym.location}</p>
+					<p style={{ fontSize: "20px", fontWeight: 700, color: "#FFD700", margin: "6px 0 0" }}>
+						{gym.price} ETB
+					</p>
+				</div>
+				<div
+					style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}
+				>
+					{gym.equbEligible && (
+						<span
+							style={{
+								padding: "4px 8px",
+								borderRadius: "4px",
+								backgroundColor: "#00C853",
+								color: "#FFF",
+								fontSize: "11px",
+								fontWeight: 700,
+								display: "flex",
+								alignItems: "center",
+								gap: "4px",
+							}}
+						>
+							Equb Eligible &#10003;
+						</span>
+					)}
+					<button
+						type="button"
+						style={{
+							padding: "8px 20px",
+							borderRadius: "8px",
+							backgroundColor: "#00C853",
+							color: "#FFF",
+							fontSize: "14px",
+							fontWeight: 700,
+							border: "none",
+							cursor: "pointer",
+						}}
+					>
+						Buy Pass
+					</button>
+				</div>
+			</div>
+		</div>
+	);
+}
 
+function RealGymCard({ gym }: { gym: PartnerGym }) {
+	const [buying, setBuying] = useState(false);
 	async function handleBuy() {
 		setBuying(true);
 		const res = await api<{ checkout_url: string }>("/api/gyms/day-passes", {
@@ -96,56 +206,44 @@ function GymCard({ gym }: { gym: PartnerGym }) {
 			body: JSON.stringify({ gym_id: gym.id }),
 		});
 		setBuying(false);
-		if (res.data?.checkout_url) {
-			window.open(res.data.checkout_url, "_blank");
-		}
+		if (res.data?.checkout_url) window.open(res.data.checkout_url, "_blank");
 	}
-
 	return (
 		<div
-			className="relative rounded-[12px] border border-[rgba(255,215,0,0.3)] overflow-hidden"
-			style={{ minHeight: "120px" }}
+			style={{
+				borderRadius: "12px",
+				border: "1px solid rgba(255,215,0,0.3)",
+				backgroundColor: "#1c1c1e",
+				padding: "14px 16px",
+				display: "flex",
+				justifyContent: "space-between",
+			}}
 		>
-			{/* Dark gradient overlay for readability */}
-			<div className="absolute inset-0 bg-gradient-to-r from-[#1c1c1e] via-[#1c1c1e] to-[rgba(28,28,30,0.7)]" />
-
-			{/* Content */}
-			<div className="relative px-4 py-3.5 flex flex-col justify-between h-full">
-				{/* Top row */}
-				<div className="flex items-start justify-between">
-					<div>
-						<h3 className="text-[18px] font-bold text-white">{gym.name}</h3>
-						<p className="text-[12px] text-[#8E8E93] mt-0.5">{gym.location}</p>
-						<p className="text-[20px] font-bold text-[#FFD700] mt-1">{gym.app_day_pass} ETB</p>
-					</div>
-
-					{/* Equb Eligible badge */}
-					<span className="px-2 py-1 rounded-[4px] bg-[#00C853] text-white text-[10px] font-bold flex items-center gap-1">
-						Equb Eligible
-						<svg
-							viewBox="0 0 24 24"
-							className="w-3 h-3"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth={3}
-						>
-							<polyline points="20 6 9 17 4 12" />
-						</svg>
-					</span>
-				</div>
-
-				{/* Buy Pass button */}
-				<div className="flex justify-end mt-2">
-					<button
-						type="button"
-						onClick={handleBuy}
-						disabled={buying}
-						className="bg-[#00C853] text-white px-5 py-2 rounded-[8px] text-[13px] font-bold disabled:opacity-50 active:scale-95 transition-transform"
-					>
-						{buying ? "..." : "Buy Pass"}
-					</button>
-				</div>
+			<div>
+				<h3 style={{ fontSize: "18px", fontWeight: 700, color: "#FFF", margin: 0 }}>{gym.name}</h3>
+				<p style={{ fontSize: "12px", color: "#8E8E93", margin: "2px 0 0" }}>{gym.location}</p>
+				<p style={{ fontSize: "20px", fontWeight: 700, color: "#FFD700", margin: "6px 0 0" }}>
+					{gym.app_day_pass} ETB
+				</p>
 			</div>
+			<button
+				type="button"
+				onClick={handleBuy}
+				disabled={buying}
+				style={{
+					padding: "8px 20px",
+					borderRadius: "8px",
+					backgroundColor: "#00C853",
+					color: "#FFF",
+					fontSize: "14px",
+					fontWeight: 700,
+					border: "none",
+					cursor: "pointer",
+					alignSelf: "flex-end",
+				}}
+			>
+				{buying ? "..." : "Buy Pass"}
+			</button>
 		</div>
 	);
 }

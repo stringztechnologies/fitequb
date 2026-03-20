@@ -4,6 +4,39 @@ import { useNavigate } from "react-router-dom";
 import { Loading } from "../components/Loading.js";
 import { api } from "../lib/api.js";
 
+const DEMO_ROOMS = [
+	{
+		id: "demo-1",
+		stake: 500,
+		payout: 10000,
+		max: 20,
+		filled: 18,
+		req: "10k Steps/Day",
+		endMs: 2 * 3600000 + 45 * 60000,
+		status: "active",
+	},
+	{
+		id: "demo-2",
+		stake: 1000,
+		payout: 25000,
+		max: 20,
+		filled: 12,
+		req: "5 Gym Sessions/Week",
+		endMs: 8 * 3600000 + 12 * 60000,
+		status: "active",
+	},
+	{
+		id: "demo-3",
+		stake: 250,
+		payout: 5000,
+		max: 15,
+		filled: 8,
+		req: "15k Steps/Day",
+		endMs: 55 * 60000,
+		status: "pending",
+	},
+];
+
 export function EqubList() {
 	const [rooms, setRooms] = useState<EqubRoom[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -12,138 +45,195 @@ export function EqubList() {
 	useEffect(() => {
 		api<EqubRoom[]>("/api/equb-rooms")
 			.then((res) => {
-				if (res.data) setRooms(res.data);
+				if (res.data && res.data.length > 0) setRooms(res.data);
 			})
 			.finally(() => setLoading(false));
 	}, []);
 
 	if (loading) return <Loading />;
 
+	const hasReal = rooms.length > 0;
+
 	return (
-		<div className="px-4 pt-5 pb-24">
-			<div className="text-center mb-5">
-				<h1 className="text-[20px] font-bold text-white">FitEqub</h1>
-				<p className="text-[13px] text-[#8E8E93] mt-0.5">Equb Rooms</p>
+		<div style={{ backgroundColor: "#0a0a0a", paddingBottom: "96px" }}>
+			<div style={{ textAlign: "center", padding: "20px 16px 16px" }}>
+				<h1 style={{ fontSize: "28px", fontWeight: 700, color: "#00C853" }}>FitEqub</h1>
+				<p style={{ fontSize: "16px", color: "#FFFFFF", marginTop: "4px" }}>Equb Rooms</p>
 			</div>
 
-			{rooms.length === 0 ? (
-				<div className="text-center mt-16">
-					<p className="text-white font-semibold text-[15px]">No rooms yet</p>
-					<p className="text-[#8E8E93] text-[13px] mt-1">Be the first to create one!</p>
-					<button
-						type="button"
-						onClick={() => navigate("/equbs/create")}
-						className="mt-4 bg-[#00C853] text-black px-6 py-2.5 rounded-[12px] text-[13px] font-bold"
-					>
-						+ Create Room
-					</button>
-				</div>
-			) : (
-				<div className="space-y-3">
-					{rooms.map((room) => (
-						<EqubCard key={room.id} room={room} onClick={() => navigate(`/equbs/${room.id}`)} />
-					))}
-				</div>
-			)}
+			<div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+				{hasReal
+					? rooms.map((r) => (
+							<RealCard key={r.id} room={r} onClick={() => navigate(`/equbs/${r.id}`)} />
+						))
+					: DEMO_ROOMS.map((r) => (
+							<DemoCard key={r.id} room={r} onClick={() => navigate("/equbs/create")} />
+						))}
+			</div>
 		</div>
 	);
 }
 
-function EqubCard({ room, onClick }: { room: EqubRoom; onClick: () => void }) {
-	const countdown = useCountdown(room.end_date);
-	const payout = room.stake_amount * room.max_members;
+function DemoCard({ room, onClick }: { room: (typeof DEMO_ROOMS)[number]; onClick: () => void }) {
+	const end = new Date(Date.now() + room.endMs).toISOString();
+	const countdown = useCd(end);
+	const fillPct = Math.round((room.filled / room.max) * 100);
 
 	return (
-		<button
-			type="button"
-			onClick={onClick}
-			className="w-full text-left rounded-[16px] bg-[#1c1c1e] border border-[rgba(255,255,255,0.1)] overflow-hidden active:bg-[#2c2c2e] transition-colors"
-		>
-			{/* Entry + Payout + Countdown row */}
-			<div className="px-4 pt-4 pb-2.5">
-				<div className="flex items-start justify-between gap-3">
-					{/* Gold-bordered entry/payout box */}
-					<div className="bg-[#2c2c2e] border border-[rgba(255,215,0,0.3)] rounded-[8px] px-3 py-2">
-						<p className="text-white text-[14px] font-bold">
-							Entry:{" "}
-							<span className="text-[#FFD700]">
-								{room.stake_amount > 0 ? `${room.stake_amount} ETB` : "Free"}
-							</span>
+		<button type="button" onClick={onClick} style={cardStyle}>
+			<div
+				style={{
+					padding: "16px 16px 8px",
+					display: "flex",
+					justifyContent: "space-between",
+					alignItems: "flex-start",
+					gap: "12px",
+				}}
+			>
+				<div
+					style={{
+						backgroundColor: "#2c2c2e",
+						border: "1px solid rgba(255,215,0,0.3)",
+						borderRadius: "8px",
+						padding: "8px 12px",
+					}}
+				>
+					<p style={{ fontSize: "15px", fontWeight: 700, color: "#FFF", margin: 0 }}>
+						Entry: <span style={{ color: "#FFD700" }}>{room.stake} ETB</span>
+					</p>
+					<p style={{ fontSize: "15px", fontWeight: 700, color: "#FFF", margin: "2px 0 0" }}>
+						Payout: <span style={{ color: "#FFD700" }}>{room.payout.toLocaleString()} ETB</span>
+					</p>
+				</div>
+				{countdown ? (
+					<div style={{ textAlign: "right" }}>
+						<p
+							style={{
+								fontSize: "10px",
+								color: "#FF9500",
+								textTransform: "uppercase",
+								letterSpacing: "0.05em",
+								margin: 0,
+							}}
+						>
+							Closes in
 						</p>
-						<p className="text-white text-[14px] font-bold">
-							Payout: <span className="text-[#FFD700]">{payout.toLocaleString()} ETB</span>
+						<p
+							style={{
+								fontSize: "24px",
+								fontWeight: 700,
+								color: cdColor(end),
+								fontFamily: "monospace",
+								fontVariantNumeric: "tabular-nums",
+								margin: "2px 0 0",
+							}}
+						>
+							{countdown}
 						</p>
 					</div>
-
-					{room.status === "active" && countdown && (
-						<div className="text-right">
-							<p className="text-[9px] text-[#FF9500] uppercase tracking-wider">Closes in</p>
-							<p
-								className="font-bold text-[22px] font-mono"
-								style={{
-									fontVariantNumeric: "tabular-nums",
-									color: getCountdownColor(room.end_date),
-								}}
-							>
-								{countdown}
-							</p>
-						</div>
-					)}
-
-					{room.status === "pending" && (
-						<span className="px-4 py-1.5 rounded-[8px] border border-[#FFD700] text-[#FFD700] text-[13px] font-semibold">
-							Join Now
-						</span>
-					)}
-				</div>
-			</div>
-
-			{/* Requirements */}
-			<div className="px-4 py-1.5 flex items-center gap-1.5">
-				<span className="text-[#00C853] text-[12px]">&#9679;</span>
-				<span className="text-[12px] text-[#8E8E93]">
-					{room.workout_target} workouts / {room.duration_days} days
-				</span>
-				{room.is_tsom && (
-					<span className="ml-auto px-1.5 py-0.5 rounded-[4px] bg-[rgba(0,200,83,0.15)] text-[#00C853] text-[9px] font-bold">
-						TSOM
+				) : (
+					<span
+						style={{
+							padding: "6px 16px",
+							borderRadius: "8px",
+							border: "1px solid #FFD700",
+							color: "#FFD700",
+							fontSize: "14px",
+							fontWeight: 600,
+						}}
+					>
+						Join Now
 					</span>
 				)}
 			</div>
-
-			{/* Fill bar */}
-			<div className="px-4 pb-3.5 pt-1">
-				<div className="flex items-center justify-between mb-1">
-					<span className="text-[10px] text-[#8E8E93]">spots filled</span>
-				</div>
-				<div className="w-full h-[5px] rounded-full bg-[#0a0a0a] overflow-hidden">
-					<div className="h-full rounded-full bg-[#00C853]" style={{ width: "30%" }} />
+			<div style={{ padding: "4px 16px 8px", display: "flex", alignItems: "center", gap: "6px" }}>
+				<span style={{ color: "#00C853", fontSize: "14px" }}>&#9679;</span>
+				<span style={{ fontSize: "14px", color: "#FFF" }}>{room.req}</span>
+			</div>
+			<div style={{ padding: "0 16px 14px" }}>
+				<p style={{ fontSize: "12px", color: "#8E8E93", margin: "0 0 4px" }}>
+					{room.filled}/{room.max} spots filled
+				</p>
+				<div
+					style={{
+						width: "100%",
+						height: "6px",
+						backgroundColor: "#2c2c2e",
+						borderRadius: "3px",
+						overflow: "hidden",
+					}}
+				>
+					<div
+						style={{
+							width: `${fillPct}%`,
+							height: "100%",
+							backgroundColor: "#00C853",
+							borderRadius: "3px",
+						}}
+					/>
 				</div>
 			</div>
 		</button>
 	);
 }
 
-function getCountdownColor(endDate: string): string {
-	const diff = new Date(endDate).getTime() - Date.now();
-	if (diff < 3600000) return "#FF3B30";
-	if (diff < 7200000) return "#FF9500";
+function RealCard({ room, onClick }: { room: EqubRoom; onClick: () => void }) {
+	const payout = room.stake_amount * room.max_members;
+	const countdown = useCd(room.end_date);
+	return (
+		<button type="button" onClick={onClick} style={cardStyle}>
+			<div style={{ padding: "16px", display: "flex", justifyContent: "space-between" }}>
+				<div>
+					<p style={{ fontSize: "15px", fontWeight: 700, color: "#FFF", margin: 0 }}>
+						Entry:{" "}
+						<span style={{ color: "#FFD700" }}>
+							{room.stake_amount > 0 ? `${room.stake_amount} ETB` : "Free"}
+						</span>
+					</p>
+					<p style={{ fontSize: "15px", color: "#FFF", margin: "2px 0 0" }}>
+						Payout: <span style={{ color: "#FFD700" }}>{payout.toLocaleString()} ETB</span>
+					</p>
+				</div>
+				{countdown && (
+					<span
+						style={{ fontSize: "20px", fontWeight: 700, color: "#FFD700", fontFamily: "monospace" }}
+					>
+						{countdown}
+					</span>
+				)}
+			</div>
+		</button>
+	);
+}
+
+const cardStyle: React.CSSProperties = {
+	width: "100%",
+	textAlign: "left",
+	backgroundColor: "#1c1c1e",
+	borderRadius: "16px",
+	border: "1px solid rgba(255,255,255,0.1)",
+	padding: 0,
+	cursor: "pointer",
+	overflow: "hidden",
+};
+
+function cdColor(end: string): string {
+	const d = new Date(end).getTime() - Date.now();
+	if (d < 3600000) return "#FF3B30";
+	if (d < 7200000) return "#FF9500";
 	return "#FFD700";
 }
 
-function useCountdown(endDate: string): string | null {
-	const [now, setNow] = useState(Date.now());
-
+function useCd(end: string): string | null {
+	const [n, sn] = useState(Date.now());
 	useEffect(() => {
-		const t = setInterval(() => setNow(Date.now()), 1000);
+		const t = setInterval(() => sn(Date.now()), 1000);
 		return () => clearInterval(t);
 	}, []);
-
-	const diff = new Date(endDate).getTime() - now;
-	if (diff <= 0) return null;
-
-	const h = Math.floor(diff / 3600000);
-	const m = Math.floor((diff % 3600000) / 60000);
-	const s = Math.floor((diff % 60000) / 1000);
+	const d = new Date(end).getTime() - n;
+	if (d <= 0) return null;
+	const h = Math.floor(d / 3600000);
+	const m = Math.floor((d % 3600000) / 60000);
+	const s = Math.floor((d % 60000) / 1000);
 	return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
