@@ -6,3 +6,7 @@ dist/
 *.tsbuildinfo
 .DS_Store
 apps/web/dist/
+stitch_fitequb_home_dashboard/
+fitequb-design-spec.md
+test-results/
+.last-run.json
