@@ -5,7 +5,12 @@ import { api } from "../lib/api.js";
 
 interface ProfileData {
 	total_points: number;
-	level: { level: number; name: string; min_points: number; perk: string | null };
+	level: {
+		level: number;
+		name: string;
+		min_points: number;
+		perk: string | null;
+	};
 	next_level: { level: number; name: string; min_points: number } | null;
 	points_to_next: number;
 	referral_code: string;
@@ -75,7 +80,7 @@ export function Profile() {
 		<div className="px-5 pt-6 pb-24">
 			{/* Avatar with gold ring */}
 			<div className="flex flex-col items-center mb-6">
-				<div className="w-24 h-24 rounded-full border-[3px] border-brand-gold bg-[#1c1c1e] flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(255,215,0,0.2)]">
+				<div className="w-24 h-24 rounded-full border-[3px] border-[#FFD700] bg-[#1c1c1e] flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(255,215,0,0.2)]">
 					<span className="text-4xl font-bold text-white">
 						{user.full_name.charAt(0).toUpperCase()}
 					</span>
@@ -84,44 +89,41 @@ export function Profile() {
 				<p className="text-sm text-[#8E8E93]">@{user.username ?? "anonymous"}</p>
 			</div>
 
-			{/* Stat Cards */}
+			{/* Stat Cards — green border for earned, cyan for steps */}
 			<div className="grid grid-cols-2 gap-3 mb-5">
-				<div className="rounded-[16px] bg-[#1c1c1e] border border-[#2c2c2e] p-4">
+				<div className="rounded-[12px] border-2 border-[#00C853] p-3">
 					<div className="flex items-center justify-between mb-1">
-						<p className="text-[10px] text-[#8E8E93] uppercase tracking-wider">Total Earned</p>
-						<div className="w-6 h-6 rounded-full bg-[rgba(0,200,83,0.15)] flex items-center justify-center">
-							<svg
-								viewBox="0 0 24 24"
-								className="w-3.5 h-3.5 text-[#00C853]"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth={2}
-							>
-								<line x1="12" y1="1" x2="12" y2="23" />
-								<path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-							</svg>
-						</div>
+						<p className="text-[12px] text-[#00C853]">Total Earned</p>
+						<svg
+							viewBox="0 0 24 24"
+							className="w-4 h-4 text-[#FFD700]"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth={2}
+						>
+							<circle cx="12" cy="12" r="10" />
+							<line x1="12" y1="8" x2="12" y2="16" />
+							<path d="M9 12h6" />
+						</svg>
 					</div>
-					<p className="text-[#FFD700] font-bold text-lg">
+					<p className="text-[#00C853] font-bold text-[22px]">
 						ETB {profile.total_points.toLocaleString()}
 					</p>
 				</div>
-				<div className="rounded-[16px] bg-[#1c1c1e] border border-[#2c2c2e] p-4">
+				<div className="rounded-[12px] border-2 border-[#00BCD4] p-3">
 					<div className="flex items-center justify-between mb-1">
-						<p className="text-[10px] text-[#8E8E93] uppercase tracking-wider">Total Steps</p>
-						<div className="w-6 h-6 rounded-full bg-[rgba(0,200,83,0.15)] flex items-center justify-center">
-							<svg
-								viewBox="0 0 24 24"
-								className="w-3.5 h-3.5 text-[#00C853]"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth={2}
-							>
-								<polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-							</svg>
-						</div>
+						<p className="text-[12px] text-[#00BCD4]">Total Steps</p>
+						<svg
+							viewBox="0 0 24 24"
+							className="w-4 h-4 text-[#00BCD4]"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth={2}
+						>
+							<polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+						</svg>
 					</div>
-					<p className="text-[#00C853] font-bold text-lg">
+					<p className="text-[#00BCD4] font-bold text-[22px]">
 						{profile.total_points.toLocaleString()}
 					</p>
 				</div>

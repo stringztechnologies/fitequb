@@ -57,32 +57,41 @@ function EqubCard({ room, onClick }: { room: EqubRoom; onClick: () => void }) {
 		<button
 			type="button"
 			onClick={onClick}
-			className="w-full text-left rounded-[16px] bg-[#1c1c1e] overflow-hidden active:bg-[#2c2c2e] transition-colors"
+			className="w-full text-left rounded-[16px] bg-[#1c1c1e] border border-[rgba(255,255,255,0.1)] overflow-hidden active:bg-[#2c2c2e] transition-colors"
 		>
 			{/* Entry + Payout + Countdown row */}
 			<div className="px-4 pt-4 pb-2.5">
-				<div className="flex items-start justify-between">
-					<div>
+				<div className="flex items-start justify-between gap-3">
+					{/* Gold-bordered entry/payout box */}
+					<div className="bg-[#2c2c2e] border border-[rgba(255,215,0,0.3)] rounded-[8px] px-3 py-2">
 						<p className="text-white text-[14px] font-bold">
-							Entry: {room.stake_amount > 0 ? `${room.stake_amount} ETB` : "Free"}
+							Entry:{" "}
+							<span className="text-[#FFD700]">
+								{room.stake_amount > 0 ? `${room.stake_amount} ETB` : "Free"}
+							</span>
 						</p>
-						<p className="text-[12px] text-[#8E8E93] mt-0.5">
-							Payout:{" "}
-							<span className="text-[#FFD700] font-semibold">{payout.toLocaleString()} ETB</span>
+						<p className="text-white text-[14px] font-bold">
+							Payout: <span className="text-[#FFD700]">{payout.toLocaleString()} ETB</span>
 						</p>
 					</div>
 
 					{room.status === "active" && countdown && (
 						<div className="text-right">
-							<p className="text-[9px] text-[#8E8E93] uppercase tracking-wider">Closes in</p>
-							<p className="text-[#00C853] font-bold text-[14px] font-mono tabular-nums">
+							<p className="text-[9px] text-[#FF9500] uppercase tracking-wider">Closes in</p>
+							<p
+								className="font-bold text-[22px] font-mono"
+								style={{
+									fontVariantNumeric: "tabular-nums",
+									color: getCountdownColor(room.end_date),
+								}}
+							>
 								{countdown}
 							</p>
 						</div>
 					)}
 
 					{room.status === "pending" && (
-						<span className="px-3 py-1.5 rounded-[8px] border border-[#00C853] text-[#00C853] text-[11px] font-bold">
+						<span className="px-4 py-1.5 rounded-[8px] border border-[#FFD700] text-[#FFD700] text-[13px] font-semibold">
 							Join Now
 						</span>
 					)}
@@ -113,6 +122,13 @@ function EqubCard({ room, onClick }: { room: EqubRoom; onClick: () => void }) {
 			</div>
 		</button>
 	);
+}
+
+function getCountdownColor(endDate: string): string {
+	const diff = new Date(endDate).getTime() - Date.now();
+	if (diff < 3600000) return "#FF3B30";
+	if (diff < 7200000) return "#FF9500";
+	return "#FFD700";
 }
 
 function useCountdown(endDate: string): string | null {

@@ -4,90 +4,46 @@ const tabs = [
 	{
 		path: "/",
 		label: "Home",
-		icon: (
-			<svg
-				viewBox="0 0 24 24"
-				className="w-5 h-5"
-				fill="none"
-				stroke="currentColor"
-				strokeWidth={1.8}
-			>
-				<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-				<polyline points="9 22 9 12 15 12 15 22" />
-			</svg>
-		),
+		activeColor: "#FFD700",
+		glowColor: "rgba(255,215,0,0.4)",
+		d: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10",
 	},
 	{
 		path: "/equbs",
 		label: "Equbs",
-		icon: (
-			<svg
-				viewBox="0 0 24 24"
-				className="w-5 h-5"
-				fill="none"
-				stroke="currentColor"
-				strokeWidth={1.8}
-			>
-				<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-			</svg>
-		),
+		activeColor: "#FFD700",
+		glowColor: "rgba(255,215,0,0.4)",
+		d: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
 	},
 	{
 		path: "/gyms",
 		label: "Gyms",
-		icon: (
-			<svg
-				viewBox="0 0 24 24"
-				className="w-5 h-5"
-				fill="none"
-				stroke="currentColor"
-				strokeWidth={1.8}
-			>
-				<rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-				<line x1="3" y1="9" x2="21" y2="9" />
-				<line x1="9" y1="21" x2="9" y2="9" />
-			</svg>
-		),
+		activeColor: "#FF6B6B",
+		glowColor: "rgba(255,107,107,0.4)",
+		d: "M6.5 6.5h11M4 12h16M6.5 17.5h11M2 12a2 2 0 0 1 2-2h1v4H4a2 2 0 0 1-2-2zM20 10h1a2 2 0 0 1 0 4h-1v-4z",
 	},
 	{
 		path: "/challenges",
 		label: "Steps",
-		icon: (
-			<svg
-				viewBox="0 0 24 24"
-				className="w-5 h-5"
-				fill="none"
-				stroke="currentColor"
-				strokeWidth={1.8}
-			>
-				<polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-			</svg>
-		),
+		activeColor: "#E040FB",
+		glowColor: "rgba(224,64,251,0.4)",
+		d: "M22 12 18 12 15 21 9 3 6 12 2 12",
 	},
 	{
 		path: "/profile",
 		label: "Profile",
-		icon: (
-			<svg
-				viewBox="0 0 24 24"
-				className="w-5 h-5"
-				fill="none"
-				stroke="currentColor"
-				strokeWidth={1.8}
-			>
-				<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-				<circle cx="12" cy="7" r="4" />
-			</svg>
-		),
+		activeColor: "#00C853",
+		glowColor: "rgba(0,200,83,0.4)",
+		d: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z",
 	},
-] as const;
+];
 
 export function BottomNav() {
 	const location = useLocation();
 	const navigate = useNavigate();
 
 	return (
-		<nav className="fixed bottom-0 left-0 right-0 glass border-t border-[#2c2c2e] safe-bottom z-50">
+		<nav className="fixed bottom-0 left-0 right-0 glass border-t border-[rgba(255,255,255,0.08)] z-50">
 			<div className="flex justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
 				{tabs.map((tab) => {
 					const active =
@@ -97,12 +53,23 @@ export function BottomNav() {
 							key={tab.path}
 							type="button"
 							onClick={() => navigate(tab.path)}
-							className={`flex flex-col items-center gap-0.5 px-3 py-1 text-[10px] font-medium transition-colors ${
-								active ? "text-[#00C853]" : "text-[#8E8E93]"
-							}`}
+							className="flex flex-col items-center gap-0.5 px-3 py-1 text-[10px] font-medium transition-colors"
+							style={{ color: active ? tab.activeColor : "#8E8E93" }}
 						>
-							<span className={active ? "drop-shadow-[0_0_6px_rgba(0,200,83,0.4)]" : ""}>
-								{tab.icon}
+							<span
+								style={{
+									filter: active ? `drop-shadow(0 0 6px ${tab.glowColor})` : "none",
+								}}
+							>
+								<svg
+									viewBox="0 0 24 24"
+									className="w-5 h-5"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth={1.8}
+								>
+									<path d={tab.d} />
+								</svg>
 							</span>
 							<span>{tab.label}</span>
 						</button>

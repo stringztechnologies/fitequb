@@ -65,16 +65,11 @@ export function Leaderboard() {
 			{top3.length >= 3 && top3[0] && top3[1] && top3[2] && (
 				<div className="flex items-end justify-center gap-2 mb-6">
 					{/* 2nd Place */}
-					<PodiumItem entry={top3[1]} rank={2} height="h-20" ringColor="border-tg-hint" />
+					<PodiumItem entry={top3[1]} rank={2} height="h-20" ringColor="border-[#C0C0C0]" />
 					{/* 1st Place */}
-					<PodiumItem entry={top3[0]} rank={1} height="h-28" ringColor="border-brand-gold" crown />
+					<PodiumItem entry={top3[0]} rank={1} height="h-28" ringColor="border-[#FFD700]" crown />
 					{/* 3rd Place */}
-					<PodiumItem
-						entry={top3[2]}
-						rank={3}
-						height="h-16"
-						ringColor="border-[rgba(0,200,83,0.3)]"
-					/>
+					<PodiumItem entry={top3[2]} rank={3} height="h-16" ringColor="border-[#CD7F32]" />
 				</div>
 			)}
 
@@ -177,11 +172,19 @@ function PodiumItem({
 			</p>
 			<p className="text-[10px] text-[#8E8E93]">{entry.total_steps.toLocaleString()}</p>
 
-			{/* Podium block */}
+			{/* Podium block with gradient */}
 			<div
-				className={`w-full ${height} rounded-t-xl bg-[#1c1c1e] border border-[#2c2c2e] mt-2 flex items-start justify-center pt-2`}
+				className={`w-full ${height} rounded-t-xl mt-2 flex items-start justify-center pt-2`}
+				style={{
+					background:
+						rank === 1
+							? "linear-gradient(180deg, #FFD700 0%, #B8860B 100%)"
+							: rank === 2
+								? "linear-gradient(180deg, #C0C0C0 0%, #808080 100%)"
+								: "linear-gradient(180deg, #CD7F32 0%, #8B4513 100%)",
+				}}
 			>
-				<span className="text-xs font-bold text-[#FFD700]">{ordinal}</span>
+				<span className="text-xs font-bold text-[#0a0a0a]">{ordinal}</span>
 			</div>
 		</div>
 	);

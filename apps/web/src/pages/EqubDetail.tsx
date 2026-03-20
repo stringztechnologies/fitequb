@@ -133,7 +133,7 @@ export function EqubDetail() {
 										<div className="flex items-center gap-2 mt-1">
 											<div className="flex-1 h-1 rounded-full bg-[#0a0a0a] overflow-hidden">
 												<div
-													className="h-full rounded-full bg-brand-green transition-all"
+													className="h-full rounded-full bg-[#00C853] transition-all"
 													style={{ width: `${Math.min(100, pct)}%` }}
 												/>
 											</div>

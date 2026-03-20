@@ -102,7 +102,7 @@ export function LogWorkout() {
 					>
 						<div
 							className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-								type === wt.value ? "bg-brand-green/20" : "bg-[#0a0a0a]"
+								type === wt.value ? "bg-[#00C853]/20" : "bg-[#0a0a0a]"
 							}`}
 						>
 							<svg
