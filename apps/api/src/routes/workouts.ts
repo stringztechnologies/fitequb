@@ -1,6 +1,8 @@
 import type { ApiResponse, Workout } from "@fitequb/shared";
+import { POINTS_WORKOUT, POINTS_WORKOUT_TSOM } from "@fitequb/shared";
 import { Hono } from "hono";
 import { z } from "zod";
+import { checkAndNotifyLevelUp } from "../lib/notifications.js";
 import { supabase } from "../lib/supabase.js";
 import type { AppVariables } from "../types/context.js";
 
@@ -104,7 +106,90 @@ workouts.post("/", async (c) => {
 		p_user_id: user.id,
 	});
 
+	// Get current points before awarding (for level-up check)
+	const { data: userBefore } = await supabase
+		.from("users")
+		.select("total_points")
+		.eq("id", user.id)
+		.single();
+	const pointsBefore = userBefore?.total_points ?? 0;
+
+	// Award points for workout (Tsom bonus during Ethiopian fasting)
+	const now = new Date();
+	const month = now.getMonth();
+	const day = now.getDate();
+	const isTsom = month === 2 || month === 3 || (month === 0 && day <= 7);
+	const pointsAmount = isTsom ? POINTS_WORKOUT_TSOM : POINTS_WORKOUT;
+	const reason = isTsom ? "Workout logged (Tsom bonus)" : "Workout logged";
+
+	await supabase.rpc("award_points", {
+		p_user_id: user.id,
+		p_points: pointsAmount,
+		p_reason: reason,
+		p_source_type: isTsom ? "tsom_bonus" : "workout",
+	});
+
+	// Check streak badges and level-up notification (fire-and-forget)
+	checkStreakBadges(user.id).catch(() => {});
+	checkAndNotifyLevelUp(user.id, pointsBefore).catch(() => {});
+
 	return c.json<ApiResponse<Workout>>({ data: workout as Workout, error: null }, 201);
 });
+
+async function checkStreakBadges(userId: string) {
+	// Count consecutive days with workouts
+	const { data: recentWorkouts } = await supabase
+		.from("workouts")
+		.select("logged_at")
+		.eq("user_id", userId)
+		.order("logged_at", { ascending: false })
+		.limit(31);
+
+	if (!recentWorkouts) return;
+
+	// Count streak from unique days
+	const days = new Set(recentWorkouts.map((w) => w.logged_at.split("T")[0]));
+	let streak = 0;
+	const d = new Date();
+	for (let i = 0; i < 31; i++) {
+		const dateStr = d.toISOString().split("T")[0];
+		if (days.has(dateStr)) {
+			streak++;
+		} else if (i > 0) {
+			break;
+		}
+		d.setDate(d.getDate() - 1);
+	}
+
+	// 7-day streak badge
+	if (streak >= 7) {
+		const { data: badge } = await supabase
+			.from("badge_definitions")
+			.select("id")
+			.eq("name", "7-Day Streak")
+			.single();
+		if (badge) {
+			await supabase.rpc("grant_badge", {
+				p_user_id: userId,
+				p_badge_id: badge.id,
+			});
+		}
+	}
+
+	// 30-day streak badge
+	if (streak >= 30) {
+		const { data: badge } = await supabase
+			.from("badge_definitions")
+			.select("id")
+			.eq("name", "30-Day Streak")
+			.single();
+		if (badge) {
+			await supabase.rpc("grant_badge", {
+				p_user_id: userId,
+				p_badge_id: badge.id,
+			});
+		}
+	}
+}
 
 export { workouts };

@@ -5,6 +5,7 @@ const tabs = [
 	{ path: "/equbs", label: "Equbs", icon: "💪" },
 	{ path: "/gyms", label: "Gyms", icon: "🏋️" },
 	{ path: "/challenges", label: "Steps", icon: "👟" },
+	{ path: "/profile", label: "Profile", icon: "🏅" },
 ] as const;
 
 export function BottomNav() {

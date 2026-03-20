@@ -52,7 +52,57 @@ export interface User {
 	full_name: string;
 	username: string | null;
 	phone: string | null;
+	total_points: number;
+	level: number;
+	badges: string[];
+	referral_code: string;
 	created_at: string;
+}
+
+// ── Gamification ──
+
+export type PointSourceType =
+	| "workout"
+	| "equb_complete"
+	| "equb_win"
+	| "streak"
+	| "referral"
+	| "badge"
+	| "challenge"
+	| "tsom_bonus";
+
+export interface PointsLedgerEntry {
+	id: string;
+	user_id: string;
+	points: number;
+	reason: string;
+	source_type: PointSourceType;
+	created_at: string;
+}
+
+export type BadgeCategory = "workout" | "streak" | "equb" | "social" | "special";
+
+export interface BadgeDefinition {
+	id: string;
+	name: string;
+	description: string;
+	icon: string;
+	category: BadgeCategory;
+	bonus_points: number;
+}
+
+export interface Referral {
+	id: string;
+	referrer_id: string;
+	referred_id: string;
+	created_at: string;
+}
+
+export interface LevelInfo {
+	level: number;
+	name: string;
+	min_points: number;
+	perk: string | null;
 }
 
 // ── Partner Gym ──

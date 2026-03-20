@@ -1,3 +1,4 @@
+import { POINTS_EQUB_COMPLETE, POINTS_EQUB_WIN } from "@fitequb/shared";
 import { Hono } from "hono";
 import { initiateTransfer } from "../lib/chapa.js";
 import { supabase } from "../lib/supabase.js";
@@ -39,6 +40,41 @@ cron.post("/settle", async (c) => {
 		const { data, error } = await supabase.rpc("settle_equb", {
 			room_id_input: room.id,
 		});
+
+		if (!error) {
+			// Award points to qualified members
+			const { data: members } = await supabase
+				.from("equb_members")
+				.select("user_id, qualified")
+				.eq("room_id", room.id);
+
+			for (const m of members ?? []) {
+				if (m.qualified) {
+					await supabase.rpc("award_points", {
+						p_user_id: m.user_id,
+						p_points: POINTS_EQUB_COMPLETE,
+						p_reason: `Completed Equb: ${room.name}`,
+						p_source_type: "equb_complete",
+					});
+				}
+			}
+
+			// Award win bonus to payout recipients
+			const { data: payouts } = await supabase
+				.from("equb_ledger")
+				.select("user_id")
+				.eq("room_id", room.id)
+				.eq("type", "payout");
+
+			for (const p of payouts ?? []) {
+				await supabase.rpc("award_points", {
+					p_user_id: p.user_id,
+					p_points: POINTS_EQUB_WIN,
+					p_reason: `Won Equb payout: ${room.name}`,
+					p_source_type: "equb_win",
+				});
+			}
+		}
 
 		results.push({
 			room_id: room.id,

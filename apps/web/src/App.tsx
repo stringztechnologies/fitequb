@@ -9,6 +9,7 @@ import { GymList } from "./pages/GymList.js";
 import { Home } from "./pages/Home.js";
 import { Leaderboard } from "./pages/Leaderboard.js";
 import { LogWorkout } from "./pages/LogWorkout.js";
+import { Profile } from "./pages/Profile.js";
 
 export function App() {
 	return (
@@ -24,6 +25,7 @@ export function App() {
 					<Route path="/day-passes/:id" element={<DayPassDetail />} />
 					<Route path="/challenges" element={<ChallengeList />} />
 					<Route path="/challenges/:id" element={<Leaderboard />} />
+					<Route path="/profile" element={<Profile />} />
 				</Routes>
 				<BottomNav />
 			</div>
