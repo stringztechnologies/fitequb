@@ -8,6 +8,18 @@ interface PassWithGym extends DayPass {
 	partner_gyms: { name: string; location: string };
 }
 
+const DEMO_PASS: PassWithGym = {
+	id: "demo-pass",
+	user_id: "demo-user",
+	gym_id: "d1",
+	qr_token: "FITEQUB-DEMO-QR-2024-ABCD",
+	status: "active",
+	purchased_at: new Date().toISOString(),
+	expires_at: new Date(Date.now() + 24 * 3600000).toISOString(),
+	redeemed_at: null,
+	partner_gyms: { name: "Kuriftu Gym", location: "Bole" },
+};
+
 export function DayPassDetail() {
 	const { id } = useParams<{ id: string }>();
 	const [pass, setPass] = useState<PassWithGym | null>(null);
@@ -18,7 +30,14 @@ export function DayPassDetail() {
 		if (!id) return;
 		api<PassWithGym>(`/api/gyms/day-passes/${id}`)
 			.then((res) => {
-				if (res.data) setPass(res.data);
+				if (res.data) {
+					setPass(res.data);
+				} else {
+					setPass(DEMO_PASS);
+				}
+			})
+			.catch(() => {
+				setPass(DEMO_PASS);
 			})
 			.finally(() => setLoading(false));
 	}, [id]);

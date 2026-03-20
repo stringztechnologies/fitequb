@@ -15,6 +15,141 @@ interface RoomDetail {
 	}>;
 }
 
+const DEMO_DETAILS: Record<string, RoomDetail> = {
+	"demo-1": {
+		room: {
+			id: "demo-1",
+			name: "10k Steps Challenge",
+			creator_id: "demo-creator",
+			stake_amount: 500,
+			duration_days: 30,
+			workout_target: 25,
+			completion_pct: 0.8,
+			min_members: 5,
+			max_members: 20,
+			status: "active",
+			start_date: new Date(Date.now() - 10 * 86400000).toISOString(),
+			end_date: new Date(Date.now() + 20 * 86400000).toISOString(),
+			sponsor_prize: 0,
+			is_tsom: false,
+			tsom_workout_target: null,
+			tsom_completion_pct: null,
+			created_at: new Date(Date.now() - 12 * 86400000).toISOString(),
+		},
+		members: [
+			{
+				id: "m1",
+				user_id: "u1",
+				completed_days: 9,
+				qualified: null,
+				users: { full_name: "Abebe Kebede", username: "abebe_k" },
+			},
+			{
+				id: "m2",
+				user_id: "u2",
+				completed_days: 7,
+				qualified: null,
+				users: { full_name: "Tigist Haile", username: "tigist_h" },
+			},
+			{
+				id: "m3",
+				user_id: "u3",
+				completed_days: 5,
+				qualified: null,
+				users: { full_name: "Dawit Mekonnen", username: "dawit_m" },
+			},
+		],
+	},
+	"demo-2": {
+		room: {
+			id: "demo-2",
+			name: "Gym Warriors",
+			creator_id: "demo-creator",
+			stake_amount: 1000,
+			duration_days: 30,
+			workout_target: 20,
+			completion_pct: 0.75,
+			min_members: 5,
+			max_members: 20,
+			status: "active",
+			start_date: new Date(Date.now() - 5 * 86400000).toISOString(),
+			end_date: new Date(Date.now() + 25 * 86400000).toISOString(),
+			sponsor_prize: 0,
+			is_tsom: false,
+			tsom_workout_target: null,
+			tsom_completion_pct: null,
+			created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
+		},
+		members: [
+			{
+				id: "m4",
+				user_id: "u4",
+				completed_days: 4,
+				qualified: null,
+				users: { full_name: "Selam Tadesse", username: "selam_t" },
+			},
+			{
+				id: "m5",
+				user_id: "u5",
+				completed_days: 3,
+				qualified: null,
+				users: { full_name: "Yonas Girma", username: "yonas_g" },
+			},
+			{
+				id: "m6",
+				user_id: "u6",
+				completed_days: 2,
+				qualified: null,
+				users: { full_name: "Hanna Bekele", username: null },
+			},
+		],
+	},
+	"demo-3": {
+		room: {
+			id: "demo-3",
+			name: "15k Steps Elite",
+			creator_id: "demo-creator",
+			stake_amount: 250,
+			duration_days: 14,
+			workout_target: 12,
+			completion_pct: 0.8,
+			min_members: 3,
+			max_members: 15,
+			status: "pending",
+			start_date: new Date(Date.now() + 1 * 86400000).toISOString(),
+			end_date: new Date(Date.now() + 15 * 86400000).toISOString(),
+			sponsor_prize: 0,
+			is_tsom: false,
+			tsom_workout_target: null,
+			tsom_completion_pct: null,
+			created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
+		},
+		members: [
+			{
+				id: "m7",
+				user_id: "u7",
+				completed_days: 0,
+				qualified: null,
+				users: { full_name: "Meron Assefa", username: "meron_a" },
+			},
+			{
+				id: "m8",
+				user_id: "u8",
+				completed_days: 0,
+				qualified: null,
+				users: { full_name: "Bereket Wolde", username: "bereket_w" },
+			},
+			{
+				id: "m9",
+				user_id: "u9",
+				completed_days: 0,
+				qualified: null,
+				users: { full_name: "Lidya Tesfaye", username: null },
+			},
+		],
+	},
+};
+
 export function EqubDetail() {
 	const { id } = useParams<{ id: string }>();
 	const [detail, setDetail] = useState<RoomDetail | null>(null);
@@ -26,7 +161,14 @@ export function EqubDetail() {
 		if (!id) return;
 		api<RoomDetail>(`/api/equb-rooms/${id}`)
 			.then((res) => {
-				if (res.data) setDetail(res.data);
+				if (res.data) {
+					setDetail(res.data);
+				} else if (DEMO_DETAILS[id]) {
+					setDetail(DEMO_DETAILS[id]);
+				}
+			})
+			.catch(() => {
+				if (DEMO_DETAILS[id]) setDetail(DEMO_DETAILS[id]);
 			})
 			.finally(() => setLoading(false));
 	}, [id]);

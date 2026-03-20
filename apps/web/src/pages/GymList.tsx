@@ -1,5 +1,6 @@
 import type { PartnerGym } from "@fitequb/shared";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Loading } from "../components/Loading.js";
 import { api } from "../lib/api.js";
 
@@ -17,6 +18,8 @@ export function GymList() {
 	const [gyms, setGyms] = useState<PartnerGym[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [filter, setFilter] = useState("Near Me");
+	const [search, setSearch] = useState("");
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		api<PartnerGym[]>("/api/gyms")
@@ -29,6 +32,23 @@ export function GymList() {
 	if (loading) return <Loading />;
 
 	const hasReal = gyms.length > 0;
+	const q = search.toLowerCase();
+
+	const filteredDemos = DEMO_GYMS.filter(
+		(g) => !q || g.name.toLowerCase().includes(q) || g.location.toLowerCase().includes(q),
+	).sort((a, b) => {
+		if (filter === "Cheapest") return a.price - b.price;
+		if (filter === "Top Rated") return a.name.localeCompare(b.name);
+		return 0;
+	});
+
+	const filteredReal = gyms
+		.filter((g) => !q || g.name.toLowerCase().includes(q) || g.location.toLowerCase().includes(q))
+		.sort((a, b) => {
+			if (filter === "Cheapest") return a.app_day_pass - b.app_day_pass;
+			if (filter === "Top Rated") return a.name.localeCompare(b.name);
+			return 0;
+		});
 
 	return (
 		<div style={{ backgroundColor: "#0a0a0a", paddingBottom: "96px" }}>
@@ -70,6 +90,8 @@ export function GymList() {
 				<input
 					type="text"
 					placeholder="Search gyms, locations..."
+					value={search}
+					onChange={(e) => setSearch(e.target.value)}
 					style={{
 						flex: 1,
 						backgroundColor: "transparent",
@@ -118,14 +140,16 @@ export function GymList() {
 			{/* Gym cards */}
 			<div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: "12px" }}>
 				{hasReal
-					? gyms.map((g) => <RealGymCard key={g.id} gym={g} />)
-					: DEMO_GYMS.map((g) => <DemoGymCard key={g.id} gym={g} />)}
+					? filteredReal.map((g) => <RealGymCard key={g.id} gym={g} />)
+					: filteredDemos.map((g) => (
+							<DemoGymCard key={g.id} gym={g} onBuy={() => navigate("/payment")} />
+						))}
 			</div>
 		</div>
 	);
 }
 
-function DemoGymCard({ gym }: { gym: (typeof DEMO_GYMS)[number] }) {
+function DemoGymCard({ gym, onBuy }: { gym: (typeof DEMO_GYMS)[number]; onBuy: () => void }) {
 	return (
 		<div
 			style={{
@@ -178,6 +202,7 @@ function DemoGymCard({ gym }: { gym: (typeof DEMO_GYMS)[number] }) {
 					)}
 					<button
 						type="button"
+						onClick={onBuy}
 						style={{
 							padding: "8px 20px",
 							borderRadius: "8px",

@@ -67,7 +67,7 @@ export function EqubList() {
 							<RealCard key={r.id} room={r} onClick={() => navigate(`/equbs/${r.id}`)} />
 						))
 					: DEMO_ROOMS.map((r) => (
-							<DemoCard key={r.id} room={r} onClick={() => navigate("/equbs/create")} />
+							<DemoCard key={r.id} room={r} onClick={() => navigate(`/equbs/${r.id}`)} />
 						))}
 			</div>
 		</div>

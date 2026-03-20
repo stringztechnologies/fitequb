@@ -10,6 +10,7 @@ import { GymQrCheckin } from "./pages/GymQrCheckin.js";
 import { Home } from "./pages/Home.js";
 import { Leaderboard } from "./pages/Leaderboard.js";
 import { LogWorkout } from "./pages/LogWorkout.js";
+import { NotFound } from "./pages/NotFound.js";
 import { Notifications } from "./pages/Notifications.js";
 import { Payment } from "./pages/Payment.js";
 import { Profile } from "./pages/Profile.js";
@@ -46,6 +47,7 @@ export function App() {
 					<Route path="/win" element={<WinCelebration />} />
 					<Route path="/sync" element={<SyncFitness />} />
 					<Route path="/qr/:id" element={<GymQrCheckin />} />
+					<Route path="*" element={<NotFound />} />
 				</Routes>
 				<BottomNav />
 			</div>
