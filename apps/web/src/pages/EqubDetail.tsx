@@ -61,7 +61,7 @@ export function EqubDetail() {
 					<div className="flex items-center gap-2">
 						<h1 className="text-xl font-bold text-white">{room.name}</h1>
 						{room.is_tsom && (
-							<span className="px-2 py-0.5 rounded-full bg-brand-green/15 text-brand-green text-[10px] font-bold">
+							<span className="px-2 py-0.5 rounded-full bg-[rgba(0,200,83,0.15)] text-[#00C853] text-[10px] font-bold">
 								TSOM
 							</span>
 						)}
@@ -89,9 +89,9 @@ export function EqubDetail() {
 
 			{/* Days Remaining */}
 			{daysLeft !== null && (
-				<div className="mt-4 rounded-2xl bg-brand-card border border-brand-border p-4 flex items-center justify-between">
-					<span className="text-sm text-tg-hint">Days remaining</span>
-					<span className="text-2xl font-bold text-brand-green">{daysLeft}</span>
+				<div className="mt-4 rounded-[16px] bg-[#1c1c1e] border border-[#2c2c2e] p-4 flex items-center justify-between">
+					<span className="text-sm text-[#8E8E93]">Days remaining</span>
+					<span className="text-2xl font-bold text-[#00C853]">{daysLeft}</span>
 				</div>
 			)}
 
@@ -105,7 +105,7 @@ export function EqubDetail() {
 						<button
 							type="button"
 							onClick={() => navigate(`/equbs/${id}/log`)}
-							className="text-brand-green text-xs font-semibold"
+							className="text-[#00C853] text-xs font-semibold"
 						>
 							Log Workout
 						</button>
@@ -113,7 +113,7 @@ export function EqubDetail() {
 				</div>
 
 				{members.length === 0 ? (
-					<p className="text-sm text-tg-hint bg-brand-card rounded-xl p-4 text-center">
+					<p className="text-sm text-[#8E8E93] bg-[#1c1c1e] rounded-xl p-4 text-center">
 						No members yet. Be the first!
 					</p>
 				) : (
@@ -123,21 +123,21 @@ export function EqubDetail() {
 							return (
 								<div
 									key={m.id}
-									className="flex items-center gap-3 bg-brand-card border border-brand-border rounded-xl p-3"
+									className="flex items-center gap-3 bg-[#1c1c1e] border border-[#2c2c2e] rounded-xl p-3"
 								>
-									<div className="w-8 h-8 rounded-full bg-brand-green/10 flex items-center justify-center text-brand-green text-xs font-bold">
+									<div className="w-8 h-8 rounded-full bg-[rgba(0,200,83,0.1)] flex items-center justify-center text-[#00C853] text-xs font-bold">
 										{i + 1}
 									</div>
 									<div className="flex-1 min-w-0">
 										<p className="text-sm text-white font-medium truncate">{m.users.full_name}</p>
 										<div className="flex items-center gap-2 mt-1">
-											<div className="flex-1 h-1 rounded-full bg-brand-dark overflow-hidden">
+											<div className="flex-1 h-1 rounded-full bg-[#0a0a0a] overflow-hidden">
 												<div
 													className="h-full rounded-full bg-brand-green transition-all"
 													style={{ width: `${Math.min(100, pct)}%` }}
 												/>
 											</div>
-											<span className="text-[10px] text-tg-hint font-medium w-12 text-right">
+											<span className="text-[10px] text-[#8E8E93] font-medium w-12 text-right">
 												{m.completed_days}/{target}
 											</span>
 										</div>
@@ -155,7 +155,7 @@ export function EqubDetail() {
 					type="button"
 					onClick={handleJoin}
 					disabled={joining}
-					className="w-full mt-6 py-3.5 rounded-2xl font-bold text-sm disabled:opacity-50 bg-gradient-green text-black shadow-glow active:scale-[0.98] transition-transform"
+					className="w-full mt-6 py-3.5 rounded-[16px] font-bold text-sm disabled:opacity-50 bg-[#00C853] text-black shadow-[0_0_20px_rgba(0,200,83,0.2)] active:scale-[0.98] transition-transform"
 				>
 					{joining
 						? "Processing..."
@@ -180,13 +180,13 @@ function StatCard({
 	accent?: "green" | "gold";
 }) {
 	const valueColor =
-		accent === "green" ? "text-brand-green" : accent === "gold" ? "text-brand-gold" : "text-white";
+		accent === "green" ? "text-[#00C853]" : accent === "gold" ? "text-[#FFD700]" : "text-white";
 	return (
-		<div className="rounded-2xl bg-brand-card border border-brand-border p-3">
-			<p className="text-[10px] text-tg-hint uppercase tracking-wider font-medium">{label}</p>
+		<div className="rounded-[16px] bg-[#1c1c1e] border border-[#2c2c2e] p-3">
+			<p className="text-[10px] text-[#8E8E93] uppercase tracking-wider font-medium">{label}</p>
 			<p className={`text-lg font-bold mt-0.5 ${valueColor}`}>
 				{value}
-				{unit && <span className="text-xs text-tg-hint font-normal ml-1">{unit}</span>}
+				{unit && <span className="text-xs text-[#8E8E93] font-normal ml-1">{unit}</span>}
 			</p>
 		</div>
 	);
@@ -194,14 +194,14 @@ function StatCard({
 
 function StatusText({ status }: { status: string }) {
 	const colors: Record<string, string> = {
-		pending: "text-brand-gold",
-		active: "text-brand-green",
+		pending: "text-[#FFD700]",
+		active: "text-[#00C853]",
 		settling: "text-blue-400",
-		settled: "text-tg-hint",
+		settled: "text-[#8E8E93]",
 		cancelled: "text-red-400",
 	};
 	return (
-		<p className={`text-xs font-medium mt-0.5 ${colors[status] ?? "text-tg-hint"}`}>
+		<p className={`text-xs font-medium mt-0.5 ${colors[status] ?? "text-[#8E8E93]"}`}>
 			{status.charAt(0).toUpperCase() + status.slice(1)}
 		</p>
 	);

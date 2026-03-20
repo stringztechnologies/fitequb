@@ -22,7 +22,7 @@ export function ChallengeList() {
 			<h1 className="text-xl font-bold text-tg-text mb-4">Step Challenges</h1>
 
 			{challenges.length === 0 ? (
-				<p className="text-tg-hint text-sm text-center mt-8">No active challenges right now.</p>
+				<p className="text-[#8E8E93] text-sm text-center mt-8">No active challenges right now.</p>
 			) : (
 				<div className="space-y-3">
 					{challenges.map((ch) => (
@@ -32,7 +32,7 @@ export function ChallengeList() {
 							className="block rounded-xl bg-tg-secondary-bg p-4 active:opacity-70"
 						>
 							<h3 className="font-semibold text-tg-text">{ch.name}</h3>
-							{ch.description && <p className="text-xs text-tg-hint mt-1">{ch.description}</p>}
+							{ch.description && <p className="text-xs text-[#8E8E93] mt-1">{ch.description}</p>}
 							{ch.reward_description && (
 								<p className="text-xs text-tg-link mt-1">Prize: {ch.reward_description}</p>
 							)}

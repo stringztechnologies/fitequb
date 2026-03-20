@@ -57,8 +57,8 @@ export function Leaderboard() {
 
 			{/* Prize Pool */}
 			<div className="text-center mb-5">
-				<p className="text-[10px] text-tg-hint uppercase tracking-widest">Current Prize Pool</p>
-				<p className="text-2xl font-bold text-brand-gold">{prizePool.toLocaleString()} ETB</p>
+				<p className="text-[10px] text-[#8E8E93] uppercase tracking-widest">Current Prize Pool</p>
+				<p className="text-2xl font-bold text-[#FFD700]">{prizePool.toLocaleString()} ETB</p>
 			</div>
 
 			{/* Podium */}
@@ -69,7 +69,12 @@ export function Leaderboard() {
 					{/* 1st Place */}
 					<PodiumItem entry={top3[0]} rank={1} height="h-28" ringColor="border-brand-gold" crown />
 					{/* 3rd Place */}
-					<PodiumItem entry={top3[2]} rank={3} height="h-16" ringColor="border-brand-green" />
+					<PodiumItem
+						entry={top3[2]}
+						rank={3}
+						height="h-16"
+						ringColor="border-[rgba(0,200,83,0.3)]"
+					/>
 				</div>
 			)}
 
@@ -78,7 +83,7 @@ export function Leaderboard() {
 				<button
 					type="button"
 					onClick={handleJoin}
-					className="w-full mb-3 bg-gradient-green text-black py-3 rounded-2xl text-sm font-bold shadow-glow active:scale-[0.98] transition-transform"
+					className="w-full mb-3 bg-[#00C853] text-black py-3 rounded-[16px] text-sm font-bold shadow-[0_0_20px_rgba(0,200,83,0.2)] active:scale-[0.98] transition-transform"
 				>
 					Join Challenge
 				</button>
@@ -90,13 +95,13 @@ export function Leaderboard() {
 					value={steps}
 					onChange={(e) => setSteps(e.target.value)}
 					placeholder="Enter today's steps"
-					className="flex-1 bg-brand-card border border-brand-border text-white rounded-xl px-4 py-3 text-sm outline-none focus:border-brand-green transition-colors placeholder:text-tg-hint/50"
+					className="flex-1 bg-[#1c1c1e] border border-[#2c2c2e] text-white rounded-xl px-4 py-3 text-sm outline-none focus:border-[rgba(0,200,83,0.3)] transition-colors placeholder:text-[#8E8E93]/50"
 				/>
 				<button
 					type="button"
 					onClick={handleLogSteps}
 					disabled={logging || !steps}
-					className="bg-gradient-green text-black px-5 py-3 rounded-xl text-sm font-bold disabled:opacity-30 shadow-glow"
+					className="bg-[#00C853] text-black px-5 py-3 rounded-xl text-sm font-bold disabled:opacity-30 shadow-[0_0_20px_rgba(0,200,83,0.2)]"
 				>
 					{logging ? "..." : "Update"}
 				</button>
@@ -108,17 +113,17 @@ export function Leaderboard() {
 					{rest.map((entry, i) => (
 						<div
 							key={entry.id}
-							className="flex items-center gap-3 bg-brand-card border border-brand-border rounded-xl px-4 py-3"
+							className="flex items-center gap-3 bg-[#1c1c1e] border border-[#2c2c2e] rounded-xl px-4 py-3"
 						>
-							<span className="text-sm font-bold text-tg-hint w-6 text-center">{i + 4}</span>
-							<div className="w-8 h-8 rounded-full bg-brand-green/10 flex items-center justify-center text-brand-green text-xs font-bold">
+							<span className="text-sm font-bold text-[#8E8E93] w-6 text-center">{i + 4}</span>
+							<div className="w-8 h-8 rounded-full bg-[rgba(0,200,83,0.1)] flex items-center justify-center text-[#00C853] text-xs font-bold">
 								{entry.users.full_name.charAt(0)}
 							</div>
 							<div className="flex-1 min-w-0">
 								<p className="text-sm text-white font-medium truncate">{entry.users.full_name}</p>
-								<p className="text-xs text-tg-hint">{entry.total_steps.toLocaleString()} Steps</p>
+								<p className="text-xs text-[#8E8E93]">{entry.total_steps.toLocaleString()} Steps</p>
 							</div>
-							<span className="text-xs font-bold text-brand-gold">
+							<span className="text-xs font-bold text-[#FFD700]">
 								{Math.round((entry.total_steps / Math.max(1, prizePool)) * 100)}%
 							</span>
 						</div>
@@ -127,7 +132,9 @@ export function Leaderboard() {
 			)}
 
 			{entries.length === 0 && (
-				<p className="text-tg-hint text-sm text-center mt-6">No participants yet. Be the first!</p>
+				<p className="text-[#8E8E93] text-sm text-center mt-6">
+					No participants yet. Be the first!
+				</p>
 			)}
 		</div>
 	);
@@ -153,12 +160,12 @@ function PodiumItem({
 			{/* Avatar with ring */}
 			<div className="relative mb-2">
 				{crown && (
-					<span className="absolute -top-3 left-1/2 -translate-x-1/2 text-brand-gold text-lg">
+					<span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[#FFD700] text-lg">
 						&#9818;
 					</span>
 				)}
 				<div
-					className={`w-14 h-14 rounded-full border-2 ${ringColor} bg-brand-card flex items-center justify-center`}
+					className={`w-14 h-14 rounded-full border-2 ${ringColor} bg-[#1c1c1e] flex items-center justify-center`}
 				>
 					<span className="text-white font-bold text-lg">{entry.users.full_name.charAt(0)}</span>
 				</div>
@@ -168,13 +175,13 @@ function PodiumItem({
 			<p className="text-xs text-white font-medium truncate w-full text-center">
 				{entry.users.full_name.split(" ")[0]}
 			</p>
-			<p className="text-[10px] text-tg-hint">{entry.total_steps.toLocaleString()}</p>
+			<p className="text-[10px] text-[#8E8E93]">{entry.total_steps.toLocaleString()}</p>
 
 			{/* Podium block */}
 			<div
-				className={`w-full ${height} rounded-t-xl bg-brand-card border border-brand-border mt-2 flex items-start justify-center pt-2`}
+				className={`w-full ${height} rounded-t-xl bg-[#1c1c1e] border border-[#2c2c2e] mt-2 flex items-start justify-center pt-2`}
 			>
-				<span className="text-xs font-bold text-brand-gold">{ordinal}</span>
+				<span className="text-xs font-bold text-[#FFD700]">{ordinal}</span>
 			</div>
 		</div>
 	);

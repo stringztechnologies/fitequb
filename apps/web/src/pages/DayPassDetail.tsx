@@ -47,30 +47,30 @@ export function DayPassDetail() {
 	return (
 		<div className="p-4 pb-20 text-center">
 			<h1 className="text-xl font-bold text-tg-text">{pass.partner_gyms.name}</h1>
-			<p className="text-sm text-tg-hint">{pass.partner_gyms.location}</p>
+			<p className="text-sm text-[#8E8E93]">{pass.partner_gyms.location}</p>
 
 			<div className="mt-6">
 				{pass.status === "active" ? (
 					<>
-						<div className="bg-white rounded-2xl p-6 mx-auto max-w-[200px] shadow-lg">
+						<div className="bg-white rounded-[16px] p-6 mx-auto max-w-[200px] shadow-lg">
 							<div className="w-full aspect-square bg-tg-secondary-bg rounded-lg flex items-center justify-center">
-								<p className="text-xs text-tg-hint font-mono break-all px-2">{pass.qr_token}</p>
+								<p className="text-xs text-[#8E8E93] font-mono break-all px-2">{pass.qr_token}</p>
 							</div>
 						</div>
 						<p className="mt-4 text-2xl font-bold text-tg-text">{timeLeft}</p>
-						<p className="text-xs text-tg-hint mt-1">Show this to gym staff</p>
+						<p className="text-xs text-[#8E8E93] mt-1">Show this to gym staff</p>
 					</>
 				) : pass.status === "redeemed" ? (
 					<div className="mt-8">
 						<p className="text-4xl">✅</p>
 						<p className="text-lg font-semibold text-tg-text mt-2">Pass Redeemed</p>
-						<p className="text-sm text-tg-hint">Enjoy your workout!</p>
+						<p className="text-sm text-[#8E8E93]">Enjoy your workout!</p>
 					</div>
 				) : (
 					<div className="mt-8">
 						<p className="text-4xl">⏰</p>
 						<p className="text-lg font-semibold text-tg-text mt-2">Pass Expired</p>
-						<p className="text-sm text-tg-hint">Purchase a new one to visit the gym</p>
+						<p className="text-sm text-[#8E8E93]">Purchase a new one to visit the gym</p>
 					</div>
 				)}
 			</div>

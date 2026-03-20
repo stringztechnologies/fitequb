@@ -87,7 +87,7 @@ export function BottomNav() {
 	const navigate = useNavigate();
 
 	return (
-		<nav className="fixed bottom-0 left-0 right-0 glass border-t border-brand-border safe-bottom z-50">
+		<nav className="fixed bottom-0 left-0 right-0 glass border-t border-[#2c2c2e] safe-bottom z-50">
 			<div className="flex justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
 				{tabs.map((tab) => {
 					const active =
@@ -98,7 +98,7 @@ export function BottomNav() {
 							type="button"
 							onClick={() => navigate(tab.path)}
 							className={`flex flex-col items-center gap-0.5 px-3 py-1 text-[10px] font-medium transition-colors ${
-								active ? "text-brand-green" : "text-tg-hint"
+								active ? "text-[#00C853]" : "text-[#8E8E93]"
 							}`}
 						>
 							<span className={active ? "drop-shadow-[0_0_6px_rgba(0,200,83,0.4)]" : ""}>

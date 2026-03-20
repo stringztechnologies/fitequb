@@ -77,7 +77,7 @@ export function TrainerDashboard() {
 		return (
 			<div className="p-4 pb-20">
 				<h1 className="text-xl font-bold text-tg-text mb-2">Become a Trainer</h1>
-				<p className="text-sm text-tg-hint mb-6">
+				<p className="text-sm text-[#8E8E93] mb-6">
 					Earn commissions when your referred users join paid Equbs. Share your affiliate code with
 					your clients.
 				</p>
@@ -122,7 +122,7 @@ export function TrainerDashboard() {
 		);
 	}
 
-	if (!data) return <div className="p-4 text-tg-hint">Could not load dashboard</div>;
+	if (!data) return <div className="p-4 text-[#8E8E93]">Could not load dashboard</div>;
 
 	const { trainer, referred_users, payouts } = data;
 
@@ -139,21 +139,21 @@ export function TrainerDashboard() {
 			{/* Stats Cards */}
 			<div className="grid grid-cols-2 gap-3 mb-4">
 				<div className="rounded-xl bg-tg-secondary-bg p-3">
-					<p className="text-xs text-tg-hint">Total Earned</p>
+					<p className="text-xs text-[#8E8E93]">Total Earned</p>
 					<p className="text-lg font-bold text-tg-text">{trainer.total_earned.toFixed(2)} ETB</p>
 				</div>
 				<div className="rounded-xl bg-tg-secondary-bg p-3">
-					<p className="text-xs text-tg-hint">Pending</p>
+					<p className="text-xs text-[#8E8E93]">Pending</p>
 					<p className="text-lg font-bold text-green-500">
 						{trainer.pending_balance.toFixed(2)} ETB
 					</p>
 				</div>
 				<div className="rounded-xl bg-tg-secondary-bg p-3">
-					<p className="text-xs text-tg-hint">Referred Users</p>
+					<p className="text-xs text-[#8E8E93]">Referred Users</p>
 					<p className="text-lg font-bold text-tg-text">{referred_users.length}</p>
 				</div>
 				<div className="rounded-xl bg-tg-secondary-bg p-3">
-					<p className="text-xs text-tg-hint">Commission Rate</p>
+					<p className="text-xs text-[#8E8E93]">Commission Rate</p>
 					<p className="text-lg font-bold text-tg-text">
 						{(trainer.commission_rate * 100).toFixed(0)}%
 					</p>
@@ -162,7 +162,7 @@ export function TrainerDashboard() {
 
 			{/* Affiliate Code */}
 			<div className="rounded-xl bg-tg-secondary-bg p-4 mb-4">
-				<p className="text-xs text-tg-hint mb-1">Your Affiliate Code</p>
+				<p className="text-xs text-[#8E8E93] mb-1">Your Affiliate Code</p>
 				<div className="flex gap-2">
 					<code className="flex-1 px-3 py-2 bg-tg-bg rounded text-sm text-tg-text font-mono">
 						{trainer.affiliate_code}
@@ -203,16 +203,16 @@ export function TrainerDashboard() {
 							>
 								<div>
 									<p className="text-sm text-tg-text">{u.full_name}</p>
-									<p className="text-xs text-tg-hint">@{u.username ?? "—"}</p>
+									<p className="text-xs text-[#8E8E93]">@{u.username ?? "—"}</p>
 								</div>
-								<p className="text-xs text-tg-hint">
+								<p className="text-xs text-[#8E8E93]">
 									{new Date(u.created_at).toLocaleDateString()}
 								</p>
 							</div>
 						))}
 					</div>
 				) : (
-					<p className="text-sm text-tg-hint">No referred users yet. Share your code!</p>
+					<p className="text-sm text-[#8E8E93]">No referred users yet. Share your code!</p>
 				)}
 			</div>
 
@@ -228,7 +228,7 @@ export function TrainerDashboard() {
 							>
 								<div>
 									<p className="text-sm text-tg-text">{p.amount.toFixed(2)} ETB</p>
-									<p className="text-xs text-tg-hint">
+									<p className="text-xs text-[#8E8E93]">
 										{new Date(p.created_at).toLocaleDateString()}
 									</p>
 								</div>
