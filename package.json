@@ -1,0 +1,17 @@
+{
+	"name": "fitequb",
+	"private": true,
+	"scripts": {
+		"dev": "pnpm -r --parallel dev",
+		"build": "pnpm -r build",
+		"lint": "biome check .",
+		"format": "biome format --write .",
+		"typecheck": "pnpm -r typecheck"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4"
+	},
+	"engines": {
+		"node": ">=20"
+	}
+}

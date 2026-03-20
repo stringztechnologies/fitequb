@@ -1,0 +1,21 @@
+{
+	"name": "@fitequb/bot",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "tsx watch src/index.ts",
+		"build": "tsc",
+		"start": "node dist/index.js",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"telegraf": "^4.16.0",
+		"@fitequb/shared": "workspace:*"
+	},
+	"devDependencies": {
+		"tsx": "^4.19.0",
+		"typescript": "^5.7.0",
+		"@types/node": "^22.0.0"
+	}
+}
