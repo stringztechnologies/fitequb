@@ -6,7 +6,12 @@ import { api } from "../lib/api.js";
 
 interface ProfileSummary {
 	total_points: number;
-	level: { level: number; name: string; min_points: number; perk: string | null };
+	level: {
+		level: number;
+		name: string;
+		min_points: number;
+		perk: string | null;
+	};
 	next_level: { level: number; name: string; min_points: number } | null;
 	points_to_next: number;
 }
@@ -40,7 +45,14 @@ export function Home() {
 		<div className="pb-24" style={{ backgroundColor: "#0a0a0a" }}>
 			{/* Header — 36px bold per spec */}
 			<div className="px-4 pt-5 pb-1">
-				<h1 style={{ fontSize: "36px", fontWeight: 700, color: "#FFFFFF", lineHeight: 1.1 }}>
+				<h1
+					style={{
+						fontSize: "36px",
+						fontWeight: 700,
+						color: "#FFFFFF",
+						lineHeight: 1.1,
+					}}
+				>
 					FitEqub
 				</h1>
 				<p style={{ fontSize: "14px", color: "#8E8E93", marginTop: "4px" }}>
@@ -59,7 +71,14 @@ export function Home() {
 				}}
 			>
 				{/* Title case, not uppercase */}
-				<p style={{ fontSize: "20px", fontWeight: 700, color: "#FFFFFF", marginBottom: "16px" }}>
+				<p
+					style={{
+						fontSize: "20px",
+						fontWeight: 700,
+						color: "#FFFFFF",
+						marginBottom: "16px",
+					}}
+				>
 					Your Progress
 				</p>
 
@@ -75,7 +94,11 @@ export function Home() {
 					>
 						<svg
 							viewBox="0 0 200 200"
-							style={{ width: "100%", height: "100%", transform: "rotate(-90deg)" }}
+							style={{
+								width: "100%",
+								height: "100%",
+								transform: "rotate(-90deg)",
+							}}
 						>
 							<circle cx="100" cy="100" r="80" fill="none" stroke="#2c2c2e" strokeWidth="8" />
 							<circle
@@ -101,11 +124,21 @@ export function Home() {
 								justifyContent: "center",
 							}}
 						>
-							<span style={{ fontSize: "32px", fontWeight: 700, color: "#00C853", lineHeight: 1 }}>
+							<span
+								style={{
+									fontSize: "32px",
+									fontWeight: 700,
+									color: "#00C853",
+									lineHeight: 1,
+								}}
+							>
 								{displayAmount.toLocaleString()} ETB
 							</span>
 							<span style={{ fontSize: "14px", color: "#FFD700", marginTop: "4px" }}>
 								Potential Payout
+							</span>
+							<span style={{ fontSize: "11px", color: "#8E8E93", marginTop: "6px" }}>
+								18/25 days completed
 							</span>
 						</div>
 					</div>
@@ -113,7 +146,14 @@ export function Home() {
 			</div>
 
 			{/* Feature Cards — 3 cards, each with icon box + progress bar */}
-			<div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+			<div
+				style={{
+					padding: "16px",
+					display: "flex",
+					flexDirection: "column",
+					gap: "12px",
+				}}
+			>
 				<FeatureCard
 					title="Equb Rooms"
 					subtitle="Join a fitness accountability group"
@@ -204,9 +244,15 @@ function FeatureCard({
 				</svg>
 			</div>
 
-			{/* Content */}
+			{/* Content + Chevron */}
 			<div style={{ flex: 1, minWidth: 0 }}>
-				<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+				<div
+					style={{
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "space-between",
+					}}
+				>
 					<span style={{ fontSize: "18px", fontWeight: 700, color: "#FFFFFF" }}>{title}</span>
 					<span
 						style={{
@@ -243,6 +289,17 @@ function FeatureCard({
 					/>
 				</div>
 			</div>
+
+			{/* Chevron */}
+			<svg
+				viewBox="0 0 24 24"
+				style={{ width: "20px", height: "20px", flexShrink: 0 }}
+				fill="none"
+				stroke="#8E8E93"
+				strokeWidth={2}
+			>
+				<polyline points="9 18 15 12 9 6" />
+			</svg>
 		</button>
 	);
 }

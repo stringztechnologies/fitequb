@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export function Payment() {
+	const navigate = useNavigate();
 	const [timeLeft, setTimeLeft] = useState(899);
+	const [confirming, setConfirming] = useState(false);
 
 	useEffect(() => {
 		const t = setInterval(() => setTimeLeft((s) => Math.max(0, s - 1)), 1000);
@@ -13,11 +16,32 @@ export function Payment() {
 
 	return (
 		<div className="px-4 pt-5 pb-24">
+			{/* Back button */}
+			<button
+				type="button"
+				onClick={() => navigate(-1)}
+				className="flex items-center gap-1 text-[#8E8E93] text-[14px] mb-4"
+				style={{ background: "none", border: "none", cursor: "pointer" }}
+			>
+				<svg
+					viewBox="0 0 24 24"
+					className="w-4 h-4"
+					fill="none"
+					stroke="currentColor"
+					strokeWidth={2}
+				>
+					<polyline points="15 18 9 12 15 6" />
+				</svg>
+				Cancel
+			</button>
+
 			{/* Header with timer badge */}
 			<div className="flex items-center justify-between mb-5">
 				<div>
-					<h1 className="text-[18px] font-bold text-white">FitEqub</h1>
-					<p className="text-[12px] text-[#8E8E93]">Join Equb Payment Confirmation</p>
+					<h1 className="text-[18px] font-bold text-white">Bole Elite 10k</h1>
+					<p className="text-[12px] text-[#8E8E93]">
+						Payment expires in {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
+					</p>
 				</div>
 				<div className="flex items-center gap-1.5 px-3 py-1.5 rounded-[20px] bg-[rgba(255,152,0,0.2)] border border-[#FF9500]">
 					<svg
@@ -109,9 +133,11 @@ export function Payment() {
 			{/* Confirm CTA */}
 			<button
 				type="button"
-				className="w-full py-4 rounded-[12px] bg-[#00C853] text-[#0a0a0a] text-[16px] font-bold shadow-[0_0_20px_rgba(0,200,83,0.4)] active:scale-[0.98] transition-transform"
+				disabled={confirming}
+				onClick={() => setConfirming(true)}
+				className="w-full py-4 rounded-[12px] bg-[#00C853] text-[#0a0a0a] text-[16px] font-bold shadow-[0_0_20px_rgba(0,200,83,0.4)] active:scale-[0.98] transition-transform disabled:opacity-50"
 			>
-				Confirm and Pay
+				{confirming ? "Processing..." : "Confirm and Pay"}
 			</button>
 		</div>
 	);

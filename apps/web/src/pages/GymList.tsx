@@ -5,11 +5,51 @@ import { Loading } from "../components/Loading.js";
 import { api } from "../lib/api.js";
 
 const DEMO_GYMS = [
-	{ id: "d1", name: "Kuriftu Gym", location: "Bole", price: 150, equbEligible: true },
-	{ id: "d2", name: "Zebra Fitness", location: "Lideta", price: 180, equbEligible: true },
-	{ id: "d3", name: "O-Zone Gym", location: "Kazanchis", price: 200, equbEligible: true },
-	{ id: "d4", name: "Golden Gym", location: "Bole", price: 120, equbEligible: false },
-	{ id: "d5", name: "Fitness Point", location: "Sarbet", price: 160, equbEligible: false },
+	{
+		id: "d1",
+		name: "Kuriftu Gym",
+		location: "Bole",
+		price: 150,
+		equbEligible: true,
+		distance: "1.2 km",
+		rating: 4.8,
+	},
+	{
+		id: "d2",
+		name: "Zebra Fitness",
+		location: "Lideta",
+		price: 180,
+		equbEligible: true,
+		distance: "2.5 km",
+		rating: 4.6,
+	},
+	{
+		id: "d3",
+		name: "O-Zone Gym",
+		location: "Kazanchis",
+		price: 200,
+		equbEligible: true,
+		distance: "3.1 km",
+		rating: 4.9,
+	},
+	{
+		id: "d4",
+		name: "Golden Gym",
+		location: "Bole",
+		price: 120,
+		equbEligible: false,
+		distance: "0.8 km",
+		rating: 4.2,
+	},
+	{
+		id: "d5",
+		name: "Fitness Point",
+		location: "Sarbet",
+		price: 160,
+		equbEligible: false,
+		distance: "4.0 km",
+		rating: 4.4,
+	},
 ];
 
 const FILTERS = ["Near Me", "Top Rated", "Cheapest"] as const;
@@ -114,7 +154,14 @@ export function GymList() {
 			</div>
 
 			{/* Filter chips */}
-			<div style={{ display: "flex", gap: "8px", padding: "0 16px 16px", overflowX: "auto" }}>
+			<div
+				style={{
+					display: "flex",
+					gap: "8px",
+					padding: "0 16px 16px",
+					overflowX: "auto",
+				}}
+			>
 				{FILTERS.map((f) => (
 					<button
 						key={f}
@@ -137,8 +184,28 @@ export function GymList() {
 				))}
 			</div>
 
+			{/* Equb Eligible explainer */}
+			<p
+				style={{
+					fontSize: "11px",
+					color: "#8E8E93",
+					padding: "0 16px 8px",
+					margin: 0,
+				}}
+			>
+				<span style={{ color: "#00C853", fontWeight: 700 }}>Equb Eligible</span> = Check-ins count
+				toward your Equb workout target
+			</p>
+
 			{/* Gym cards */}
-			<div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+			<div
+				style={{
+					padding: "0 16px",
+					display: "flex",
+					flexDirection: "column",
+					gap: "12px",
+				}}
+			>
 				{hasReal
 					? filteredReal.map((g) => <RealGymCard key={g.id} gym={g} />)
 					: filteredDemos.map((g) => (
@@ -149,7 +216,13 @@ export function GymList() {
 	);
 }
 
-function DemoGymCard({ gym, onBuy }: { gym: (typeof DEMO_GYMS)[number]; onBuy: () => void }) {
+function DemoGymCard({
+	gym,
+	onBuy,
+}: {
+	gym: (typeof DEMO_GYMS)[number];
+	onBuy: () => void;
+}) {
 	return (
 		<div
 			style={{
@@ -172,16 +245,46 @@ function DemoGymCard({ gym, onBuy }: { gym: (typeof DEMO_GYMS)[number]; onBuy: (
 				}}
 			>
 				<div>
-					<h3 style={{ fontSize: "18px", fontWeight: 700, color: "#FFF", margin: 0 }}>
+					<h3
+						style={{
+							fontSize: "18px",
+							fontWeight: 700,
+							color: "#FFF",
+							margin: 0,
+						}}
+					>
 						{gym.name}
 					</h3>
-					<p style={{ fontSize: "12px", color: "#8E8E93", margin: "2px 0 0" }}>{gym.location}</p>
-					<p style={{ fontSize: "20px", fontWeight: 700, color: "#FFD700", margin: "6px 0 0" }}>
+					<div
+						style={{
+							display: "flex",
+							alignItems: "center",
+							gap: "8px",
+							marginTop: "2px",
+						}}
+					>
+						<span style={{ fontSize: "12px", color: "#8E8E93" }}>{gym.location}</span>
+						<span style={{ fontSize: "11px", color: "#FFD700" }}>{gym.distance}</span>
+						<span style={{ fontSize: "11px", color: "#FF9500" }}>&#9733; {gym.rating}</span>
+					</div>
+					<p
+						style={{
+							fontSize: "20px",
+							fontWeight: 700,
+							color: "#FFD700",
+							margin: "6px 0 0",
+						}}
+					>
 						{gym.price} ETB
 					</p>
 				</div>
 				<div
-					style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}
+					style={{
+						display: "flex",
+						flexDirection: "column",
+						alignItems: "flex-end",
+						gap: "8px",
+					}}
 				>
 					{gym.equbEligible && (
 						<span
@@ -196,6 +299,7 @@ function DemoGymCard({ gym, onBuy }: { gym: (typeof DEMO_GYMS)[number]; onBuy: (
 								alignItems: "center",
 								gap: "4px",
 							}}
+							title="Check-ins here count toward your Equb workout target"
 						>
 							Equb Eligible &#10003;
 						</span>
@@ -206,8 +310,8 @@ function DemoGymCard({ gym, onBuy }: { gym: (typeof DEMO_GYMS)[number]; onBuy: (
 						style={{
 							padding: "8px 20px",
 							borderRadius: "8px",
-							backgroundColor: "#00C853",
-							color: "#FFF",
+							backgroundColor: gym.equbEligible ? "#00C853" : "#FFD700",
+							color: gym.equbEligible ? "#FFF" : "#0a0a0a",
 							fontSize: "14px",
 							fontWeight: 700,
 							border: "none",
@@ -245,9 +349,25 @@ function RealGymCard({ gym }: { gym: PartnerGym }) {
 			}}
 		>
 			<div>
-				<h3 style={{ fontSize: "18px", fontWeight: 700, color: "#FFF", margin: 0 }}>{gym.name}</h3>
+				<h3
+					style={{
+						fontSize: "18px",
+						fontWeight: 700,
+						color: "#FFF",
+						margin: 0,
+					}}
+				>
+					{gym.name}
+				</h3>
 				<p style={{ fontSize: "12px", color: "#8E8E93", margin: "2px 0 0" }}>{gym.location}</p>
-				<p style={{ fontSize: "20px", fontWeight: 700, color: "#FFD700", margin: "6px 0 0" }}>
+				<p
+					style={{
+						fontSize: "20px",
+						fontWeight: 700,
+						color: "#FFD700",
+						margin: "6px 0 0",
+					}}
+				>
 					{gym.app_day_pass} ETB
 				</p>
 			</div>

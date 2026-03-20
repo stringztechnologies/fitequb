@@ -68,10 +68,39 @@ export function ChallengeList() {
 				>
 					CURRENT PRIZE POOL
 				</p>
-				<p style={{ fontSize: "32px", fontWeight: 700, color: "#0a0a0a", margin: "4px 0 0" }}>
+				<p
+					style={{
+						fontSize: "32px",
+						fontWeight: 700,
+						color: "#0a0a0a",
+						margin: "4px 0 0",
+					}}
+				>
 					15,000 ETB
 				</p>
+				<p
+					style={{
+						fontSize: "11px",
+						color: "#0a0a0a",
+						opacity: 0.7,
+						margin: "4px 0 0",
+					}}
+				>
+					1st: 50% &middot; 2nd: 25% &middot; 3rd: 12.5% &middot; Others: shared
+				</p>
 			</div>
+
+			{/* Resets countdown */}
+			<p
+				style={{
+					fontSize: "12px",
+					color: "#8E8E93",
+					textAlign: "center",
+					marginBottom: "12px",
+				}}
+			>
+				Resets in 5 days
+			</p>
 
 			{/* Podium */}
 			<div
@@ -122,56 +151,86 @@ export function ChallengeList() {
 
 			{/* Rank list 4+ */}
 			<div style={{ padding: "0 16px", marginBottom: "16px" }}>
-				{DEMO_LEADERS.slice(3).map((l, i) => (
-					<div
-						key={l.name}
-						style={{
-							display: "flex",
-							alignItems: "center",
-							padding: "12px 0",
-							borderBottom: "1px solid rgba(255,255,255,0.05)",
-							gap: "12px",
-						}}
-					>
-						<span
-							style={{
-								fontSize: "16px",
-								fontWeight: 700,
-								color: "#8E8E93",
-								width: "24px",
-								textAlign: "center",
-							}}
-						>
-							{i + 4}
-						</span>
+				{DEMO_LEADERS.slice(3).map((l, i) => {
+					const isYou = l.name === "Zemzem A.";
+					return (
 						<div
+							key={l.name}
 							style={{
-								width: "40px",
-								height: "40px",
-								borderRadius: "50%",
-								backgroundColor: "#2c2c2e",
 								display: "flex",
 								alignItems: "center",
-								justifyContent: "center",
+								padding: "12px 8px",
+								borderBottom: "1px solid rgba(255,255,255,0.05)",
+								gap: "12px",
+								backgroundColor: isYou ? "rgba(0,200,83,0.08)" : "transparent",
+								borderRadius: isYou ? "10px" : "0",
+								border: isYou ? "1px solid rgba(0,200,83,0.3)" : "none",
 							}}
 						>
-							<span style={{ fontSize: "16px", fontWeight: 700, color: "#FFF" }}>
-								{l.name.charAt(0)}
+							<span
+								style={{
+									fontSize: "16px",
+									fontWeight: 700,
+									color: isYou ? "#00C853" : "#8E8E93",
+									width: "24px",
+									textAlign: "center",
+								}}
+							>
+								{i + 4}
+							</span>
+							<div
+								style={{
+									width: "40px",
+									height: "40px",
+									borderRadius: "50%",
+									backgroundColor: isYou ? "rgba(0,200,83,0.2)" : "#2c2c2e",
+									border: isYou ? "2px solid #00C853" : "none",
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "center",
+								}}
+							>
+								<span style={{ fontSize: "16px", fontWeight: 700, color: "#FFF" }}>
+									{l.name.charAt(0)}
+								</span>
+							</div>
+							<div style={{ flex: 1 }}>
+								<div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+									<p
+										style={{
+											fontSize: "16px",
+											fontWeight: 700,
+											color: "#FFF",
+											margin: 0,
+										}}
+									>
+										{l.name}
+									</p>
+									{isYou && (
+										<span
+											style={{
+												fontSize: "10px",
+												fontWeight: 700,
+												color: "#0a0a0a",
+												backgroundColor: "#00C853",
+												padding: "1px 6px",
+												borderRadius: "4px",
+											}}
+										>
+											YOU
+										</span>
+									)}
+								</div>
+								<p style={{ fontSize: "14px", color: "#8E8E93", margin: 0 }}>
+									{l.steps.toLocaleString()} Steps
+								</p>
+							</div>
+							<span style={{ fontSize: "16px", fontWeight: 700, color: "#00C853" }}>
+								{l.etb.toLocaleString()} ETB
 							</span>
 						</div>
-						<div style={{ flex: 1 }}>
-							<p style={{ fontSize: "16px", fontWeight: 700, color: "#FFF", margin: 0 }}>
-								{l.name}
-							</p>
-							<p style={{ fontSize: "14px", color: "#8E8E93", margin: 0 }}>
-								{l.steps.toLocaleString()} Steps
-							</p>
-						</div>
-						<span style={{ fontSize: "16px", fontWeight: 700, color: "#00C853" }}>
-							{l.etb.toLocaleString()} ETB
-						</span>
-					</div>
-				))}
+					);
+				})}
 			</div>
 
 			{/* CTA */}
@@ -260,7 +319,13 @@ function Podium({
 						justifyContent: "center",
 					}}
 				>
-					<span style={{ fontSize: `${avatarSize * 0.4}px`, fontWeight: 700, color: "#FFF" }}>
+					<span
+						style={{
+							fontSize: `${avatarSize * 0.4}px`,
+							fontWeight: 700,
+							color: "#FFF",
+						}}
+					>
 						{name.charAt(0)}
 					</span>
 				</div>
@@ -301,7 +366,13 @@ function Podium({
 					paddingTop: "8px",
 				}}
 			>
-				<span style={{ fontSize: rank === 1 ? "16px" : "14px", fontWeight: 700, color: "#0a0a0a" }}>
+				<span
+					style={{
+						fontSize: rank === 1 ? "16px" : "14px",
+						fontWeight: 700,
+						color: "#0a0a0a",
+					}}
+				>
 					{ordinal}
 				</span>
 			</div>

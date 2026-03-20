@@ -229,11 +229,47 @@ export function EqubDetail() {
 				/>
 			</div>
 
-			{/* Days Remaining */}
+			{/* Threshold Explanation */}
+			<div className="mt-3 rounded-[12px] bg-[rgba(255,215,0,0.08)] border border-[rgba(255,215,0,0.2)] p-3">
+				<p className="text-[11px] text-[#8E8E93] m-0">
+					<span className="text-[#FFD700] font-bold">
+						Threshold{" "}
+						{Math.round(
+							(room.is_tsom
+								? (room.tsom_completion_pct ?? room.completion_pct)
+								: room.completion_pct) * 100,
+						)}
+						%
+					</span>{" "}
+					= Complete at least{" "}
+					{Math.ceil(
+						target *
+							(room.is_tsom
+								? (room.tsom_completion_pct ?? room.completion_pct)
+								: room.completion_pct),
+					)}{" "}
+					of {target} workouts to qualify for the payout
+				</p>
+			</div>
+
+			{/* Days Remaining with progress bar */}
 			{daysLeft !== null && (
-				<div className="mt-4 rounded-[16px] bg-[#1c1c1e] border border-[#2c2c2e] p-4 flex items-center justify-between">
-					<span className="text-sm text-[#8E8E93]">Days remaining</span>
-					<span className="text-2xl font-bold text-[#00C853]">{daysLeft}</span>
+				<div className="mt-4 rounded-[16px] bg-[#1c1c1e] border border-[#2c2c2e] p-4">
+					<div className="flex items-center justify-between mb-2">
+						<span className="text-sm text-[#8E8E93]">Days remaining</span>
+						<span className="text-2xl font-bold text-[#00C853]">{daysLeft}</span>
+					</div>
+					<div className="w-full h-1.5 rounded-full bg-[#0a0a0a] overflow-hidden">
+						<div
+							className="h-full rounded-full bg-[#00C853] transition-all"
+							style={{
+								width: `${Math.max(0, Math.min(100, ((room.duration_days - daysLeft) / room.duration_days) * 100))}%`,
+							}}
+						/>
+					</div>
+					<p className="text-[10px] text-[#8E8E93] mt-1 text-right">
+						Day {room.duration_days - daysLeft} of {room.duration_days}
+					</p>
 				</div>
 			)}
 
@@ -291,20 +327,25 @@ export function EqubDetail() {
 				)}
 			</div>
 
-			{/* Join Button */}
-			{room.status === "pending" && (
+			{/* Join / CTA Button */}
+			{(room.status === "pending" || room.status === "active") && (
 				<button
 					type="button"
 					onClick={handleJoin}
 					disabled={joining}
-					className="w-full mt-6 py-3.5 rounded-[16px] font-bold text-sm disabled:opacity-50 bg-[#00C853] text-black shadow-[0_0_20px_rgba(0,200,83,0.2)] active:scale-[0.98] transition-transform"
+					className="w-full mt-6 py-4 rounded-[16px] font-bold text-[16px] disabled:opacity-50 bg-[#00C853] text-black shadow-[0_0_20px_rgba(0,200,83,0.4)] active:scale-[0.98] transition-transform"
 				>
 					{joining
 						? "Processing..."
 						: room.stake_amount > 0
-							? `Join for ${room.stake_amount} ETB`
-							: "Join for Free"}
+							? `Join This Equb \u2014 ${room.stake_amount} ETB`
+							: "Join This Equb \u2014 Free"}
 				</button>
+			)}
+			{room.status === "pending" && members.length < room.max_members && (
+				<p className="text-[11px] text-[#8E8E93] text-center mt-2">
+					{room.max_members - members.length} spots remaining
+				</p>
 			)}
 		</div>
 	);
