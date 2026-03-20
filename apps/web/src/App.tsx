@@ -10,6 +10,7 @@ import { Home } from "./pages/Home.js";
 import { Leaderboard } from "./pages/Leaderboard.js";
 import { LogWorkout } from "./pages/LogWorkout.js";
 import { Profile } from "./pages/Profile.js";
+import { TrainerDashboard } from "./pages/TrainerDashboard.js";
 
 export function App() {
 	return (
@@ -26,6 +27,7 @@ export function App() {
 					<Route path="/challenges" element={<ChallengeList />} />
 					<Route path="/challenges/:id" element={<Leaderboard />} />
 					<Route path="/profile" element={<Profile />} />
+					<Route path="/trainer" element={<TrainerDashboard />} />
 				</Routes>
 				<BottomNav />
 			</div>

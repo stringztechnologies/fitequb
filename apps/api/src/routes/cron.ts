@@ -74,6 +74,11 @@ cron.post("/settle", async (c) => {
 					p_source_type: "equb_win",
 				});
 			}
+
+			// Process trainer commissions from house fee
+			await supabase.rpc("process_trainer_commissions", {
+				p_equb_id: room.id,
+			});
 		}
 
 		results.push({

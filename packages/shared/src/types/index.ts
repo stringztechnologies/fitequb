@@ -16,6 +16,9 @@ export interface EqubRoom {
 	start_date: string;
 	end_date: string;
 	sponsor_prize: number;
+	is_tsom: boolean;
+	tsom_workout_target: number | null;
+	tsom_completion_pct: number | null;
 	created_at: string;
 }
 
@@ -56,6 +59,42 @@ export interface User {
 	level: number;
 	badges: string[];
 	referral_code: string;
+	referred_by_trainer: string | null;
+	created_at: string;
+}
+
+// ── Trainer / Affiliate ──
+
+export type TrainerStatus = "pending" | "active" | "suspended";
+
+export interface Trainer {
+	id: string;
+	user_id: string;
+	affiliate_code: string;
+	gym_name: string | null;
+	phone: string | null;
+	commission_rate: number;
+	status: TrainerStatus;
+	total_earned: number;
+	pending_balance: number;
+	created_at: string;
+}
+
+export interface TrainerEarning {
+	id: string;
+	trainer_id: string;
+	equb_id: string;
+	user_id: string;
+	amount: number;
+	created_at: string;
+}
+
+export interface TrainerPayout {
+	id: string;
+	trainer_id: string;
+	amount: number;
+	tx_ref: string;
+	status: "pending" | "completed" | "failed";
 	created_at: string;
 }
 

@@ -7,7 +7,15 @@ export function useAuth() {
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
-		api<User>("/api/auth/login", { method: "POST" })
+		// Extract trainer code from Telegram start_param or URL query
+		const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+		const urlParams = new URLSearchParams(window.location.search);
+		const trainerCode = startParam ?? urlParams.get("trainer_code") ?? undefined;
+
+		api<User>("/api/auth/login", {
+			method: "POST",
+			body: JSON.stringify({ trainer_code: trainerCode }),
+		})
 			.then((res) => {
 				if (res.data) setUser(res.data);
 			})

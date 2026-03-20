@@ -11,6 +11,7 @@ import { equbRooms } from "./routes/equb-rooms.js";
 import { gamification } from "./routes/gamification.js";
 import { gyms } from "./routes/gyms.js";
 import { health } from "./routes/health.js";
+import { trainers } from "./routes/trainers.js";
 import { webhooks } from "./routes/webhooks.js";
 import { workouts } from "./routes/workouts.js";
 import type { AppVariables } from "./types/context.js";
@@ -43,6 +44,7 @@ app.route("/api/workouts", workouts);
 app.route("/api/gyms", gyms);
 app.route("/api/challenges", challenges);
 app.route("/api/gamification", gamification);
+app.route("/api/trainers", trainers);
 
 const port = Number(process.env.PORT) || 3000;
 
