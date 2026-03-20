@@ -2,10 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+	--tg-theme-bg-color: #0d0f14;
+	--tg-theme-text-color: #f5f5f7;
+	--tg-theme-hint-color: #8e8e93;
+	--tg-theme-link-color: #00c853;
+	--tg-theme-button-color: #00c853;
+	--tg-theme-button-text-color: #000000;
+	--tg-theme-secondary-bg-color: #1a1d24;
+}
+
 body {
 	margin: 0;
 	padding: 0;
-	background-color: var(--tg-theme-bg-color, #ffffff);
-	color: var(--tg-theme-text-color, #000000);
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	background-color: var(--tg-theme-bg-color, #0d0f14);
+	color: var(--tg-theme-text-color, #f5f5f7);
+	font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+	width: 4px;
+}
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+::-webkit-scrollbar-thumb {
+	background: #2a2d35;
+	border-radius: 4px;
+}
+
+/* Smooth page transitions */
+.page-enter {
+	opacity: 0;
+	transform: translateY(8px);
+}
+.page-enter-active {
+	opacity: 1;
+	transform: translateY(0);
+	transition: all 200ms ease-out;
+}
+
+/* Glassmorphism utility */
+.glass {
+	backdrop-filter: blur(16px);
+	-webkit-backdrop-filter: blur(16px);
+	background: rgba(26, 29, 36, 0.8);
+}
+
+/* Number counter animation */
+@keyframes countUp {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+.animate-count {
+	animation: countUp 0.4s ease-out;
 }
