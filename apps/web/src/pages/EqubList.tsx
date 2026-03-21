@@ -59,9 +59,43 @@ export function EqubList() {
 
 	return (
 		<div style={{ backgroundColor: "#0a0a0a", paddingBottom: "96px" }}>
-			<div style={{ textAlign: "center", padding: "20px 16px 16px" }}>
+			<div style={{ textAlign: "center", padding: "20px 16px 8px" }}>
 				<h1 style={{ fontSize: "28px", fontWeight: 700, color: "#00C853" }}>FitEqub</h1>
 				<p style={{ fontSize: "16px", color: "#FFFFFF", marginTop: "4px" }}>Equb Rooms</p>
+			</div>
+
+			<div style={{ padding: "0 16px 12px" }}>
+				<button
+					type="button"
+					onClick={() => navigate("/equbs/create")}
+					style={{
+						width: "100%",
+						padding: "12px",
+						borderRadius: "12px",
+						backgroundColor: "transparent",
+						color: "#00C853",
+						fontSize: "15px",
+						fontWeight: 700,
+						border: "2px solid #00C853",
+						cursor: "pointer",
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "center",
+						gap: "8px",
+					}}
+				>
+					<svg
+						viewBox="0 0 24 24"
+						style={{ width: "18px", height: "18px" }}
+						fill="none"
+						stroke="#00C853"
+						strokeWidth={2.5}
+					>
+						<line x1="12" y1="5" x2="12" y2="19" />
+						<line x1="5" y1="12" x2="19" y2="12" />
+					</svg>
+					Create New Equb
+				</button>
 			</div>
 
 			<div
