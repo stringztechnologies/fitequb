@@ -34,7 +34,10 @@ equbRooms.post("/", async (c) => {
 
 	if (!parsed.success) {
 		return c.json<ApiResponse<null>>(
-			{ data: null, error: parsed.error.issues.map((i) => i.message).join(", ") },
+			{
+				data: null,
+				error: parsed.error.issues.map((i) => i.message).join(", "),
+			},
 			400,
 		);
 	}
@@ -91,7 +94,10 @@ equbRooms.get("/", async (c) => {
 		return c.json<ApiResponse<null>>({ data: null, error: error.message }, 500);
 	}
 
-	return c.json<ApiResponse<EqubRoom[]>>({ data: data as EqubRoom[], error: null });
+	return c.json<ApiResponse<EqubRoom[]>>({
+		data: data as EqubRoom[],
+		error: null,
+	});
 });
 
 // GET /equb-rooms/:id — room detail with members
@@ -210,17 +216,7 @@ equbRooms.post("/:id/join", async (c) => {
 	});
 });
 
-// POST /equb-rooms/:id/settle — trigger settlement
-equbRooms.post("/:id/settle", async (c) => {
-	const roomId = c.req.param("id");
-
-	const { data, error } = await supabase.rpc("settle_equb", { room_id_input: roomId });
-
-	if (error) {
-		return c.json<ApiResponse<null>>({ data: null, error: error.message }, 500);
-	}
-
-	return c.json({ data, error: null });
-});
+// Settlement is handled exclusively via POST /cron/settle (requires CRON_SECRET).
+// No public settlement endpoint — prevents unauthorized financial operations.
 
 export { equbRooms };

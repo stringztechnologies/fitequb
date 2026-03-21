@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { POINTS_EQUB_COMPLETE, POINTS_EQUB_WIN } from "@fitequb/shared";
 import { Hono } from "hono";
 import { initiateTransfer } from "../lib/chapa.js";
@@ -5,11 +6,14 @@ import { supabase } from "../lib/supabase.js";
 
 const cron = new Hono();
 
-// Verify cron secret to prevent unauthorized access
+// Verify cron secret to prevent unauthorized access (timing-safe)
 function verifyCronSecret(secret: string | undefined): boolean {
 	const expected = process.env.CRON_SECRET;
-	if (!expected) return false;
-	return secret === expected;
+	if (!expected || !secret) return false;
+	const a = Buffer.from(expected);
+	const b = Buffer.from(secret);
+	if (a.length !== b.length) return false;
+	return timingSafeEqual(a, b);
 }
 
 // POST /cron/settle — settle expired Equbs

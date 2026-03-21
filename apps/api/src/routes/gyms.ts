@@ -20,7 +20,10 @@ gyms.get("/", async (c) => {
 		return c.json<ApiResponse<null>>({ data: null, error: error.message }, 500);
 	}
 
-	return c.json<ApiResponse<PartnerGym[]>>({ data: data as PartnerGym[], error: null });
+	return c.json<ApiResponse<PartnerGym[]>>({
+		data: data as PartnerGym[],
+		error: null,
+	});
 });
 
 // POST /day-passes — purchase a day pass
@@ -63,7 +66,7 @@ gyms.post("/day-passes", async (c) => {
 			user_id: user.id,
 			gym_id,
 			qr_token: qrToken,
-			status: "active", // For MVP, mark active immediately (Chapa test mode)
+			status: "pending",
 			expires_at: expiresAt,
 		})
 		.select()
@@ -141,11 +144,23 @@ gyms.get("/day-passes/:id", async (c) => {
 // POST /day-passes/:id/redeem — mark as redeemed
 gyms.post("/day-passes/:id/redeem", async (c) => {
 	const passId = c.req.param("id");
+	const telegramUser = c.get("telegramUser");
+
+	const { data: user } = await supabase
+		.from("users")
+		.select("id")
+		.eq("telegram_id", telegramUser.id)
+		.single();
+
+	if (!user) {
+		return c.json<ApiResponse<null>>({ data: null, error: "User not found" }, 404);
+	}
 
 	const { data: pass, error } = await supabase
 		.from("day_passes")
 		.update({ status: "redeemed", redeemed_at: new Date().toISOString() })
 		.eq("id", passId)
+		.eq("user_id", user.id)
 		.eq("status", "active")
 		.select()
 		.single();
