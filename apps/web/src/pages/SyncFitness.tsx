@@ -10,6 +10,7 @@ export function SyncFitness() {
 				type="button"
 				onClick={() => navigate(-1)}
 				className="flex items-center gap-1 text-[#8E8E93] text-[14px] mb-4"
+				style={{ background: "none", border: "none", cursor: "pointer" }}
 			>
 				<svg
 					viewBox="0 0 24 24"
@@ -23,9 +24,22 @@ export function SyncFitness() {
 				Back
 			</button>
 			<h1 className="text-[20px] font-bold text-white text-center mb-2">Sync Fitness Data</h1>
-			<p className="text-[13px] text-[#8E8E93] text-center mb-6">
-				Connect your fitness apps to automatically track workouts
-			</p>
+
+			{/* Coming soon notice */}
+			<div
+				style={{
+					margin: "0 0 20px",
+					padding: "12px 16px",
+					borderRadius: "12px",
+					backgroundColor: "rgba(255,152,0,0.1)",
+					border: "1px solid rgba(255,152,0,0.25)",
+				}}
+			>
+				<p style={{ fontSize: "13px", color: "#FF9500", margin: 0, lineHeight: 1.5 }}>
+					Automatic fitness tracking is coming soon. For now, log your workouts manually from the
+					home screen.
+				</p>
+			</div>
 
 			{/* Pulse icon */}
 			<div className="flex justify-center mb-8">
@@ -48,7 +62,7 @@ export function SyncFitness() {
 				</div>
 			</div>
 
-			{/* Provider Cards */}
+			{/* Provider Cards — all Coming Soon */}
 			<div className="space-y-3 mb-6">
 				<ProviderCard
 					name="Google Fit"
@@ -94,27 +108,24 @@ export function SyncFitness() {
 				/>
 			</div>
 
-			{/* Last Synced */}
-			<div className="rounded-[12px] bg-[#1c1c1e] border border-[rgba(0,200,83,0.3)] p-3.5 flex items-center gap-3 mb-6">
-				<svg
-					viewBox="0 0 24 24"
-					className="w-4 h-4 text-[#00C853]"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth={2}
-				>
-					<polyline points="23 4 23 10 17 10" />
-					<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
-				</svg>
-				<span className="text-[13px] text-[#8E8E93]">Last synced: 2 hours ago</span>
-			</div>
-
-			{/* Sync Button */}
+			{/* Manual log CTA */}
 			<button
 				type="button"
-				className="w-full py-4 rounded-[12px] bg-[#00C853] text-[#0a0a0a] text-[16px] font-bold shadow-[0_0_20px_rgba(0,200,83,0.4)] active:scale-[0.98] transition-transform"
+				onClick={() => navigate("/equbs")}
+				style={{
+					width: "100%",
+					padding: "16px",
+					borderRadius: "12px",
+					backgroundColor: "#00C853",
+					color: "#0a0a0a",
+					fontSize: "16px",
+					fontWeight: 700,
+					border: "none",
+					cursor: "pointer",
+					boxShadow: "0 0 20px rgba(0,200,83,0.4)",
+				}}
 			>
-				Sync Now
+				Log Workout Manually
 			</button>
 		</div>
 	);
@@ -129,12 +140,18 @@ function ProviderCard({ name, icon }: { name: string; icon: React.ReactNode }) {
 				</div>
 				<span className="text-[15px] font-semibold text-white">{name}</span>
 			</div>
-			<button
-				type="button"
-				className="px-5 py-2 rounded-[8px] bg-[#FFC107] text-[#0a0a0a] text-[13px] font-bold active:scale-95 transition-transform"
+			<span
+				style={{
+					padding: "6px 14px",
+					borderRadius: "8px",
+					backgroundColor: "#2c2c2e",
+					color: "#8E8E93",
+					fontSize: "13px",
+					fontWeight: 600,
+				}}
 			>
-				Connect
-			</button>
+				Coming Soon
+			</span>
 		</div>
 	);
 }
