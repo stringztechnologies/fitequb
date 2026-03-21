@@ -1,10 +1,34 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { api } from "../lib/api.js";
+
+interface PaymentState {
+	equbId: string;
+	equbName: string;
+	stakeAmount: number;
+	payout: number;
+	requirement: string;
+}
+
+const PROCESSING_FEE = 5;
 
 export function Payment() {
 	const navigate = useNavigate();
+	const location = useLocation();
+	const routeState = location.state as PaymentState | null;
+
 	const [timeLeft, setTimeLeft] = useState(899);
 	const [confirming, setConfirming] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+
+	// Fallback demo values if no route state
+	const equbName = routeState?.equbName ?? "Bole Elite 10k";
+	const stakeAmount = routeState?.stakeAmount ?? 1000;
+	const payout = routeState?.payout ?? 25000;
+	const requirement = routeState?.requirement ?? "5 Gym Sessions/Week";
+	const equbId = routeState?.equbId;
+	const total = stakeAmount + PROCESSING_FEE;
+	const isDemo = !equbId;
 
 	useEffect(() => {
 		const t = setInterval(() => setTimeLeft((s) => Math.max(0, s - 1)), 1000);
@@ -13,6 +37,38 @@ export function Payment() {
 
 	const mins = Math.floor(timeLeft / 60);
 	const secs = timeLeft % 60;
+
+	async function handleConfirm() {
+		setConfirming(true);
+		setError(null);
+
+		if (isDemo) {
+			// Demo mode — simulate success after brief delay
+			setTimeout(() => {
+				setConfirming(false);
+				navigate("/win");
+			}, 1500);
+			return;
+		}
+
+		const res = await api<{ checkout_url: string; tx_ref: string }>(
+			`/api/equb-rooms/${equbId}/join`,
+			{ method: "POST" },
+		);
+
+		if (res.error) {
+			setError(res.error);
+			setConfirming(false);
+			return;
+		}
+
+		if (res.data?.checkout_url) {
+			window.location.href = res.data.checkout_url;
+		} else {
+			// Free equb — joined directly
+			navigate(`/equbs/${equbId}`);
+		}
+	}
 
 	return (
 		<div className="px-4 pt-5 pb-24">
@@ -35,10 +91,19 @@ export function Payment() {
 				Cancel
 			</button>
 
+			{/* Demo banner */}
+			{isDemo && (
+				<div className="rounded-[8px] bg-[rgba(255,152,0,0.15)] border border-[#FF9500] px-3 py-2 mb-4">
+					<p className="text-[12px] text-[#FF9500] font-medium m-0">
+						Demo Mode — This is a preview. Join a real Equb to make a payment.
+					</p>
+				</div>
+			)}
+
 			{/* Header with timer badge */}
 			<div className="flex items-center justify-between mb-5">
 				<div>
-					<h1 className="text-[18px] font-bold text-white">Bole Elite 10k</h1>
+					<h1 className="text-[18px] font-bold text-white">{equbName}</h1>
 					<p className="text-[12px] text-[#8E8E93]">
 						Payment expires in {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
 					</p>
@@ -66,10 +131,10 @@ export function Payment() {
 			{/* Payment Summary Card */}
 			<div className="rounded-[16px] bg-[#1c1c1e] p-4 mb-4">
 				<p className="text-[18px] font-bold text-white">
-					<span className="text-[#FFD700]">1,000 ETB</span> Entry
+					<span className="text-[#FFD700]">{stakeAmount.toLocaleString()} ETB</span> Entry
 				</p>
 				<p className="text-[18px] font-bold text-white">
-					<span className="text-[#FFD700]">25,000 ETB</span> Payout
+					<span className="text-[#FFD700]">{payout.toLocaleString()} ETB</span> Payout
 				</p>
 				<div className="flex items-center gap-2 mt-2">
 					<svg
@@ -81,28 +146,25 @@ export function Payment() {
 					>
 						<path d="M6.5 6.5h11M4 12h16" />
 					</svg>
-					<span className="text-[13px] text-[#8E8E93]">5 Gym Sessions/Week</span>
+					<span className="text-[13px] text-[#8E8E93]">{requirement}</span>
 				</div>
 			</div>
 
 			{/* Payment Breakdown Table */}
 			<div className="rounded-[16px] bg-[#1c1c1e] border border-[rgba(255,215,0,0.3)] p-4 mb-4">
 				<h2 className="text-[16px] font-semibold text-white mb-3">Payment Breakdown</h2>
-
 				<div className="flex justify-between py-2">
 					<span className="text-[14px] text-[#8E8E93]">Entry Fee:</span>
-					<span className="text-[14px] text-white">1,000 ETB</span>
+					<span className="text-[14px] text-white">{stakeAmount.toLocaleString()} ETB</span>
 				</div>
 				<div className="flex justify-between py-2">
 					<span className="text-[14px] text-[#8E8E93]">Processing Fee:</span>
-					<span className="text-[14px] text-white">5 ETB</span>
+					<span className="text-[14px] text-white">{PROCESSING_FEE} ETB</span>
 				</div>
-
 				<div className="border-t border-[rgba(255,255,255,0.1)] my-2" />
-
 				<div className="flex justify-between py-2">
 					<span className="text-[15px] font-bold text-[#FFD700]">Total to Pay:</span>
-					<span className="text-[17px] font-bold text-[#FFD700]">1,005 ETB</span>
+					<span className="text-[17px] font-bold text-[#FFD700]">{total.toLocaleString()} ETB</span>
 				</div>
 			</div>
 
@@ -134,14 +196,17 @@ export function Payment() {
 				More payment methods coming soon
 			</p>
 
+			{/* Error message */}
+			{error && <p className="text-[14px] text-[#FF3B30] text-center mb-3">{error}</p>}
+
 			{/* Confirm CTA */}
 			<button
 				type="button"
-				disabled={confirming}
-				onClick={() => setConfirming(true)}
+				disabled={confirming || timeLeft === 0}
+				onClick={handleConfirm}
 				className="w-full py-4 rounded-[12px] bg-[#00C853] text-[#0a0a0a] text-[16px] font-bold shadow-[0_0_20px_rgba(0,200,83,0.4)] active:scale-[0.98] transition-transform disabled:opacity-50"
 			>
-				{confirming ? "Processing..." : "Confirm and Pay"}
+				{confirming ? "Processing..." : `Confirm and Pay ${total.toLocaleString()} ETB`}
 			</button>
 		</div>
 	);

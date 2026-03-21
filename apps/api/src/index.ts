@@ -25,7 +25,7 @@ app.use("*", logger());
 app.use(
 	"*",
 	cors({
-		origin: process.env.TELEGRAM_MINI_APP_URL ?? "*",
+		origin: process.env.TELEGRAM_MINI_APP_URL ?? "https://fitequb.com",
 		allowMethods: ["GET", "POST", "PUT", "DELETE"],
 		allowHeaders: ["Content-Type", "Authorization"],
 	}),

@@ -211,7 +211,15 @@ export function EqubDetail() {
 	async function handleJoin() {
 		if (!id) return;
 		if (id.startsWith("demo-")) {
-			navigate("/payment");
+			navigate("/payment", {
+				state: {
+					equbId: undefined,
+					equbName: room.name,
+					stakeAmount: room.stake_amount,
+					payout,
+					requirement: `${target} workouts in ${room.duration_days} days`,
+				},
+			});
 			return;
 		}
 		setJoining(true);
@@ -230,15 +238,38 @@ export function EqubDetail() {
 		<div style={{ backgroundColor: "#0a0a0a", paddingBottom: "96px" }}>
 			{/* Header — room name + payout */}
 			<div style={{ textAlign: "center", padding: "24px 16px 0" }}>
-				<h1 style={{ fontSize: "22px", fontWeight: 700, color: "#FFF", margin: 0 }}>{room.name}</h1>
-				<p style={{ fontSize: "36px", fontWeight: 700, color: "#FFD700", margin: "4px 0 0" }}>
+				<h1
+					style={{
+						fontSize: "22px",
+						fontWeight: 700,
+						color: "#FFF",
+						margin: 0,
+					}}
+				>
+					{room.name}
+				</h1>
+				<p
+					style={{
+						fontSize: "36px",
+						fontWeight: 700,
+						color: "#FFD700",
+						margin: "4px 0 0",
+					}}
+				>
 					{payout.toLocaleString()} ETB
 				</p>
 			</div>
 
 			{/* Rules Section */}
 			<div style={{ padding: "20px 16px 0" }}>
-				<h2 style={{ fontSize: "18px", fontWeight: 700, color: "#FFF", margin: "0 0 12px" }}>
+				<h2
+					style={{
+						fontSize: "18px",
+						fontWeight: 700,
+						color: "#FFF",
+						margin: "0 0 12px",
+					}}
+				>
 					Rules
 				</h2>
 				<div
@@ -263,7 +294,14 @@ export function EqubDetail() {
 
 			{/* Member List — grid layout like Stitch */}
 			<div style={{ padding: "20px 16px 0" }}>
-				<h2 style={{ fontSize: "18px", fontWeight: 700, color: "#FFF", margin: "0 0 12px" }}>
+				<h2
+					style={{
+						fontSize: "18px",
+						fontWeight: 700,
+						color: "#FFF",
+						margin: "0 0 12px",
+					}}
+				>
 					Member List
 				</h2>
 				<div
@@ -348,7 +386,14 @@ export function EqubDetail() {
 					padding: "16px",
 				}}
 			>
-				<h2 style={{ fontSize: "16px", fontWeight: 700, color: "#FFF", margin: "0 0 10px" }}>
+				<h2
+					style={{
+						fontSize: "16px",
+						fontWeight: 700,
+						color: "#FFF",
+						margin: "0 0 10px",
+					}}
+				>
 					My Progress
 				</h2>
 				<div
@@ -414,7 +459,12 @@ export function EqubDetail() {
 					</button>
 					{room.status === "pending" && members.length < room.max_members && (
 						<p
-							style={{ fontSize: "11px", color: "#8E8E93", textAlign: "center", marginTop: "6px" }}
+							style={{
+								fontSize: "11px",
+								color: "#8E8E93",
+								textAlign: "center",
+								marginTop: "6px",
+							}}
 						>
 							{room.max_members - members.length} spots remaining
 						</p>
@@ -425,7 +475,15 @@ export function EqubDetail() {
 	);
 }
 
-function RuleItem({ icon, title, subtitle }: { icon: string; title: string; subtitle: string }) {
+function RuleItem({
+	icon,
+	title,
+	subtitle,
+}: {
+	icon: string;
+	title: string;
+	subtitle: string;
+}) {
 	return (
 		<div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
 			<div
@@ -451,7 +509,16 @@ function RuleItem({ icon, title, subtitle }: { icon: string; title: string; subt
 				</svg>
 			</div>
 			<div>
-				<p style={{ fontSize: "15px", fontWeight: 600, color: "#FFF", margin: 0 }}>{title}</p>
+				<p
+					style={{
+						fontSize: "15px",
+						fontWeight: 600,
+						color: "#FFF",
+						margin: 0,
+					}}
+				>
+					{title}
+				</p>
 				<p style={{ fontSize: "12px", color: "#8E8E93", margin: "2px 0 0" }}>{subtitle}</p>
 			</div>
 		</div>

@@ -41,8 +41,35 @@ export function Home() {
 	const circ = 2 * Math.PI * 80;
 	const displayAmount = profile?.total_points ?? 12500;
 
+	const isDemo = !profile;
+
 	return (
 		<div className="pb-24" style={{ backgroundColor: "#0a0a0a" }}>
+			{/* Demo banner */}
+			{isDemo && (
+				<div
+					style={{
+						margin: "0 16px",
+						padding: "8px 12px",
+						borderRadius: "8px",
+						backgroundColor: "rgba(255,152,0,0.12)",
+						border: "1px solid rgba(255,152,0,0.3)",
+						marginTop: "12px",
+					}}
+				>
+					<p
+						style={{
+							fontSize: "12px",
+							color: "#FF9500",
+							fontWeight: 500,
+							margin: 0,
+						}}
+					>
+						Demo Mode — Sign in via Telegram to see your real data
+					</p>
+				</div>
+			)}
+
 			{/* Header — 36px bold per spec */}
 			<div className="px-4 pt-5 pb-1">
 				<h1
