@@ -172,6 +172,22 @@ export function Profile() {
 						{totalSteps.toLocaleString()}
 					</div>
 				</div>
+				<div
+					style={{
+						border: "2px solid #FF9500",
+						borderRadius: "12px",
+						padding: "12px",
+						backgroundColor: "#1c1c1e",
+					}}
+				>
+					<div className="flex items-center justify-between" style={{ marginBottom: "4px" }}>
+						<span style={{ fontSize: "12px", color: "#FF9500", fontWeight: 600 }}>
+							Current Streak
+						</span>
+						<span style={{ fontSize: "16px" }}>&#128293;</span>
+					</div>
+					<div style={{ fontSize: "24px", fontWeight: 700, color: "#FF9500" }}>7 days</div>
+				</div>
 			</div>
 
 			{/* Fitness Achievements */}

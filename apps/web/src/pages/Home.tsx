@@ -82,9 +82,31 @@ export function Home() {
 				>
 					FitEqub
 				</h1>
-				<p style={{ fontSize: "14px", color: "#8E8E93", marginTop: "4px" }}>
-					{user ? `Welcome, ${user.full_name}` : "Stake. Sweat. Split the pot."}
-				</p>
+				<div
+					style={{
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "space-between",
+						marginTop: "4px",
+					}}
+				>
+					<p style={{ fontSize: "14px", color: "#8E8E93", margin: 0 }}>
+						{user ? `Welcome, ${user.full_name}` : "Stake. Sweat. Split the pot."}
+					</p>
+					<div
+						style={{
+							display: "flex",
+							alignItems: "center",
+							gap: "4px",
+							backgroundColor: "rgba(255,152,0,0.15)",
+							padding: "4px 10px",
+							borderRadius: "12px",
+						}}
+					>
+						<span style={{ fontSize: "14px" }}>&#128293;</span>
+						<span style={{ fontSize: "14px", fontWeight: 700, color: "#FF9500" }}>7</span>
+					</div>
+				</div>
 			</div>
 
 			{/* Progress Ring Card — bg #1c1c1e, 16px radius, 24px padding */}
