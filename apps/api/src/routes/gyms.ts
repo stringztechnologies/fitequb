@@ -2,9 +2,14 @@ import { randomUUID } from "node:crypto";
 import type { ApiResponse, DayPass, PartnerGym } from "@fitequb/shared";
 import { DAY_PASS_EXPIRY_MINUTES } from "@fitequb/shared";
 import { Hono } from "hono";
+import { z } from "zod";
 import { initializePayment } from "../lib/chapa.js";
 import { supabase } from "../lib/supabase.js";
 import type { AppVariables } from "../types/context.js";
+
+const dayPassSchema = z.object({
+	gym_id: z.string().uuid(),
+});
 
 const gyms = new Hono<{ Variables: AppVariables }>();
 
@@ -29,11 +34,18 @@ gyms.get("/", async (c) => {
 // POST /day-passes — purchase a day pass
 gyms.post("/day-passes", async (c) => {
 	const telegramUser = c.get("telegramUser");
-	const { gym_id } = (await c.req.json()) as { gym_id: string };
-
-	if (!gym_id) {
-		return c.json<ApiResponse<null>>({ data: null, error: "gym_id required" }, 400);
+	const body = await c.req.json();
+	const parsed = dayPassSchema.safeParse(body);
+	if (!parsed.success) {
+		return c.json<ApiResponse<null>>(
+			{
+				data: null,
+				error: parsed.error.issues.map((i) => i.message).join(", "),
+			},
+			400,
+		);
 	}
+	const { gym_id } = parsed.data;
 
 	const { data: user } = await supabase
 		.from("users")

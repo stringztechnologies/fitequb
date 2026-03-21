@@ -1,6 +1,13 @@
 import { Hono } from "hono";
+import { z } from "zod";
 import { verifyChapaWebhook } from "../lib/chapa.js";
 import { supabase } from "../lib/supabase.js";
+
+const chapaWebhookSchema = z.object({
+	tx_ref: z.string().min(1),
+	status: z.string(),
+	amount: z.number(),
+});
 
 const webhooks = new Hono();
 
@@ -13,11 +20,11 @@ webhooks.post("/chapa", async (c) => {
 		return c.json({ error: "Invalid signature" }, 401);
 	}
 
-	const payload = JSON.parse(rawBody) as {
-		tx_ref: string;
-		status: string;
-		amount: number;
-	};
+	const parsed = chapaWebhookSchema.safeParse(JSON.parse(rawBody));
+	if (!parsed.success) {
+		return c.json({ error: "Invalid payload" }, 400);
+	}
+	const payload = parsed.data;
 
 	if (payload.status !== "success") {
 		return c.json({ status: "ignored" });
@@ -89,7 +96,10 @@ webhooks.post("/chapa", async (c) => {
 		await supabase.from("equb_rooms").update({ status: "active" }).eq("id", roomId);
 	}
 
-	return c.json({ status: "ok", ledger: ledgerResult.error ? "failed" : "created" });
+	return c.json({
+		status: "ok",
+		ledger: ledgerResult.error ? "failed" : "created",
+	});
 });
 
 async function handleDayPassWebhook(txRef: string, _amount: number) {
@@ -98,7 +108,9 @@ async function handleDayPassWebhook(txRef: string, _amount: number) {
 	const passId = parts[1];
 
 	if (!passId) {
-		return new Response(JSON.stringify({ error: "Invalid daypass tx_ref" }), { status: 400 });
+		return new Response(JSON.stringify({ error: "Invalid daypass tx_ref" }), {
+			status: 400,
+		});
 	}
 
 	// Mark pass as active (payment confirmed)

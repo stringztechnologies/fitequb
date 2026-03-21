@@ -1,7 +1,12 @@
 import type { ApiResponse, User } from "@fitequb/shared";
 import { Hono } from "hono";
+import { z } from "zod";
 import { supabase } from "../lib/supabase.js";
 import type { AppVariables } from "../types/context.js";
+
+const loginSchema = z.object({
+	trainer_code: z.string().max(20).optional(),
+});
 
 const auth = new Hono<{ Variables: AppVariables }>();
 
@@ -13,7 +18,8 @@ const auth = new Hono<{ Variables: AppVariables }>();
 auth.post("/login", async (c) => {
 	const telegramUser = c.get("telegramUser");
 	const body = await c.req.json().catch(() => ({}));
-	const trainerCode = (body as { trainer_code?: string }).trainer_code;
+	const parsed = loginSchema.safeParse(body);
+	const trainerCode = parsed.success ? parsed.data.trainer_code : undefined;
 
 	const fullName = [telegramUser.first_name, telegramUser.last_name].filter(Boolean).join(" ");
 

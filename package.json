@@ -6,11 +6,13 @@
 		"build": "pnpm -r build",
 		"lint": "biome check .",
 		"format": "biome format --write .",
-		"typecheck": "pnpm -r typecheck"
+		"typecheck": "pnpm -r typecheck",
+		"test": "vitest"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
-		"@playwright/test": "^1.58.2"
+		"@playwright/test": "^1.58.2",
+		"vitest": "^4.1.0"
 	},
 	"engines": {
 		"node": ">=20"
