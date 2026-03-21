@@ -102,6 +102,23 @@ export function WinCelebration() {
 				</button>
 				<button
 					type="button"
+					onClick={() => {
+						const deepLink = "https://t.me/fitequb_bot?start=ref";
+						const text =
+							"I just won 25,000 ETB on FitEqub by completing my fitness goals! Join me and start earning:";
+						if (navigator.share) {
+							navigator.share({ title: "I won on FitEqub!", text, url: deepLink }).catch(() => {});
+						} else if (window.Telegram?.WebApp?.openTelegramLink) {
+							window.Telegram.WebApp.openTelegramLink(
+								`https://t.me/share/url?url=${encodeURIComponent(deepLink)}&text=${encodeURIComponent(text)}`,
+							);
+						} else {
+							window.open(
+								`https://t.me/share/url?url=${encodeURIComponent(deepLink)}&text=${encodeURIComponent(text)}`,
+								"_blank",
+							);
+						}
+					}}
 					className="w-full py-3.5 rounded-[12px] border border-[#FFD700] text-[#FFD700] text-[15px] font-semibold active:bg-[rgba(255,215,0,0.1)] transition-colors"
 				>
 					Share with Friends
