@@ -1,6 +1,6 @@
 import type { DayPass } from "@fitequb/shared";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Loading } from "../components/Loading.js";
 import { api } from "../lib/api.js";
 
@@ -8,22 +8,12 @@ interface PassWithGym extends DayPass {
 	partner_gyms: { name: string; location: string };
 }
 
-const DEMO_PASS: PassWithGym = {
-	id: "demo-pass",
-	user_id: "demo-user",
-	gym_id: "d1",
-	qr_token: "FITEQUB-DEMO-QR-2024-ABCD",
-	status: "active",
-	purchased_at: new Date().toISOString(),
-	expires_at: new Date(Date.now() + 24 * 3600000).toISOString(),
-	redeemed_at: null,
-	partner_gyms: { name: "Kuriftu Gym", location: "Bole" },
-};
-
 export function DayPassDetail() {
 	const { id } = useParams<{ id: string }>();
+	const navigate = useNavigate();
 	const [pass, setPass] = useState<PassWithGym | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
 	const [timeLeft, setTimeLeft] = useState("");
 
 	useEffect(() => {
@@ -33,11 +23,11 @@ export function DayPassDetail() {
 				if (res.data) {
 					setPass(res.data);
 				} else {
-					setPass(DEMO_PASS);
+					setError(res.error ?? "Day pass not found");
 				}
 			})
 			.catch(() => {
-				setPass(DEMO_PASS);
+				setError("Failed to load day pass");
 			})
 			.finally(() => setLoading(false));
 	}, [id]);
@@ -61,7 +51,36 @@ export function DayPassDetail() {
 		return () => clearInterval(interval);
 	}, [pass]);
 
-	if (loading || !pass) return <Loading />;
+	if (loading) return <Loading />;
+
+	if (error || !pass) {
+		return (
+			<div className="p-4 pb-20 text-center">
+				<svg
+					viewBox="0 0 24 24"
+					style={{ width: "48px", height: "48px", margin: "48px auto 16px" }}
+					fill="none"
+					stroke="#FF3B30"
+					strokeWidth={1.5}
+				>
+					<circle cx="12" cy="12" r="10" />
+					<line x1="15" y1="9" x2="9" y2="15" />
+					<line x1="9" y1="9" x2="15" y2="15" />
+				</svg>
+				<h2 className="text-lg font-bold text-tg-text">{error ?? "Day Pass Not Found"}</h2>
+				<p className="text-sm text-[#8E8E93] mt-2">
+					This day pass doesn't exist or has expired.
+				</p>
+				<button
+					type="button"
+					onClick={() => navigate("/gyms")}
+					className="mt-6 px-6 py-3 rounded-xl bg-[#00C853] text-white font-bold"
+				>
+					Browse Gyms
+				</button>
+			</div>
+		);
+	}
 
 	return (
 		<div className="p-4 pb-20 text-center">

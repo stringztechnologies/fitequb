@@ -5,6 +5,7 @@ function isTelegramWebApp(): boolean {
 }
 
 function isDemoOverride(): boolean {
+	if (import.meta.env.MODE !== "development") return false;
 	return new URLSearchParams(window.location.search).get("demo") === "true";
 }
 

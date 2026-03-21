@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { api } from "../lib/api.js";
 
 const STORAGE_KEY = "fitequb_onboarded";
 
@@ -30,14 +31,30 @@ const screens = [
 export function Onboarding() {
 	const [current, setCurrent] = useState(0);
 	const [direction, setDirection] = useState(0); // -1 left, 0 none, 1 right
+	const [registering, setRegistering] = useState(false);
+	const [registerError, setRegisterError] = useState<string | null>(null);
 	const isLast = current === screens.length - 1;
 	const screen = screens[current]!;
 
-	const complete = useCallback(() => {
+	const hasTelegram = Boolean(window.Telegram?.WebApp?.initData);
+
+	const complete = useCallback(async () => {
+		if (!hasTelegram) {
+			// Not in Telegram — can't register
+			setRegisterError("Please open FitEqub inside Telegram to get started.");
+			return;
+		}
+		setRegistering(true);
+		setRegisterError(null);
+		const res = await api<unknown>("/api/auth/login", { method: "POST", body: JSON.stringify({}) });
+		setRegistering(false);
+		if (res.error) {
+			setRegisterError("Registration failed. Please try again.");
+			return;
+		}
 		localStorage.setItem(STORAGE_KEY, "true");
-		// Force a fresh page load to re-evaluate isOnboarded()
 		window.location.href = "/";
-	}, []);
+	}, [hasTelegram]);
 
 	function goNext() {
 		if (isLast) {
@@ -210,10 +227,26 @@ export function Onboarding() {
 				))}
 			</div>
 
+			{/* Registration error */}
+			{registerError && (
+				<p
+					style={{
+						fontSize: 14,
+						color: "#FF3B30",
+						textAlign: "center",
+						margin: "0 0 12px",
+						maxWidth: 320,
+					}}
+				>
+					{registerError}
+				</p>
+			)}
+
 			{/* Action button — gradient shimmer */}
 			<button
 				type="button"
 				onClick={goNext}
+				disabled={registering}
 				style={{
 					width: "100%",
 					maxWidth: 320,
@@ -230,9 +263,10 @@ export function Onboarding() {
 					boxShadow: "0 4px 20px rgba(0,200,83,0.3)",
 					position: "relative",
 					zIndex: 5,
+					opacity: registering ? 0.6 : 1,
 				}}
 			>
-				{isLast ? "Get Started" : "Next"}
+				{registering ? "Setting up..." : isLast ? "Get Started" : "Next"}
 			</button>
 
 			{/* Shimmer animation */}

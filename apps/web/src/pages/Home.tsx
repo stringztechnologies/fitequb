@@ -39,7 +39,7 @@ export function Home() {
     : 75;
 
   const circ = 2 * Math.PI * 80;
-  const displayAmount = profile?.total_points ?? 12500;
+  const displayAmount = profile?.total_points ?? 0;
 
   const isDemo = !profile;
 

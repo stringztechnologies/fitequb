@@ -18,19 +18,75 @@ export function Payment() {
 	const location = useLocation();
 	const routeState = location.state as PaymentState | null;
 
+	// If no valid payment context, show error
+	if (!routeState || (!routeState.equbId && routeState.type !== "gym_pass")) {
+		return (
+			<div className="px-4 pt-5 pb-24">
+				<div
+					style={{
+						textAlign: "center",
+						padding: "48px 24px",
+						backgroundColor: "#1c1c1e",
+						borderRadius: "16px",
+						border: "1px solid rgba(255,255,255,0.08)",
+						marginTop: "48px",
+					}}
+				>
+					<svg
+						viewBox="0 0 24 24"
+						style={{ width: "48px", height: "48px", margin: "0 auto 16px" }}
+						fill="none"
+						stroke="#FF3B30"
+						strokeWidth={1.5}
+					>
+						<circle cx="12" cy="12" r="10" />
+						<line x1="15" y1="9" x2="9" y2="15" />
+						<line x1="9" y1="9" x2="15" y2="15" />
+					</svg>
+					<h3 style={{ fontSize: "18px", fontWeight: 700, color: "#FFF", margin: "0 0 8px" }}>
+						Invalid Payment Session
+					</h3>
+					<p style={{ fontSize: "14px", color: "#8E8E93", margin: "0 0 24px", lineHeight: 1.5 }}>
+						This payment session is not valid. Please join an Equb or purchase a gym pass to proceed.
+					</p>
+					<button
+						type="button"
+						onClick={() => navigate(-1)}
+						style={{
+							padding: "12px 24px",
+							borderRadius: "12px",
+							backgroundColor: "#00C853",
+							color: "#FFF",
+							fontSize: "15px",
+							fontWeight: 700,
+							border: "none",
+							cursor: "pointer",
+						}}
+					>
+						Go Back
+					</button>
+				</div>
+			</div>
+		);
+	}
+
+	return <PaymentFlow routeState={routeState} />;
+}
+
+function PaymentFlow({ routeState }: { routeState: PaymentState }) {
+	const navigate = useNavigate();
+
 	const [timeLeft, setTimeLeft] = useState(899);
 	const [confirming, setConfirming] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	// Fallback demo values if no route state
-	const isGymPass = routeState?.type === "gym_pass";
-	const itemName = routeState?.equbName ?? "Bole Elite 10k";
-	const stakeAmount = routeState?.stakeAmount ?? 1000;
-	const payout = routeState?.payout ?? 25000;
-	const requirement = routeState?.requirement ?? "5 Gym Sessions/Week";
-	const equbId = routeState?.equbId;
+	const isGymPass = routeState.type === "gym_pass";
+	const itemName = routeState.equbName;
+	const stakeAmount = routeState.stakeAmount;
+	const payout = routeState.payout;
+	const requirement = routeState.requirement;
+	const equbId = routeState.equbId;
 	const total = stakeAmount + PROCESSING_FEE;
-	const isDemo = !equbId && !isGymPass;
 
 	useEffect(() => {
 		const t = setInterval(() => setTimeLeft((s) => Math.max(0, s - 1)), 1000);
@@ -43,15 +99,6 @@ export function Payment() {
 	async function handleConfirm() {
 		setConfirming(true);
 		setError(null);
-
-		if (isDemo) {
-			// Demo mode — simulate success after brief delay
-			setTimeout(() => {
-				setConfirming(false);
-				navigate("/win");
-			}, 1500);
-			return;
-		}
 
 		const res = await api<{ checkout_url: string; tx_ref: string }>(
 			`/api/equb-rooms/${equbId}/join`,
@@ -92,15 +139,6 @@ export function Payment() {
 				</svg>
 				Back
 			</button>
-
-			{/* Demo banner */}
-			{isDemo && (
-				<div className="rounded-[8px] bg-[rgba(255,152,0,0.15)] border border-[#FF9500] px-3 py-2 mb-4">
-					<p className="text-[12px] text-[#FF9500] font-medium m-0">
-						Demo Mode — This is a preview. Join a real Equb to make a payment.
-					</p>
-				</div>
-			)}
 
 			{/* Header with timer badge */}
 			<div className="flex items-center justify-between mb-5">

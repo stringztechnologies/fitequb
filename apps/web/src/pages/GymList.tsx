@@ -1,56 +1,7 @@
 import type { PartnerGym } from "@fitequb/shared";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Loading } from "../components/Loading.js";
 import { api } from "../lib/api.js";
-
-const DEMO_GYMS = [
-	{
-		id: "d1",
-		name: "Kuriftu Gym",
-		location: "Bole",
-		price: 150,
-		equbEligible: true,
-		distance: "1.2 km",
-		rating: 4.8,
-	},
-	{
-		id: "d2",
-		name: "Zebra Fitness",
-		location: "Lideta",
-		price: 180,
-		equbEligible: true,
-		distance: "2.5 km",
-		rating: 4.6,
-	},
-	{
-		id: "d3",
-		name: "O-Zone Gym",
-		location: "Kazanchis",
-		price: 200,
-		equbEligible: true,
-		distance: "3.1 km",
-		rating: 4.9,
-	},
-	{
-		id: "d4",
-		name: "Golden Gym",
-		location: "Bole",
-		price: 120,
-		equbEligible: false,
-		distance: "0.8 km",
-		rating: 4.2,
-	},
-	{
-		id: "d5",
-		name: "Fitness Point",
-		location: "Sarbet",
-		price: 160,
-		equbEligible: false,
-		distance: "4.0 km",
-		rating: 4.4,
-	},
-];
 
 const FILTERS = ["Near Me", "Top Rated", "Cheapest"] as const;
 
@@ -59,28 +10,18 @@ export function GymList() {
 	const [loading, setLoading] = useState(true);
 	const [filter, setFilter] = useState("Near Me");
 	const [search, setSearch] = useState("");
-	const navigate = useNavigate();
 
 	useEffect(() => {
 		api<PartnerGym[]>("/api/gyms")
 			.then((res) => {
-				if (res.data && res.data.length > 0) setGyms(res.data);
+				if (res.data) setGyms(res.data);
 			})
 			.finally(() => setLoading(false));
 	}, []);
 
 	if (loading) return <Loading />;
 
-	const hasReal = gyms.length > 0;
 	const q = search.toLowerCase();
-
-	const filteredDemos = DEMO_GYMS.filter(
-		(g) => !q || g.name.toLowerCase().includes(q) || g.location.toLowerCase().includes(q),
-	).sort((a, b) => {
-		if (filter === "Cheapest") return a.price - b.price;
-		if (filter === "Top Rated") return b.rating - a.rating;
-		return 0;
-	});
 
 	const filteredReal = gyms
 		.filter((g) => !q || g.name.toLowerCase().includes(q) || g.location.toLowerCase().includes(q))
@@ -206,135 +147,37 @@ export function GymList() {
 					gap: "12px",
 				}}
 			>
-				{hasReal
-					? filteredReal.map((g) => <RealGymCard key={g.id} gym={g} />)
-					: filteredDemos.map((g) => (
-							<DemoGymCard
-								key={g.id}
-								gym={g}
-								onBuy={() =>
-									navigate("/payment", {
-										state: {
-											type: "gym_pass",
-											equbName: g.name,
-											stakeAmount: g.price,
-											payout: 0,
-											requirement: `Day pass at ${g.name}`,
-										},
-									})
-								}
-							/>
-						))}
-			</div>
-		</div>
-	);
-}
-
-function DemoGymCard({
-	gym,
-	onBuy,
-}: {
-	gym: (typeof DEMO_GYMS)[number];
-	onBuy: () => void;
-}) {
-	return (
-		<div
-			style={{
-				position: "relative",
-				borderRadius: "12px",
-				border: "1px solid rgba(255,215,0,0.3)",
-				overflow: "hidden",
-				minHeight: "110px",
-				backgroundColor: "#1c1c1e",
-			}}
-		>
-			{/* Content */}
-			<div
-				style={{
-					position: "relative",
-					padding: "14px 16px",
-					display: "flex",
-					justifyContent: "space-between",
-					zIndex: 1,
-				}}
-			>
-				<div>
-					<h3
-						style={{
-							fontSize: "18px",
-							fontWeight: 700,
-							color: "#FFF",
-							margin: 0,
-						}}
-					>
-						{gym.name}
-					</h3>
+				{filteredReal.length > 0 ? (
+					filteredReal.map((g) => <RealGymCard key={g.id} gym={g} />)
+				) : (
 					<div
 						style={{
-							display: "flex",
-							alignItems: "center",
-							gap: "8px",
-							marginTop: "2px",
+							textAlign: "center",
+							padding: "48px 24px",
+							backgroundColor: "#1c1c1e",
+							borderRadius: "16px",
+							border: "1px solid rgba(255,255,255,0.08)",
 						}}
 					>
-						<span style={{ fontSize: "12px", color: "#8E8E93" }}>{gym.location}</span>
-						<span style={{ fontSize: "11px", color: "#FFD700" }}>{gym.distance}</span>
-						<span style={{ fontSize: "11px", color: "#FF9500" }}>&#9733; {gym.rating}</span>
-					</div>
-					<p
-						style={{
-							fontSize: "20px",
-							fontWeight: 700,
-							color: "#FFD700",
-							margin: "6px 0 0",
-						}}
-					>
-						{gym.price} ETB
-					</p>
-				</div>
-				<div
-					style={{
-						display: "flex",
-						flexDirection: "column",
-						alignItems: "flex-end",
-						gap: "8px",
-					}}
-				>
-					{gym.equbEligible && (
-						<span
-							style={{
-								padding: "4px 8px",
-								borderRadius: "4px",
-								backgroundColor: "#00C853",
-								color: "#FFF",
-								fontSize: "11px",
-								fontWeight: 700,
-								display: "flex",
-								alignItems: "center",
-								gap: "4px",
-							}}
-							title="Check-ins here count toward your Equb workout target"
+						<svg
+							viewBox="0 0 24 24"
+							style={{ width: "48px", height: "48px", margin: "0 auto 16px" }}
+							fill="none"
+							stroke="#3a3a3c"
+							strokeWidth={1.5}
 						>
-							Equb Eligible &#10003;
-						</span>
-					)}
-					<button
-						type="button"
-						onClick={onBuy}
-						style={{
-							padding: "8px 20px",
-							borderRadius: "8px",
-							backgroundColor: gym.equbEligible ? "#00C853" : "#FFD700",
-							color: gym.equbEligible ? "#FFF" : "#0a0a0a",
-							fontSize: "14px",
-							fontWeight: 700,
-							border: "none",
-							cursor: "pointer",
-						}}
-					>
-						Buy Pass
-					</button>
-				</div>
+							<path d="M6.5 6.5h11M4 12h16M6.5 17.5h11M2 10h2v4H2zm18 0h2v4h-2z" />
+						</svg>
+						<h3 style={{ fontSize: "18px", fontWeight: 700, color: "#FFF", margin: "0 0 8px" }}>
+							{q ? "No Gyms Found" : "No Partner Gyms Yet"}
+						</h3>
+						<p style={{ fontSize: "14px", color: "#8E8E93", margin: 0, lineHeight: 1.5 }}>
+							{q
+								? "Try a different search term."
+								: "Partner gyms will appear here once available in your area."}
+						</p>
+					</div>
+				)}
 			</div>
 		</div>
 	);

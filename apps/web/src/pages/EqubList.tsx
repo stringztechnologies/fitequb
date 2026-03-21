@@ -4,42 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { Loading } from "../components/Loading.js";
 import { api } from "../lib/api.js";
 
-const DEMO_ROOMS = [
-	{
-		id: "demo-1",
-		name: "Bole Elite 10k",
-		stake: 500,
-		payout: 10000,
-		max: 20,
-		filled: 18,
-		req: "10k Steps/Day",
-		endMs: 2 * 3600000 + 45 * 60000,
-		status: "active",
-	},
-	{
-		id: "demo-2",
-		name: "Sarbet Steppers",
-		stake: 1000,
-		payout: 25000,
-		max: 20,
-		filled: 12,
-		req: "5 Gym Sessions/Week",
-		endMs: 8 * 3600000 + 12 * 60000,
-		status: "active",
-	},
-	{
-		id: "demo-3",
-		name: "Kazanchis Runners",
-		stake: 250,
-		payout: 5000,
-		max: 15,
-		filled: 8,
-		req: "15k Steps/Day",
-		endMs: 55 * 60000,
-		status: "pending",
-	},
-];
-
 export function EqubList() {
 	const [rooms, setRooms] = useState<EqubRoom[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -48,14 +12,12 @@ export function EqubList() {
 	useEffect(() => {
 		api<EqubRoom[]>("/api/equb-rooms")
 			.then((res) => {
-				if (res.data && res.data.length > 0) setRooms(res.data);
+				if (res.data) setRooms(res.data);
 			})
 			.finally(() => setLoading(false));
 	}, []);
 
 	if (loading) return <Loading />;
-
-	const hasReal = rooms.length > 0;
 
 	return (
 		<div style={{ backgroundColor: "#0a0a0a", paddingBottom: "96px" }}>
@@ -106,164 +68,51 @@ export function EqubList() {
 					gap: "12px",
 				}}
 			>
-				{hasReal
-					? rooms.map((r) => (
-							<RealCard key={r.id} room={r} onClick={() => navigate(`/equbs/${r.id}`)} />
-						))
-					: DEMO_ROOMS.map((r) => (
-							<DemoCard key={r.id} room={r} onClick={() => navigate(`/equbs/${r.id}`)} />
-						))}
+				{rooms.length > 0 ? (
+					rooms.map((r) => (
+						<RealCard key={r.id} room={r} onClick={() => navigate(`/equbs/${r.id}`)} />
+					))
+				) : (
+					<EmptyState
+						title="No Equb Rooms Yet"
+						description="Create a new Equb or wait for others to start one. Invite your friends to get started!"
+					/>
+				)}
 			</div>
 		</div>
 	);
 }
 
-function DemoCard({
-	room,
-	onClick,
-}: {
-	room: (typeof DEMO_ROOMS)[number];
-	onClick: () => void;
-}) {
-	const end = new Date(Date.now() + room.endMs).toISOString();
-	const countdown = useCd(end);
-	const fillPct = Math.round((room.filled / room.max) * 100);
-
+function EmptyState({ title, description }: { title: string; description: string }) {
 	return (
-		<button type="button" onClick={onClick} style={cardStyle}>
-			<p
-				style={{
-					fontSize: "16px",
-					fontWeight: 700,
-					color: "#FFF",
-					margin: 0,
-					padding: "14px 16px 0",
-				}}
+		<div
+			style={{
+				textAlign: "center",
+				padding: "48px 24px",
+				backgroundColor: "#1c1c1e",
+				borderRadius: "16px",
+				border: "1px solid rgba(255,255,255,0.08)",
+			}}
+		>
+			<svg
+				viewBox="0 0 24 24"
+				style={{ width: "48px", height: "48px", margin: "0 auto 16px" }}
+				fill="none"
+				stroke="#3a3a3c"
+				strokeWidth={1.5}
 			>
-				{room.name}
+				<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+				<circle cx="9" cy="7" r="4" />
+				<path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+				<path d="M16 3.13a4 4 0 0 1 0 7.75" />
+			</svg>
+			<h3 style={{ fontSize: "18px", fontWeight: 700, color: "#FFF", margin: "0 0 8px" }}>
+				{title}
+			</h3>
+			<p style={{ fontSize: "14px", color: "#8E8E93", margin: 0, lineHeight: 1.5 }}>
+				{description}
 			</p>
-			<div
-				style={{
-					padding: "8px 16px 8px",
-					display: "flex",
-					justifyContent: "space-between",
-					alignItems: "flex-start",
-					gap: "12px",
-				}}
-			>
-				<div
-					style={{
-						backgroundColor: "#2c2c2e",
-						border: "1px solid rgba(255,215,0,0.3)",
-						borderRadius: "8px",
-						padding: "8px 12px",
-					}}
-				>
-					<p
-						style={{
-							fontSize: "15px",
-							fontWeight: 700,
-							color: "#FFF",
-							margin: 0,
-						}}
-					>
-						Entry: <span style={{ color: "#FFD700" }}>{room.stake} ETB</span>
-					</p>
-					<p
-						style={{
-							fontSize: "15px",
-							fontWeight: 700,
-							color: "#FFF",
-							margin: "2px 0 0",
-						}}
-					>
-						Payout: <span style={{ color: "#FFD700" }}>{room.payout.toLocaleString()} ETB</span>
-					</p>
-				</div>
-				<div
-					style={{
-						display: "flex",
-						flexDirection: "column",
-						alignItems: "flex-end",
-						gap: "6px",
-					}}
-				>
-					{countdown && (
-						<div style={{ textAlign: "right" }}>
-							<p
-								style={{
-									fontSize: "10px",
-									color: "#FF9500",
-									textTransform: "uppercase",
-									letterSpacing: "0.05em",
-									margin: 0,
-								}}
-							>
-								Closes in
-							</p>
-							<p
-								style={{
-									fontSize: "24px",
-									fontWeight: 700,
-									color: cdColor(end),
-									fontFamily: "monospace",
-									fontVariantNumeric: "tabular-nums",
-									margin: "2px 0 0",
-								}}
-							>
-								{countdown}
-							</p>
-						</div>
-					)}
-					<span
-						style={{
-							padding: "6px 16px",
-							borderRadius: "8px",
-							border: "1px solid #FFD700",
-							color: "#FFD700",
-							fontSize: "14px",
-							fontWeight: 600,
-						}}
-					>
-						Join Now
-					</span>
-				</div>
-			</div>
-			<div
-				style={{
-					padding: "4px 16px 8px",
-					display: "flex",
-					alignItems: "center",
-					gap: "6px",
-				}}
-			>
-				<span style={{ color: "#00C853", fontSize: "14px" }}>&#9679;</span>
-				<span style={{ fontSize: "14px", color: "#FFF" }}>{room.req}</span>
-			</div>
-			<div style={{ padding: "0 16px 14px" }}>
-				<p style={{ fontSize: "12px", color: "#8E8E93", margin: "0 0 4px" }}>
-					{room.filled}/{room.max} spots filled
-				</p>
-				<div
-					style={{
-						width: "100%",
-						height: "6px",
-						backgroundColor: "#2c2c2e",
-						borderRadius: "3px",
-						overflow: "hidden",
-					}}
-				>
-					<div
-						style={{
-							width: `${fillPct}%`,
-							height: "100%",
-							backgroundColor: "#00C853",
-							borderRadius: "3px",
-						}}
-					/>
-				</div>
-			</div>
-		</button>
+		</div>
 	);
 }
 
@@ -335,13 +184,6 @@ const cardStyle: React.CSSProperties = {
 	cursor: "pointer",
 	overflow: "hidden",
 };
-
-function cdColor(end: string): string {
-	const d = new Date(end).getTime() - Date.now();
-	if (d < 3600000) return "#FF3B30";
-	if (d < 7200000) return "#FF9500";
-	return "#FFD700";
-}
 
 function useCd(end: string): string | null {
 	const [n, sn] = useState(Date.now());
