@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Loading } from "../components/Loading.js";
 import { api } from "../lib/api.js";
 
@@ -11,6 +11,7 @@ interface LeaderboardEntry {
 
 export function Leaderboard() {
 	const { id } = useParams<{ id: string }>();
+	const navigate = useNavigate();
 	const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [steps, setSteps] = useState("");
@@ -53,6 +54,23 @@ export function Leaderboard() {
 
 	return (
 		<div className="px-4 pt-5 pb-24">
+			{/* Back button */}
+			<button
+				type="button"
+				onClick={() => navigate(-1)}
+				className="flex items-center gap-1 text-[#8E8E93] text-[14px] mb-4"
+			>
+				<svg
+					viewBox="0 0 24 24"
+					className="w-4 h-4"
+					fill="none"
+					stroke="currentColor"
+					strokeWidth={2}
+				>
+					<path d="M15 18l-6-6 6-6" />
+				</svg>
+				Back
+			</button>
 			<h1 className="text-center text-lg font-bold text-white mb-1">Step Challenge Leaderboard</h1>
 
 			{/* Prize Pool */}
