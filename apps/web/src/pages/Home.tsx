@@ -5,404 +5,244 @@ import { useAuth } from "../hooks/useAuth.js";
 import { api } from "../lib/api.js";
 
 interface ProfileSummary {
-  total_points: number;
-  level: {
-    level: number;
-    name: string;
-    min_points: number;
-    perk: string | null;
-  };
-  next_level: { level: number; name: string; min_points: number } | null;
-  points_to_next: number;
+	total_points: number;
+	level: {
+		level: number;
+		name: string;
+		min_points: number;
+		perk: string | null;
+	};
+	next_level: { level: number; name: string; min_points: number } | null;
+	points_to_next: number;
 }
 
 export function Home() {
-  const { user, loading } = useAuth();
-  const [profile, setProfile] = useState<ProfileSummary | null>(null);
-  const navigate = useNavigate();
+	const { user, loading } = useAuth();
+	const [profile, setProfile] = useState<ProfileSummary | null>(null);
+	const navigate = useNavigate();
 
-  useEffect(() => {
-    api<ProfileSummary>("/api/gamification/profile").then((res) => {
-      if (res.data) setProfile(res.data);
-    });
-  }, []);
+	useEffect(() => {
+		api<ProfileSummary>("/api/gamification/profile").then((res) => {
+			if (res.data) setProfile(res.data);
+		});
+	}, []);
 
-  if (loading) return <Loading />;
+	if (loading) return <Loading />;
 
-  const progressPct = profile?.next_level
-    ? Math.min(
-        100,
-        ((profile.total_points - profile.level.min_points) /
-          (profile.next_level.min_points - profile.level.min_points)) *
-          100,
-      )
-    : 75;
+	const progressPct = profile?.next_level
+		? Math.min(
+				100,
+				((profile.total_points - profile.level.min_points) /
+					(profile.next_level.min_points - profile.level.min_points)) *
+					100,
+			)
+		: 75;
 
-  const circ = 2 * Math.PI * 80;
-  const displayAmount = profile?.total_points ?? 12500;
+	const circ = 2 * Math.PI * 80;
+	const displayAmount = profile?.total_points ?? 12500;
 
-  const isDemo = !profile;
+	const isDemo = !profile;
 
-  return (
-    <div className="pb-24" style={{ backgroundColor: "#0a0a0a" }}>
-      {/* Demo banner */}
-      {isDemo && (
-        <div
-          style={{
-            margin: "0 16px",
-            padding: "8px 12px",
-            borderRadius: "8px",
-            backgroundColor: "rgba(255,152,0,0.12)",
-            border: "1px solid rgba(255,152,0,0.3)",
-            marginTop: "12px",
-          }}
-        >
-          <p
-            style={{
-              fontSize: "12px",
-              color: "#FF9500",
-              fontWeight: 500,
-              margin: 0,
-            }}
-          >
-            Demo Mode — Sign in via Telegram to see your real data
-          </p>
-        </div>
-      )}
+	return (
+		<div className="bg-background text-on-surface font-body pb-24">
+			{/* Header */}
+			<header className="fixed top-0 w-full z-50 bg-[#131313]/70 backdrop-blur-xl flex justify-between items-center px-5 h-16">
+				<h1 className="text-xl font-headline font-bold tracking-tight text-primary-container">
+					FitEqub
+				</h1>
+				<div className="flex items-center gap-1 bg-secondary-container/15 px-2.5 py-1 rounded-full">
+					<span className="text-sm">🔥</span>
+					<span className="text-sm font-bold text-secondary-container">7</span>
+				</div>
+			</header>
 
-      {/* Header — 36px bold per spec */}
-      <div className="px-4 pt-5 pb-1">
-        <h1
-          style={{
-            fontSize: "36px",
-            fontWeight: 700,
-            color: "#FFFFFF",
-            lineHeight: 1.1,
-          }}
-        >
-          FitEqub
-        </h1>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginTop: "4px",
-          }}
-        >
-          <p style={{ fontSize: "14px", color: "#8E8E93", margin: 0 }}>
-            {user
-              ? `Welcome, ${user.full_name}`
-              : "Stake. Sweat. Split the pot."}
-          </p>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              backgroundColor: "rgba(255,152,0,0.15)",
-              padding: "4px 10px",
-              borderRadius: "12px",
-            }}
-          >
-            <span style={{ fontSize: "14px" }}>&#128293;</span>
-            <span
-              style={{ fontSize: "14px", fontWeight: 700, color: "#FF9500" }}
-            >
-              7
-            </span>
-          </div>
-        </div>
-      </div>
+			{/* Spacer for fixed header */}
+			<div className="h-16" />
 
-      {/* Progress Ring Card — bg #1c1c1e, 16px radius, 24px padding */}
-      <div
-        style={{
-          margin: "24px 16px 0",
-          backgroundColor: "#1c1c1e",
-          borderRadius: "16px",
-          padding: "24px",
-          textAlign: "center",
-        }}
-      >
-        {/* Title case, not uppercase */}
-        <p
-          style={{
-            fontSize: "20px",
-            fontWeight: 700,
-            color: "#FFFFFF",
-            marginBottom: "16px",
-          }}
-        >
-          Your Progress
-        </p>
+			{/* Demo banner */}
+			{isDemo && (
+				<div className="mx-5 mt-3 px-3 py-2 rounded-lg bg-secondary-container/12 border border-secondary-container/30">
+					<p className="text-xs text-secondary-container font-medium">
+						Demo Mode — Sign in via Telegram to see your real data
+					</p>
+				</div>
+			)}
 
-        {/* SVG Ring — 200px, 8px stroke, green glow */}
-        <div className="flex justify-center">
-          <div
-            className="relative"
-            style={{
-              width: "200px",
-              height: "200px",
-              filter: "drop-shadow(0 0 20px rgba(0,200,83,0.5))",
-            }}
-          >
-            <svg
-              viewBox="0 0 200 200"
-              style={{
-                width: "100%",
-                height: "100%",
-                transform: "rotate(-90deg)",
-              }}
-            >
-              <circle
-                cx="100"
-                cy="100"
-                r="80"
-                fill="none"
-                stroke="#2c2c2e"
-                strokeWidth="8"
-              />
-              <circle
-                cx="100"
-                cy="100"
-                r="80"
-                fill="none"
-                stroke="#00C853"
-                strokeWidth="8"
-                strokeLinecap="round"
-                strokeDasharray={`${(progressPct / 100) * circ} ${circ}`}
-              />
-            </svg>
+			{/* Tagline */}
+			<div className="px-5 pt-6 pb-2">
+				<p className="text-on-surface-variant text-sm font-body">
+					{user ? `Welcome, ${user.full_name}` : "Stake. Sweat. Split the pot."}
+				</p>
+			</div>
 
-            {/* Center text */}
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "32px",
-                  fontWeight: 700,
-                  color: "#00C853",
-                  lineHeight: 1,
-                }}
-              >
-                {displayAmount.toLocaleString()} ETB
-              </span>
-              <span
-                style={{ fontSize: "14px", color: "#FFD700", marginTop: "4px" }}
-              >
-                Potential Payout
-              </span>
-              <span
-                style={{ fontSize: "11px", color: "#8E8E93", marginTop: "6px" }}
-              >
-                18/25 days completed
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+			{/* Progress Ring Section */}
+			<div className="mx-5 mt-4 bg-surface-container-low rounded-lg p-6 text-center">
+				{/* Payout label */}
+				<p className="font-label text-2xs uppercase tracking-[0.2em] text-on-surface-variant mb-4">
+					Your Progress
+				</p>
 
-      {/* Feature Cards — 3 cards, each with icon box + progress bar */}
-      <div
-        style={{
-          padding: "16px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "12px",
-        }}
-      >
-        <FeatureCard
-          title="Equb Rooms"
-          subtitle="Join a fitness accountability group"
-          badgeText="Ends in 2 days"
-          badgeGreen={false}
-          icon="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75"
-          progress={65}
-          onClick={() => navigate("/equbs")}
-        />
-        <FeatureCard
-          title="Gym Day Passes"
-          subtitle="Discounted single-visit passes"
-          badgeText="Discount Active"
-          badgeGreen
-          icon="M6.5 6.5h11M4 12h16M6.5 17.5h11M2 10h2v4H2zm18 0h2v4h-2z"
-          progress={40}
-          onClick={() => navigate("/gyms")}
-        />
-        <FeatureCard
-          title="Step Challenge"
-          subtitle="Compete on the city leaderboard"
-          badgeText="15,450 Steps"
-          badgeGreen
-          icon="M22 12 18 12 15 21 9 3 6 12 2 12"
-          progress={80}
-          onClick={() => navigate("/challenges")}
-        />
-      </div>
+				{/* SVG Ring */}
+				<div className="flex justify-center">
+					<div className="relative w-[200px] h-[200px] drop-shadow-[0_0_20px_rgba(63,229,108,0.5)]">
+						<svg
+							viewBox="0 0 200 200"
+							className="w-full h-full -rotate-90"
+						>
+							<circle
+								cx="100"
+								cy="100"
+								r="80"
+								fill="none"
+								className="stroke-surface-container-highest"
+								strokeWidth="8"
+							/>
+							<circle
+								cx="100"
+								cy="100"
+								r="80"
+								fill="none"
+								className="stroke-primary"
+								strokeWidth="8"
+								strokeLinecap="round"
+								strokeDasharray={`${(progressPct / 100) * circ} ${circ}`}
+							/>
+						</svg>
 
-      {/* Create Equb FAB */}
-      <button
-        type="button"
-        onClick={() => navigate("/equbs/create")}
-        style={{
-          position: "fixed",
-          bottom: "90px",
-          right: "max(16px, calc((100vw - 430px) / 2 + 16px))",
-          width: "56px",
-          height: "56px",
-          borderRadius: "50%",
-          backgroundColor: "#00C853",
-          border: "none",
-          cursor: "pointer",
-          boxShadow: "0 4px 16px rgba(0,200,83,0.4)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 40,
-        }}
-      >
-        <svg
-          viewBox="0 0 24 24"
-          style={{ width: "28px", height: "28px" }}
-          fill="none"
-          stroke="#FFF"
-          strokeWidth={2.5}
-        >
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-      </button>
-    </div>
-  );
+						{/* Center text */}
+						<div className="absolute inset-0 flex flex-col items-center justify-center">
+							<span className="font-headline text-4xl font-extrabold text-white">
+								{displayAmount.toLocaleString()}
+								<span className="font-label text-sm text-primary font-bold ml-1">
+									ETB
+								</span>
+							</span>
+							<span className="font-label text-xs text-secondary-container mt-1">
+								Potential Payout
+							</span>
+							<span className="font-label text-2xs text-on-surface-variant mt-1.5">
+								18/25 days completed
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			{/* Feature Cards */}
+			<div className="grid grid-cols-1 gap-5 px-5 pt-5">
+				<FeatureCard
+					title="Equb Rooms"
+					subtitle="Join a fitness accountability group"
+					badgeText="Ends in 2 days"
+					badgeGreen={false}
+					icon="groups"
+					progress={65}
+					onClick={() => navigate("/equbs")}
+				/>
+				<FeatureCard
+					title="Gym Day Passes"
+					subtitle="Discounted single-visit passes"
+					badgeText="Discount Active"
+					badgeGreen
+					icon="fitness_center"
+					progress={40}
+					onClick={() => navigate("/gyms")}
+				/>
+				<FeatureCard
+					title="Step Challenge"
+					subtitle="Compete on the city leaderboard"
+					badgeText="15,450 Steps"
+					badgeGreen
+					icon="directions_walk"
+					progress={80}
+					variant="challenge"
+					onClick={() => navigate("/challenges")}
+				/>
+			</div>
+
+			{/* Create Equb FAB */}
+			<button
+				type="button"
+				onClick={() => navigate("/equbs/create")}
+				className="fixed bottom-32 right-6 w-16 h-16 bg-primary text-on-primary-container rounded-full shadow-2xl shadow-primary/40 flex items-center justify-center z-40 active:scale-95 transition-transform"
+			>
+				<span className="material-symbols-outlined text-3xl">add</span>
+			</button>
+		</div>
+	);
 }
 
 function FeatureCard({
-  title,
-  subtitle,
-  badgeText,
-  badgeGreen,
-  icon,
-  progress,
-  onClick,
+	title,
+	subtitle,
+	badgeText,
+	badgeGreen,
+	icon,
+	progress,
+	variant,
+	onClick,
 }: {
-  title: string;
-  subtitle: string;
-  badgeText: string;
-  badgeGreen: boolean;
-  icon: string;
-  progress: number;
-  onClick: () => void;
+	title: string;
+	subtitle: string;
+	badgeText: string;
+	badgeGreen: boolean;
+	icon: string;
+	progress: number;
+	variant?: "challenge";
+	onClick: () => void;
 }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        gap: "12px",
-        backgroundColor: "#1c1c1e",
-        borderRadius: "16px",
-        padding: "16px",
-        border: "none",
-        textAlign: "left",
-        cursor: "pointer",
-      }}
-    >
-      {/* Left icon box — 48x48, gold tint bg, 12px radius */}
-      <div
-        style={{
-          width: "48px",
-          height: "48px",
-          minWidth: "48px",
-          backgroundColor: "rgba(255,215,0,0.15)",
-          borderRadius: "12px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <svg
-          viewBox="0 0 24 24"
-          style={{ width: "24px", height: "24px" }}
-          fill="none"
-          stroke="#FFD700"
-          strokeWidth={1.8}
-        >
-          <path d={icon} />
-        </svg>
-      </div>
+	const isChallenge = variant === "challenge";
 
-      {/* Content + Chevron */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <span style={{ fontSize: "18px", fontWeight: 700, color: "#FFFFFF" }}>
-            {title}
-          </span>
-          <span
-            style={{
-              fontSize: "12px",
-              color: badgeGreen ? "#00C853" : "#8E8E93",
-              fontWeight: 600,
-              marginLeft: "8px",
-              flexShrink: 0,
-            }}
-          >
-            {badgeText}
-          </span>
-        </div>
-        <p style={{ fontSize: "13px", color: "#8E8E93", marginTop: "2px" }}>
-          {subtitle}
-        </p>
+	return (
+		<button
+			type="button"
+			onClick={onClick}
+			className={`w-full text-left rounded-lg p-6 relative overflow-hidden transition-transform active:scale-[0.98] ${
+				isChallenge
+					? "bg-surface-container border-l-4 border-primary/30"
+					: "bg-surface-container-low"
+			}`}
+		>
+			<div className="flex items-start justify-between mb-3">
+				<div className="flex items-center gap-3">
+					{/* Icon */}
+					<div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center">
+						<span className="material-symbols-outlined text-xl text-primary">
+							{icon}
+						</span>
+					</div>
+					<div>
+						<h3 className="font-headline text-xl text-white">{title}</h3>
+						<p className="text-on-surface-variant text-sm font-body mt-0.5">
+							{subtitle}
+						</p>
+					</div>
+				</div>
 
-        {/* Green progress bar — 4px height */}
-        <div
-          style={{
-            width: "100%",
-            height: "4px",
-            backgroundColor: "#2c2c2e",
-            borderRadius: "2px",
-            marginTop: "8px",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              width: `${progress}%`,
-              height: "100%",
-              backgroundColor: "#00C853",
-              borderRadius: "2px",
-            }}
-          />
-        </div>
-      </div>
+				{/* Badge */}
+				<span
+					className={`font-label text-2xs font-bold px-3 py-1 rounded-full shrink-0 ${
+						badgeGreen
+							? "bg-secondary-container text-on-secondary-container"
+							: "bg-surface-container-highest text-on-surface-variant"
+					}`}
+				>
+					{badgeText}
+				</span>
+			</div>
 
-      {/* Chevron */}
-      <svg
-        viewBox="0 0 24 24"
-        style={{ width: "20px", height: "20px", flexShrink: 0 }}
-        fill="none"
-        stroke="#8E8E93"
-        strokeWidth={2}
-      >
-        <polyline points="9 18 15 12 9 6" />
-      </svg>
-    </button>
-  );
+			{/* Progress bar */}
+			<div className="mt-2">
+				<div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+					<div
+						className="h-full bg-primary rounded-full shadow-[0_0_12px_rgba(63,229,108,0.4)]"
+						style={{ width: `${progress}%` }}
+					/>
+				</div>
+				<p className="font-label text-xs text-primary font-bold uppercase tracking-wider mt-2">
+					{progress}% Complete
+				</p>
+			</div>
+		</button>
+	);
 }

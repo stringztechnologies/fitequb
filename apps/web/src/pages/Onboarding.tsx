@@ -6,26 +6,36 @@ const screens = [
 	{
 		title: "Stake",
 		subtitle: "Put your money where your muscles are",
-		description: "Stake 100–1,000 ETB to join a 30-day fitness challenge with your crew.",
-		color: "#FFD700",
-		glowColor: "rgba(255,215,0,0.3)",
+		description: "Stake 100-1,000 ETB to join a 30-day fitness challenge with your crew.",
+		colorClass: "text-secondary-container",
+		glowClass: "bg-secondary-container/30",
 	},
 	{
 		title: "Sweat",
 		subtitle: "Hit your daily targets",
 		description: "Log steps, gym check-ins, or photo proof. Hit 80% of your goals to qualify.",
-		color: "#00C853",
-		glowColor: "rgba(0,200,83,0.3)",
+		colorClass: "text-primary",
+		glowClass: "bg-primary/30",
 	},
 	{
 		title: "Win",
 		subtitle: "Your fitness literally pays you",
 		description:
 			"Complete the challenge and split the pot. Those who quit lose their stake to you.",
-		color: "#FFD700",
-		glowColor: "rgba(255,215,0,0.3)",
+		colorClass: "text-secondary-container",
+		glowClass: "bg-secondary-container/30",
 	},
 ];
+
+// SVG illustrations need raw hex values — pull from the design tokens
+const svgColors = {
+	gold: "#ffdb3c",
+	goldLight: "#ffe16d",
+	green: "#3fe56c",
+	greenDark: "#006e2a",
+	surface: "#201f1f",
+	surfaceHigh: "#353534",
+};
 
 export function Onboarding() {
 	const [current, setCurrent] = useState(0);
@@ -72,63 +82,34 @@ export function Onboarding() {
 		<div
 			onTouchStart={handleTouchStart}
 			onTouchEnd={handleTouchEnd}
-			style={{
-				minHeight: "100vh",
-				backgroundColor: "#0a0a0a",
-				display: "flex",
-				flexDirection: "column",
-				alignItems: "center",
-				justifyContent: "center",
-				padding: "40px 24px",
-				position: "relative",
-				overflow: "hidden",
-			}}
+			className="min-h-screen bg-background text-on-surface font-body flex flex-col items-center justify-center px-6 py-10 relative overflow-hidden"
 		>
 			{/* Background glow */}
 			<div
+				className={`absolute top-[20%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full pointer-events-none transition-all duration-500 ${screen.glowClass}`}
 				style={{
-					position: "absolute",
-					top: "20%",
-					left: "50%",
-					transform: "translate(-50%, -50%)",
-					width: "300px",
-					height: "300px",
-					borderRadius: "50%",
-					background: `radial-gradient(circle, ${screen.glowColor} 0%, transparent 70%)`,
-					transition: "background 0.5s ease",
-					pointerEvents: "none",
+					background: `radial-gradient(circle, currentColor 0%, transparent 70%)`,
 				}}
 			/>
 
 			{/* Floating particles */}
-			<FloatingParticles color={screen.color} />
+			<FloatingParticles screenIndex={current} />
 
 			{/* Skip */}
 			{!isLast && (
 				<button
 					type="button"
 					onClick={complete}
-					style={{
-						position: "absolute",
-						top: 16,
-						right: 16,
-						background: "none",
-						border: "none",
-						color: "#8E8E93",
-						fontSize: 14,
-						cursor: "pointer",
-						padding: "8px 12px",
-						zIndex: 10,
-					}}
+					className="absolute top-4 right-4 bg-transparent border-none text-on-surface-variant text-sm cursor-pointer px-3 py-2 z-10 font-label uppercase tracking-widest"
 				>
 					Skip
 				</button>
 			)}
 
-			{/* Illustration — animated SVG */}
+			{/* Illustration -- animated SVG */}
 			<div
+				className="mb-8 transition-all duration-200 ease-out"
 				style={{
-					marginBottom: 32,
 					transform:
 						direction === 1
 							? "translateX(-100px)"
@@ -136,7 +117,6 @@ export function Onboarding() {
 								? "translateX(100px)"
 								: "translateX(0)",
 					opacity: direction !== 0 ? 0 : 1,
-					transition: "all 0.2s ease-out",
 				}}
 			>
 				{current === 0 && <CoinPotIllustration />}
@@ -146,15 +126,11 @@ export function Onboarding() {
 
 			{/* Title */}
 			<h1
+				className={`font-headline text-4xl font-extrabold tracking-tight text-center mb-2 transition-all duration-200 ease-out ${screen.colorClass}`}
 				style={{
-					fontSize: 36,
-					fontWeight: 800,
-					color: screen.color,
-					margin: "0 0 8px",
-					textAlign: "center",
+					transitionDelay: "0.05s",
 					transform: direction !== 0 ? `translateX(${direction * -60}px)` : "translateX(0)",
 					opacity: direction !== 0 ? 0 : 1,
-					transition: "all 0.2s ease-out 0.05s",
 				}}
 			>
 				{screen.title}
@@ -162,15 +138,11 @@ export function Onboarding() {
 
 			{/* Subtitle */}
 			<p
+				className="font-headline text-lg font-semibold text-on-surface text-center mb-3 transition-all duration-200 ease-out"
 				style={{
-					fontSize: 18,
-					fontWeight: 600,
-					color: "#FFFFFF",
-					margin: "0 0 12px",
-					textAlign: "center",
+					transitionDelay: "0.1s",
 					transform: direction !== 0 ? `translateX(${direction * -40}px)` : "translateX(0)",
 					opacity: direction !== 0 ? 0 : 1,
-					transition: "all 0.2s ease-out 0.1s",
 				}}
 			>
 				{screen.subtitle}
@@ -178,58 +150,37 @@ export function Onboarding() {
 
 			{/* Description */}
 			<p
+				className="text-on-surface-variant text-[15px] leading-relaxed text-center mb-12 max-w-[300px] transition-all duration-200 ease-out"
 				style={{
-					fontSize: 15,
-					lineHeight: 1.6,
-					color: "#8E8E93",
-					textAlign: "center",
-					margin: "0 0 48px",
-					maxWidth: 300,
+					transitionDelay: "0.15s",
 					transform: direction !== 0 ? `translateX(${direction * -20}px)` : "translateX(0)",
 					opacity: direction !== 0 ? 0 : 1,
-					transition: "all 0.2s ease-out 0.15s",
 				}}
 			>
 				{screen.description}
 			</p>
 
 			{/* Dot indicators */}
-			<div style={{ display: "flex", gap: 8, marginBottom: 28 }}>
+			<div className="flex gap-2 mb-7">
 				{screens.map((s, i) => (
 					<div
 						key={s.title}
-						style={{
-							width: i === current ? 28 : 8,
-							height: 8,
-							borderRadius: 4,
-							backgroundColor: i === current ? screen.color : "#3a3a3c",
-							transition: "all 0.4s ease",
-							boxShadow: i === current ? `0 0 8px ${screen.glowColor}` : "none",
-						}}
+						className={`h-2 rounded-full transition-all duration-400 ${
+							i === current
+								? `w-7 ${current === 1 ? "bg-primary shadow-glow" : "bg-secondary-container shadow-glow-gold"}`
+								: "w-2 bg-surface-container-highest"
+						}`}
 					/>
 				))}
 			</div>
 
-			{/* Action button — gradient shimmer */}
+			{/* Action button -- gradient shimmer */}
 			<button
 				type="button"
 				onClick={goNext}
+				className="w-full max-w-[320px] py-4 rounded-full border-none bg-gradient-to-r from-primary to-secondary-container text-on-primary text-[17px] font-headline font-bold cursor-pointer shadow-glow-strong relative z-[5] animate-shimmer"
 				style={{
-					width: "100%",
-					maxWidth: 320,
-					padding: "16px 0",
-					borderRadius: 14,
-					border: "none",
-					background: "linear-gradient(135deg, #00C853 0%, #00E676 40%, #FFD700 100%)",
 					backgroundSize: "200% 200%",
-					animation: "shimmer 3s ease infinite",
-					color: "#0a0a0a",
-					fontSize: 17,
-					fontWeight: 700,
-					cursor: "pointer",
-					boxShadow: "0 4px 20px rgba(0,200,83,0.3)",
-					position: "relative",
-					zIndex: 5,
 				}}
 			>
 				{isLast ? "Get Started" : "Next"}
@@ -241,7 +192,8 @@ export function Onboarding() {
 					0% { background-position: 0% 50%; }
 					50% { background-position: 100% 50%; }
 					100% { background-position: 0% 50%; }
-				}`}
+				}
+				.animate-shimmer { animation: shimmer 3s ease infinite; }`}
 			</style>
 		</div>
 	);
@@ -251,9 +203,10 @@ export function isOnboarded(): boolean {
 	return localStorage.getItem(STORAGE_KEY) === "true";
 }
 
-// ── Floating Particles ──
+// -- Floating Particles --
 
-function FloatingParticles({ color }: { color: string }) {
+function FloatingParticles({ screenIndex }: { screenIndex: number }) {
+	const color = screenIndex === 1 ? svgColors.green : svgColors.gold;
 	const [particles] = useState(() =>
 		Array.from({ length: 12 }, (_, i) => ({
 			id: i,
@@ -266,24 +219,16 @@ function FloatingParticles({ color }: { color: string }) {
 	);
 
 	return (
-		<div
-			style={{
-				position: "absolute",
-				inset: 0,
-				pointerEvents: "none",
-				overflow: "hidden",
-			}}
-		>
+		<div className="absolute inset-0 pointer-events-none overflow-hidden">
 			{particles.map((p) => (
 				<div
 					key={p.id}
+					className="absolute rounded-full"
 					style={{
-						position: "absolute",
 						left: `${p.x}%`,
 						bottom: "-10px",
 						width: `${p.size}px`,
 						height: `${p.size}px`,
-						borderRadius: "50%",
 						backgroundColor: color,
 						opacity: p.opacity,
 						animation: `float-up ${p.duration}s ease-in-out ${p.delay}s infinite`,
@@ -301,39 +246,39 @@ function FloatingParticles({ color }: { color: string }) {
 	);
 }
 
-// ── Animated SVG Illustrations (120px+) ──
+// -- Animated SVG Illustrations (120px+) --
 
 function CoinPotIllustration() {
 	return (
 		<svg width="180" height="180" viewBox="0 0 180 180" fill="none">
 			{/* Pot glow */}
-			<ellipse cx="90" cy="140" rx="50" ry="8" fill="rgba(255,215,0,0.1)" />
+			<ellipse cx="90" cy="140" rx="50" ry="8" fill="rgba(255,219,60,0.1)" />
 			{/* Pot body */}
 			<path
 				d="M55 90 C55 90 48 135 55 135 L125 135 C132 135 125 90 125 90 Z"
-				fill="#2c2c2e"
-				stroke="#3a3a3c"
+				fill={svgColors.surface}
+				stroke={svgColors.surfaceHigh}
 				strokeWidth="2"
 			/>
-			<ellipse cx="90" cy="90" rx="35" ry="10" fill="#3a3a3c" />
+			<ellipse cx="90" cy="90" rx="35" ry="10" fill={svgColors.surfaceHigh} />
 			{/* Animated coins */}
 			<g style={{ animation: "coin-fall-1 2s ease-in-out infinite" }}>
-				<ellipse cx="70" cy="35" rx="14" ry="5" fill="#FFD700" />
-				<ellipse cx="70" cy="33" rx="14" ry="5" fill="#FFF176" opacity="0.5" />
+				<ellipse cx="70" cy="35" rx="14" ry="5" fill={svgColors.gold} />
+				<ellipse cx="70" cy="33" rx="14" ry="5" fill={svgColors.goldLight} opacity="0.5" />
 				<text x="70" y="38" textAnchor="middle" fontSize="7" fill="#8B6914" fontWeight="bold">
 					ETB
 				</text>
 			</g>
 			<g style={{ animation: "coin-fall-2 2.5s ease-in-out 0.3s infinite" }}>
-				<ellipse cx="105" cy="20" rx="14" ry="5" fill="#FFD700" />
-				<ellipse cx="105" cy="18" rx="14" ry="5" fill="#FFF176" opacity="0.5" />
+				<ellipse cx="105" cy="20" rx="14" ry="5" fill={svgColors.gold} />
+				<ellipse cx="105" cy="18" rx="14" ry="5" fill={svgColors.goldLight} opacity="0.5" />
 				<text x="105" y="23" textAnchor="middle" fontSize="7" fill="#8B6914" fontWeight="bold">
 					ETB
 				</text>
 			</g>
 			<g style={{ animation: "coin-fall-3 2.2s ease-in-out 0.6s infinite" }}>
-				<ellipse cx="85" cy="55" rx="14" ry="5" fill="#FFD700" />
-				<ellipse cx="85" cy="53" rx="14" ry="5" fill="#FFF176" opacity="0.5" />
+				<ellipse cx="85" cy="55" rx="14" ry="5" fill={svgColors.gold} />
+				<ellipse cx="85" cy="53" rx="14" ry="5" fill={svgColors.goldLight} opacity="0.5" />
 				<text x="85" y="58" textAnchor="middle" fontSize="7" fill="#8B6914" fontWeight="bold">
 					ETB
 				</text>
@@ -343,7 +288,7 @@ function CoinPotIllustration() {
 				cx="45"
 				cy="60"
 				r="2"
-				fill="#FFD700"
+				fill={svgColors.gold}
 				opacity="0.6"
 				style={{ animation: "sparkle 1.5s ease infinite" }}
 			/>
@@ -351,7 +296,7 @@ function CoinPotIllustration() {
 				cx="135"
 				cy="55"
 				r="2.5"
-				fill="#FFD700"
+				fill={svgColors.gold}
 				opacity="0.5"
 				style={{ animation: "sparkle 1.8s ease 0.5s infinite" }}
 			/>
@@ -369,12 +314,12 @@ function RunnerIllustration() {
 	return (
 		<svg width="180" height="180" viewBox="0 0 180 180" fill="none">
 			{/* Ground with glow */}
-			<line x1="20" y1="150" x2="160" y2="150" stroke="#2c2c2e" strokeWidth="2" />
-			<ellipse cx="90" cy="150" rx="50" ry="4" fill="rgba(0,200,83,0.08)" />
-			{/* Running person — animated */}
+			<line x1="20" y1="150" x2="160" y2="150" stroke={svgColors.surface} strokeWidth="2" />
+			<ellipse cx="90" cy="150" rx="50" ry="4" fill="rgba(63,229,108,0.08)" />
+			{/* Running person -- animated */}
 			<g style={{ animation: "runner-bounce 1s ease-in-out infinite" }}>
 				{/* Head */}
-				<circle cx="95" cy="40" r="13" fill="#00C853" />
+				<circle cx="95" cy="40" r="13" fill={svgColors.green} />
 				<circle cx="95" cy="40" r="13" fill="url(#headGrad)" />
 				{/* Body */}
 				<line
@@ -382,7 +327,7 @@ function RunnerIllustration() {
 					y1="53"
 					x2="88"
 					y2="88"
-					stroke="#00C853"
+					stroke={svgColors.green}
 					strokeWidth="4"
 					strokeLinecap="round"
 				/>
@@ -392,7 +337,7 @@ function RunnerIllustration() {
 					y1="65"
 					x2="70"
 					y2="58"
-					stroke="#00C853"
+					stroke={svgColors.green}
 					strokeWidth="4"
 					strokeLinecap="round"
 				/>
@@ -401,7 +346,7 @@ function RunnerIllustration() {
 					y1="65"
 					x2="110"
 					y2="75"
-					stroke="#00C853"
+					stroke={svgColors.green}
 					strokeWidth="4"
 					strokeLinecap="round"
 				/>
@@ -411,7 +356,7 @@ function RunnerIllustration() {
 					y1="88"
 					x2="70"
 					y2="115"
-					stroke="#00C853"
+					stroke={svgColors.green}
 					strokeWidth="4"
 					strokeLinecap="round"
 				/>
@@ -420,7 +365,7 @@ function RunnerIllustration() {
 					y1="115"
 					x2="58"
 					y2="148"
-					stroke="#00C853"
+					stroke={svgColors.green}
 					strokeWidth="4"
 					strokeLinecap="round"
 				/>
@@ -429,7 +374,7 @@ function RunnerIllustration() {
 					y1="88"
 					x2="108"
 					y2="110"
-					stroke="#00C853"
+					stroke={svgColors.green}
 					strokeWidth="4"
 					strokeLinecap="round"
 				/>
@@ -438,12 +383,12 @@ function RunnerIllustration() {
 					y1="110"
 					x2="120"
 					y2="148"
-					stroke="#00C853"
+					stroke={svgColors.green}
 					strokeWidth="4"
 					strokeLinecap="round"
 				/>
 			</g>
-			{/* Sweat drops — animated */}
+			{/* Sweat drops -- animated */}
 			<circle
 				cx="115"
 				cy="38"
@@ -464,7 +409,7 @@ function RunnerIllustration() {
 				y1="65"
 				x2="55"
 				y2="65"
-				stroke="#00C853"
+				stroke={svgColors.green}
 				strokeWidth="2"
 				opacity="0.3"
 				style={{ animation: "motion-line 0.8s ease infinite" }}
@@ -474,7 +419,7 @@ function RunnerIllustration() {
 				y1="78"
 				x2="52"
 				y2="78"
-				stroke="#00C853"
+				stroke={svgColors.green}
 				strokeWidth="2"
 				opacity="0.25"
 				style={{ animation: "motion-line 0.8s ease 0.2s infinite" }}
@@ -484,7 +429,7 @@ function RunnerIllustration() {
 				y1="91"
 				x2="50"
 				y2="91"
-				stroke="#00C853"
+				stroke={svgColors.green}
 				strokeWidth="2"
 				opacity="0.2"
 				style={{ animation: "motion-line 0.8s ease 0.4s infinite" }}
@@ -492,7 +437,7 @@ function RunnerIllustration() {
 			<defs>
 				<radialGradient id="headGrad">
 					<stop offset="30%" stopColor="#00E676" />
-					<stop offset="100%" stopColor="#00C853" />
+					<stop offset="100%" stopColor={svgColors.green} />
 				</radialGradient>
 			</defs>
 			<style>
@@ -508,7 +453,7 @@ function TrophyIllustration() {
 	return (
 		<svg width="180" height="180" viewBox="0 0 180 180" fill="none">
 			{/* Trophy glow */}
-			<ellipse cx="90" cy="130" rx="45" ry="8" fill="rgba(255,215,0,0.15)" />
+			<ellipse cx="90" cy="130" rx="45" ry="8" fill="rgba(255,219,60,0.15)" />
 			{/* Trophy body */}
 			<g style={{ animation: "trophy-pulse 2s ease-in-out infinite" }}>
 				<path
@@ -520,21 +465,21 @@ function TrophyIllustration() {
 				{/* Handles */}
 				<path
 					d="M65 42 C52 42 47 55 53 68 L65 62"
-					stroke="#FFD700"
+					stroke={svgColors.gold}
 					strokeWidth="3.5"
 					fill="none"
 					strokeLinecap="round"
 				/>
 				<path
 					d="M115 42 C128 42 133 55 127 68 L115 62"
-					stroke="#FFD700"
+					stroke={svgColors.gold}
 					strokeWidth="3.5"
 					fill="none"
 					strokeLinecap="round"
 				/>
 				{/* Stem + base */}
 				<rect x="84" y="100" width="12" height="16" rx="2" fill="#E6C200" />
-				<rect x="70" y="116" width="40" height="8" rx="3" fill="#FFD700" />
+				<rect x="70" y="116" width="40" height="8" rx="3" fill={svgColors.gold} />
 				{/* Star */}
 				<polygon
 					points="90,42 94,54 106,54 96,62 100,74 90,66 80,74 84,62 74,54 86,54"
@@ -542,7 +487,7 @@ function TrophyIllustration() {
 					opacity="0.9"
 				/>
 			</g>
-			{/* Money bills — floating */}
+			{/* Money bills -- floating */}
 			<g style={{ animation: "bill-float-1 3s ease-in-out infinite" }}>
 				<rect
 					x="25"
@@ -550,7 +495,7 @@ function TrophyIllustration() {
 					width="32"
 					height="18"
 					rx="3"
-					fill="#00C853"
+					fill={svgColors.green}
 					transform="rotate(-15 41 74)"
 				/>
 				<text
@@ -558,7 +503,7 @@ function TrophyIllustration() {
 					y="78"
 					textAnchor="middle"
 					fontSize="8"
-					fill="#004D1A"
+					fill={svgColors.greenDark}
 					fontWeight="bold"
 					transform="rotate(-15 41 74)"
 				>
@@ -572,7 +517,7 @@ function TrophyIllustration() {
 					width="32"
 					height="18"
 					rx="3"
-					fill="#00C853"
+					fill={svgColors.green}
 					transform="rotate(10 136 77)"
 				/>
 				<text
@@ -580,7 +525,7 @@ function TrophyIllustration() {
 					y="81"
 					textAnchor="middle"
 					fontSize="8"
-					fill="#004D1A"
+					fill={svgColors.greenDark}
 					fontWeight="bold"
 					transform="rotate(10 136 77)"
 				>
@@ -592,34 +537,34 @@ function TrophyIllustration() {
 				cx="45"
 				cy="25"
 				r="3"
-				fill="#FFD700"
+				fill={svgColors.gold}
 				style={{ animation: "sparkle 1.5s ease infinite" }}
 			/>
 			<circle
 				cx="135"
 				cy="22"
 				r="3.5"
-				fill="#FFD700"
+				fill={svgColors.gold}
 				style={{ animation: "sparkle 1.8s ease 0.5s infinite" }}
 			/>
 			<circle
 				cx="30"
 				cy="50"
 				r="2"
-				fill="#FFD700"
+				fill={svgColors.gold}
 				style={{ animation: "sparkle 2s ease 1s infinite" }}
 			/>
 			<circle
 				cx="150"
 				cy="45"
 				r="2"
-				fill="#FFD700"
+				fill={svgColors.gold}
 				style={{ animation: "sparkle 1.6s ease 0.3s infinite" }}
 			/>
 			<defs>
 				<linearGradient id="trophyGrad" x1="65" y1="30" x2="115" y2="100">
-					<stop offset="0%" stopColor="#FFE082" />
-					<stop offset="100%" stopColor="#FFD700" />
+					<stop offset="0%" stopColor={svgColors.goldLight} />
+					<stop offset="100%" stopColor={svgColors.gold} />
 				</linearGradient>
 			</defs>
 			<style>

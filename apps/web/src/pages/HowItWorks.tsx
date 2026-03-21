@@ -20,7 +20,7 @@ const items: AccordionItem[] = [
 	{
 		title: "What's the 80% rule?",
 		content:
-			"You must complete at least 80% of your scheduled workout days to be considered a \"completer.\" For example, if your Equb runs for 20 days, you need to log at least 16 workouts. Miss more than 20% and your stake goes to the winners.",
+			'You must complete at least 80% of your scheduled workout days to be considered a "completer." For example, if your Equb runs for 20 days, you need to log at least 16 workouts. Miss more than 20% and your stake goes to the winners.',
 	},
 	{
 		title: "What's the 5% fee?",
@@ -39,27 +39,13 @@ const items: AccordionItem[] = [
 	},
 ];
 
-function ChevronDown({ open }: { open: boolean }) {
+function ChevronIcon({ open }: { open: boolean }) {
 	return (
-		<svg
-			width="20"
-			height="20"
-			viewBox="0 0 20 20"
-			fill="none"
-			style={{
-				transform: open ? "rotate(180deg)" : "rotate(0deg)",
-				transition: "transform 0.2s ease",
-				flexShrink: 0,
-			}}
+		<span
+			className={`material-symbols-outlined text-primary shrink-0 transition-transform duration-200 ${open ? "rotate-180" : "rotate-0"}`}
 		>
-			<path
-				d="M5 7.5L10 12.5L15 7.5"
-				stroke="#22c55e"
-				strokeWidth="2"
-				strokeLinecap="round"
-				strokeLinejoin="round"
-			/>
-		</svg>
+			expand_more
+		</span>
 	);
 }
 
@@ -68,71 +54,43 @@ export function HowItWorks() {
 	const navigate = useNavigate();
 
 	return (
-		<div style={{ padding: "16px 16px 100px", backgroundColor: "#0a0a0a", minHeight: "100vh" }}>
-			<div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
+		<div className="bg-background text-on-surface font-body min-h-screen px-4 pt-4 pb-24">
+			{/* Header */}
+			<div className="flex items-center gap-3 mb-6">
 				<button
 					type="button"
 					onClick={() => navigate(-1)}
-					style={{
-						background: "none",
-						border: "none",
-						color: "#fff",
-						fontSize: "20px",
-						cursor: "pointer",
-						padding: "4px",
-					}}
+					className="text-on-surface p-1 bg-transparent border-none cursor-pointer"
+					aria-label="Go back"
 				>
-					←
+					<span className="material-symbols-outlined text-xl">
+						arrow_back
+					</span>
 				</button>
-				<h1 style={{ color: "#fff", fontSize: "22px", fontWeight: 700, margin: 0 }}>
+				<h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface m-0">
 					How It Works
 				</h1>
 			</div>
 
-			<div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+			{/* Accordion */}
+			<div className="flex flex-col gap-3">
 				{items.map((item, i) => {
 					const isOpen = openIndex === i;
 					return (
 						<div
 							key={item.title}
-							style={{
-								backgroundColor: "#1c1c1e",
-								borderRadius: "16px",
-								overflow: "hidden",
-							}}
+							className="bg-surface-container-low rounded-card overflow-hidden"
 						>
 							<button
 								type="button"
 								onClick={() => setOpenIndex(isOpen ? null : i)}
-								style={{
-									width: "100%",
-									display: "flex",
-									alignItems: "center",
-									justifyContent: "space-between",
-									padding: "16px",
-									background: "none",
-									border: "none",
-									color: "#fff",
-									fontSize: "15px",
-									fontWeight: 600,
-									cursor: "pointer",
-									textAlign: "left",
-									gap: "12px",
-								}}
+								className="w-full flex items-center justify-between gap-3 p-4 bg-transparent border-none text-on-surface text-[15px] font-semibold font-body cursor-pointer text-left"
 							>
 								<span>{item.title}</span>
-								<ChevronDown open={isOpen} />
+								<ChevronIcon open={isOpen} />
 							</button>
 							{isOpen && (
-								<div
-									style={{
-										padding: "0 16px 16px",
-										color: "#a1a1aa",
-										fontSize: "14px",
-										lineHeight: 1.6,
-										whiteSpace: "pre-line",
-									}}
-								>
+								<div className="px-4 pb-4 text-on-surface-variant text-sm leading-relaxed whitespace-pre-line">
 									{item.content}
 								</div>
 							)}

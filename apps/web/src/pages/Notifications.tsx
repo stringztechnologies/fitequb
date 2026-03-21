@@ -46,20 +46,52 @@ const mockNotifications: Notification[] = [
 	},
 ];
 
-const borderColors: Record<string, string> = {
-	payout: "#FFD700",
-	gym: "#00C853",
-	urgency: "#FF3B30",
-	info: "transparent",
-	earnings: "#FFD700",
+const borderColorClass: Record<string, string> = {
+	payout: "border-secondary-container",
+	gym: "border-primary",
+	urgency: "border-error",
+	info: "border-outline",
+	earnings: "border-secondary-container",
 };
 
-const iconColors: Record<string, string> = {
-	payout: "#FFD700",
-	gym: "#00C853",
-	urgency: "#FF3B30",
-	info: "#00BCD4",
-	earnings: "#FFD700",
+const iconBgClass: Record<string, string> = {
+	payout: "bg-secondary-container/15",
+	gym: "bg-primary/15",
+	urgency: "bg-error/15",
+	info: "bg-outline/15",
+	earnings: "bg-secondary-container/15",
+};
+
+const iconTextClass: Record<string, string> = {
+	payout: "text-secondary-container",
+	gym: "text-primary",
+	urgency: "text-error",
+	info: "text-outline",
+	earnings: "text-secondary-container",
+};
+
+const iconName: Record<string, string> = {
+	payout: "payments",
+	gym: "fitness_center",
+	urgency: "alarm",
+	info: "info",
+	earnings: "currency_exchange",
+};
+
+const iconFilled: Record<string, boolean> = {
+	payout: true,
+	gym: false,
+	urgency: false,
+	info: false,
+	earnings: true,
+};
+
+const bgIconName: Record<string, string> = {
+	payout: "payments",
+	gym: "fitness_center",
+	urgency: "alarm",
+	info: "info",
+	earnings: "currency_exchange",
 };
 
 export function Notifications() {
@@ -72,32 +104,53 @@ export function Notifications() {
 
 	return (
 		<div className="px-4 pt-5 pb-24">
-			<div className="flex items-center justify-between mb-4">
-				<h1 className="text-[20px] font-bold text-white">Notification Center</h1>
-				<button type="button" className="text-[13px] text-[#8E8E93]">
-					Clear All
-				</button>
+			{/* Header */}
+			<div className="flex items-center justify-between mb-6">
+				<h1 className="font-headline font-bold text-xl uppercase tracking-tighter text-[#00c853]">
+					Notifications
+				</h1>
+				<span className="material-symbols-outlined text-on-surface-variant text-2xl cursor-pointer">
+					settings
+				</span>
 			</div>
 
-			{/* Tab Bar */}
-			<div className="flex gap-6 mb-5 border-b border-[rgba(255,255,255,0.08)]">
+			{/* Tabs */}
+			<div className="flex items-center gap-8 mb-8 px-2">
 				<button
 					type="button"
 					onClick={() => setTab("all")}
-					className={`pb-2.5 text-[14px] font-medium transition-colors ${
-						tab === "all" ? "text-white border-b-2 border-[#FFD700]" : "text-[#8E8E93]"
-					}`}
+					className="relative pb-2 transition-colors"
 				>
-					All
+					<span
+						className={
+							tab === "all"
+								? "text-secondary-container font-label text-sm font-bold uppercase tracking-widest"
+								: "text-on-surface-variant opacity-60 font-label text-sm font-bold uppercase tracking-widest"
+						}
+					>
+						All
+					</span>
+					{tab === "all" && (
+						<span className="absolute bottom-0 left-0 right-0 h-[3px] bg-secondary-container rounded-full" />
+					)}
 				</button>
 				<button
 					type="button"
 					onClick={() => setTab("earnings")}
-					className={`pb-2.5 text-[14px] font-medium transition-colors ${
-						tab === "earnings" ? "text-white border-b-2 border-[#FFD700]" : "text-[#8E8E93]"
-					}`}
+					className="relative pb-2 transition-colors"
 				>
-					Earnings
+					<span
+						className={
+							tab === "earnings"
+								? "text-secondary-container font-label text-sm font-bold uppercase tracking-widest"
+								: "text-on-surface-variant opacity-60 font-label text-sm font-bold uppercase tracking-widest"
+						}
+					>
+						Earnings
+					</span>
+					{tab === "earnings" && (
+						<span className="absolute bottom-0 left-0 right-0 h-[3px] bg-secondary-container rounded-full" />
+					)}
 				</button>
 			</div>
 
@@ -106,44 +159,48 @@ export function Notifications() {
 				{filtered.map((n) => (
 					<div
 						key={n.id}
-						className="rounded-[16px] bg-[#1c1c1e] p-4 border border-[rgba(255,255,255,0.08)]"
-						style={{ borderLeftWidth: "3px", borderLeftColor: borderColors[n.type] }}
+						className={`relative overflow-hidden bg-surface-container-low p-5 rounded-lg border-l-4 shadow-lg ${borderColorClass[n.type]}`}
 					>
 						<div className="flex items-start gap-3">
 							{/* Icon */}
 							<div
-								className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-								style={{ backgroundColor: `${iconColors[n.type]}15` }}
+								className={`p-2 rounded-full shrink-0 ${iconBgClass[n.type]}`}
 							>
-								<svg
-									viewBox="0 0 24 24"
-									className="w-5 h-5"
-									fill="none"
-									stroke={iconColors[n.type]}
-									strokeWidth={2}
+								<span
+									className={`material-symbols-outlined text-xl ${iconTextClass[n.type]} ${iconFilled[n.type] ? "font-filled" : ""}`}
+									style={iconFilled[n.type] ? { fontVariationSettings: "'FILL' 1" } : undefined}
 								>
-									{n.type === "payout" || n.type === "earnings" ? (
-										<path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-									) : n.type === "gym" ? (
-										<path d="M6.5 6.5h11M4 12h16M6.5 17.5h11" />
-									) : n.type === "urgency" ? (
-										<path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-									) : (
-										<circle cx="12" cy="12" r="10" />
-									)}
-								</svg>
+									{iconName[n.type]}
+								</span>
 							</div>
 
 							<div className="flex-1 min-w-0">
-								<p className="text-[14px] font-semibold text-white leading-snug">{n.title}</p>
-								<p className="text-[12px] text-[#8E8E93] mt-1 leading-relaxed">{n.body}</p>
-								<p className="text-[11px] text-[#636366] mt-1.5">{n.time}</p>
+								<div className="flex items-start justify-between gap-2">
+									<p className="font-headline font-bold text-base text-on-surface leading-snug">
+										{n.title}
+									</p>
+									{n.type === "urgency" && (
+										<div className="w-2.5 h-2.5 rounded-full bg-error shrink-0 mt-1 animate-pulse" />
+									)}
+								</div>
+								<p className="font-label text-[10px] text-on-surface-variant opacity-60 mt-1">
+									{n.time}
+								</p>
 							</div>
-
-							{n.type === "urgency" && (
-								<div className="w-2.5 h-2.5 rounded-full bg-[#FF3B30] shrink-0 mt-1 animate-pulse" />
-							)}
 						</div>
+
+						{/* Body text */}
+						<p className="font-body text-sm text-on-surface-variant leading-relaxed pl-12 mt-1">
+							{n.body}
+						</p>
+
+						{/* Background decorative icon */}
+						<span
+							className={`material-symbols-outlined absolute -right-4 -bottom-4 opacity-5 rotate-12 text-8xl ${iconTextClass[n.type]} pointer-events-none select-none`}
+							style={iconFilled[n.type] ? { fontVariationSettings: "'FILL' 1" } : undefined}
+						>
+							{bgIconName[n.type]}
+						</span>
 					</div>
 				))}
 			</div>
