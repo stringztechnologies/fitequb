@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { EmptyState } from "../components/EmptyState.js";
+import { useNavigate } from "react-router-dom";
 import { Loading } from "../components/Loading.js";
 import { useAuth } from "../hooks/useAuth.js";
 import { api } from "../lib/api.js";
