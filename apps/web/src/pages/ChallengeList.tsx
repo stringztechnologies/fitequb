@@ -31,201 +31,125 @@ export function ChallengeList() {
 
 	const hasReal = challenges.length > 0;
 
+	const totalPrize = 15000;
+	const progressPercent = 72;
+
 	return (
-		<div style={{ backgroundColor: "#0a0a0a", paddingBottom: "96px" }}>
-			<h1
-				style={{
-					fontSize: "20px",
-					fontWeight: 700,
-					color: "#FFF",
-					textAlign: "center",
-					padding: "20px 16px 8px",
-				}}
-			>
-				Step Challenge Leaderboard
-			</h1>
+		<div className="bg-surface min-h-screen pb-24 px-4 pt-5">
+			{/* Header */}
+			<div className="flex items-center justify-between mb-6">
+				<button
+					type="button"
+					onClick={() => navigate(-1)}
+					className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-low"
+				>
+					<span className="material-symbols-rounded text-on-surface text-xl">
+						arrow_back
+					</span>
+				</button>
+				<h1 className="font-headline font-bold text-xl tracking-tight text-on-surface">
+					<span className="material-symbols-rounded text-secondary-container align-middle mr-1.5 text-xl">
+						emoji_events
+					</span>
+					Step Challenge
+				</h1>
+				<div className="w-10" />
+			</div>
 
 			{/* Prize Pool Banner */}
-			<div
-				style={{
-					margin: "0 16px 16px",
-					padding: "16px",
-					borderRadius: "12px",
-					border: "2px solid #FFD700",
-					background: "linear-gradient(180deg, #FFD700 0%, #B8860B 100%)",
-					textAlign: "center",
-				}}
-			>
-				<p
-					style={{
-						fontSize: "12px",
-						fontWeight: 700,
-						color: "#0a0a0a",
-						letterSpacing: "2px",
-						textTransform: "uppercase",
-						margin: 0,
-					}}
-				>
-					CURRENT PRIZE POOL
+			<div className="bg-surface-container-low p-6 gold-glow rounded-lg border border-secondary-container/10 mb-4 text-center">
+				<p className="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant flex items-center justify-center gap-1.5 mb-2">
+					<span className="material-symbols-rounded text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
+						payments
+					</span>
+					Current Prize Pool
 				</p>
-				<p
-					style={{
-						fontSize: "32px",
-						fontWeight: 700,
-						color: "#0a0a0a",
-						margin: "4px 0 0",
-					}}
-				>
-					15,000 ETB
+				<p className="font-headline text-4xl font-black text-secondary-container">
+					{totalPrize.toLocaleString()}
+					<span className="font-label text-lg ml-1">ETB</span>
 				</p>
-				<p
-					style={{
-						fontSize: "11px",
-						color: "#0a0a0a",
-						opacity: 0.7,
-						margin: "4px 0 0",
-					}}
-				>
+				<p className="font-label text-[10px] text-on-surface-variant mt-2">
 					1st: 50% &middot; 2nd: 25% &middot; 3rd: 12.5% &middot; Others: shared
+				</p>
+				{/* Progress bar */}
+				<div className="h-1 bg-surface-container-highest rounded-full mt-4 overflow-hidden">
+					<div
+						className="h-full bg-gradient-to-r from-primary to-primary-container rounded-full transition-all duration-500"
+						style={{ width: `${progressPercent}%` }}
+					/>
+				</div>
+				<p className="font-label text-[10px] text-on-surface-variant mt-1.5">
+					Resets in 5 days
 				</p>
 			</div>
 
-			{/* Resets countdown */}
-			<p
-				style={{
-					fontSize: "12px",
-					color: "#8E8E93",
-					textAlign: "center",
-					marginBottom: "12px",
-				}}
-			>
-				Resets in 5 days
-			</p>
-
 			{/* Podium */}
-			<div
-				style={{
-					display: "flex",
-					alignItems: "flex-end",
-					justifyContent: "center",
-					gap: "8px",
-					padding: "0 16px",
-					marginBottom: "16px",
-				}}
-			>
-				{/* 2nd */}
-				<Podium
+			<div className="flex items-end justify-center gap-3 mb-6 pt-4">
+				{/* 2nd Place */}
+				<PodiumCard
 					name="Dawit K."
 					steps="48,200"
 					etb="3,750"
 					rank={2}
-					height={100}
-					color="#C0C0C0"
-					darkColor="#808080"
-					avatarSize={52}
 				/>
-				{/* 1st */}
-				<Podium
+				{/* 1st Place */}
+				<PodiumCard
 					name="Abeba T."
 					steps="50,000"
 					etb="7,500"
 					rank={1}
-					height={140}
-					color="#FFD700"
-					darkColor="#B8860B"
-					avatarSize={60}
 					crown
 				/>
-				{/* 3rd */}
-				<Podium
+				{/* 3rd Place */}
+				<PodiumCard
 					name="Sara M."
 					steps="45,200"
 					etb="1,875"
 					rank={3}
-					height={80}
-					color="#CD7F32"
-					darkColor="#8B4513"
-					avatarSize={48}
 				/>
 			</div>
 
-			{/* Rank list 4+ */}
-			<div style={{ padding: "0 16px", marginBottom: "16px" }}>
+			{/* Leaderboard List (4th+) */}
+			<div className="flex flex-col gap-2 mb-6">
 				{DEMO_LEADERS.slice(3).map((l, i) => {
 					const isYou = l.name === "Zemzem A.";
 					return (
 						<div
 							key={l.name}
-							style={{
-								display: "flex",
-								alignItems: "center",
-								padding: "12px 8px",
-								borderBottom: "1px solid rgba(255,255,255,0.05)",
-								gap: "12px",
-								backgroundColor: isYou ? "rgba(0,200,83,0.08)" : "transparent",
-								borderRadius: isYou ? "10px" : "0",
-								border: isYou ? "1px solid rgba(0,200,83,0.3)" : "none",
-							}}
+							className={`bg-surface-container-low rounded-xl p-4 flex items-center gap-4 ${
+								isYou ? "ring-1 ring-primary/30 bg-primary/5" : ""
+							}`}
 						>
-							<span
-								style={{
-									fontSize: "16px",
-									fontWeight: 700,
-									color: isYou ? "#00C853" : "#8E8E93",
-									width: "24px",
-									textAlign: "center",
-								}}
-							>
+							<span className="font-label text-sm text-on-surface-variant w-4 text-center">
 								{i + 4}
 							</span>
 							<div
-								style={{
-									width: "40px",
-									height: "40px",
-									borderRadius: "50%",
-									backgroundColor: isYou ? "rgba(0,200,83,0.2)" : "#2c2c2e",
-									border: isYou ? "2px solid #00C853" : "none",
-									display: "flex",
-									alignItems: "center",
-									justifyContent: "center",
-								}}
+								className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+									isYou
+										? "bg-primary/20 ring-2 ring-primary"
+										: "bg-surface-container-highest"
+								}`}
 							>
-								<span style={{ fontSize: "16px", fontWeight: 700, color: "#FFF" }}>
+								<span className="font-body font-bold text-sm text-on-surface">
 									{l.name.charAt(0)}
 								</span>
 							</div>
-							<div style={{ flex: 1 }}>
-								<div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-									<p
-										style={{
-											fontSize: "16px",
-											fontWeight: 700,
-											color: "#FFF",
-											margin: 0,
-										}}
-									>
+							<div className="flex-1 min-w-0">
+								<div className="flex items-center gap-1.5">
+									<p className="font-body font-bold text-sm text-on-surface truncate">
 										{l.name}
 									</p>
 									{isYou && (
-										<span
-											style={{
-												fontSize: "10px",
-												fontWeight: 700,
-												color: "#0a0a0a",
-												backgroundColor: "#00C853",
-												padding: "1px 6px",
-												borderRadius: "4px",
-											}}
-										>
+										<span className="font-label text-[9px] font-bold text-on-primary bg-primary px-1.5 py-0.5 rounded">
 											YOU
 										</span>
 									)}
 								</div>
-								<p style={{ fontSize: "14px", color: "#8E8E93", margin: 0 }}>
-									{l.steps.toLocaleString()} Steps
+								<p className="font-label text-[10px] text-on-surface-variant">
+									{l.steps.toLocaleString()} steps
 								</p>
 							</div>
-							<span style={{ fontSize: "16px", fontWeight: 700, color: "#00C853" }}>
+							<span className="font-label font-bold text-primary text-xs whitespace-nowrap">
 								{l.etb.toLocaleString()} ETB
 							</span>
 						</div>
@@ -233,147 +157,96 @@ export function ChallengeList() {
 				})}
 			</div>
 
-			{/* CTA */}
-			<div style={{ padding: "0 16px" }}>
-				<button
-					type="button"
-					onClick={() => (hasReal ? navigate(`/challenges/${challenges[0]?.id}`) : undefined)}
-					style={{
-						width: "100%",
-						padding: "16px",
-						borderRadius: "12px",
-						backgroundColor: "#00C853",
-						color: "#FFF",
-						fontSize: "18px",
-						fontWeight: 700,
-						border: "none",
-						cursor: "pointer",
-						textTransform: "uppercase",
-						letterSpacing: "1px",
-						boxShadow: "0 0 20px rgba(0,200,83,0.4)",
-					}}
-				>
-					UPDATE MY STEPS
-				</button>
-			</div>
+			{/* CTA Button */}
+			<button
+				type="button"
+				onClick={() => (hasReal ? navigate(`/challenges/${challenges[0]?.id}`) : undefined)}
+				className="w-full bg-gradient-to-r from-primary to-primary-container text-on-primary py-4 rounded-full font-body font-bold text-sm tracking-wide shadow-[0_10px_30px_rgba(0,200,83,0.3)] active:scale-[0.98] transition-transform"
+			>
+				UPDATE MY STEPS
+			</button>
 		</div>
 	);
 }
 
-function Podium({
+function PodiumCard({
 	name,
 	steps,
 	etb,
 	rank,
-	height,
-	color,
-	darkColor,
-	avatarSize,
 	crown,
 }: {
 	name: string;
 	steps: string;
 	etb: string;
 	rank: number;
-	height: number;
-	color: string;
-	darkColor: string;
-	avatarSize: number;
 	crown?: boolean;
 }) {
-	const ordinal = rank === 1 ? "1st" : rank === 2 ? "2nd" : "3rd";
+	const heightClass = rank === 1 ? "h-[180px]" : rank === 2 ? "h-[140px]" : "h-[110px]";
+	const avatarSize = rank === 1 ? "w-16 h-16" : rank === 2 ? "w-14 h-14" : "w-12 h-12";
+	const avatarTextSize = rank === 1 ? "text-xl" : "text-lg";
+	const rankBg =
+		rank === 1
+			? "bg-secondary-container text-on-secondary-container"
+			: rank === 2
+				? "bg-surface-container-highest text-on-surface"
+				: "bg-surface-container-highest text-on-surface";
+	const borderGradient =
+		rank === 1
+			? "from-secondary-container to-secondary-container/60"
+			: rank === 2
+				? "from-on-surface-variant to-on-surface-variant/40"
+				: "from-[#CD7F32] to-[#CD7F32]/40";
+	const prizeColor = rank === 1 ? "text-secondary-container" : "text-primary";
+
 	return (
-		<div
-			style={{
-				display: "flex",
-				flexDirection: "column",
-				alignItems: "center",
-				width: rank === 1 ? "120px" : "100px",
-			}}
-		>
-			{/* Avatar */}
-			<div style={{ position: "relative", marginBottom: "6px" }}>
+		<div className={`flex flex-col items-center ${rank === 1 ? "w-[120px] -mt-4" : "w-[100px]"}`}>
+			{/* Avatar with gradient border */}
+			<div className="relative mb-2">
 				{crown && (
 					<span
-						style={{
-							position: "absolute",
-							top: "-14px",
-							left: "50%",
-							transform: "translateX(-50%)",
-							fontSize: "18px",
-							color: "#FFD700",
-						}}
+						className="material-symbols-rounded absolute -top-5 left-1/2 -translate-x-1/2 text-secondary-container text-2xl"
+						style={{ fontVariationSettings: "'FILL' 1" }}
 					>
-						&#9818;
+						workspace_premium
 					</span>
 				)}
+				<div className={`${avatarSize} rounded-full p-[3px] bg-gradient-to-b ${borderGradient}`}>
+					<div className="w-full h-full rounded-full bg-surface-container-low flex items-center justify-center">
+						<span className={`font-headline font-bold ${avatarTextSize} text-on-surface`}>
+							{name.charAt(0)}
+						</span>
+					</div>
+				</div>
+				{/* Rank badge */}
 				<div
-					style={{
-						width: `${avatarSize}px`,
-						height: `${avatarSize}px`,
-						borderRadius: "50%",
-						border: `3px solid ${color}`,
-						backgroundColor: "#1c1c1e",
-						display: "flex",
-						alignItems: "center",
-						justifyContent: "center",
-					}}
+					className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center ${rankBg} text-[10px] font-bold font-label ring-2 ring-surface`}
 				>
-					<span
-						style={{
-							fontSize: `${avatarSize * 0.4}px`,
-							fontWeight: 700,
-							color: "#FFF",
-						}}
-					>
-						{name.charAt(0)}
-					</span>
+					{rank}
 				</div>
 			</div>
-			<p
-				style={{
-					fontSize: rank === 1 ? "14px" : "12px",
-					fontWeight: 700,
-					color: "#FFF",
-					margin: 0,
-				}}
-			>
+
+			{/* Name */}
+			<p className="font-body font-bold text-xs text-on-surface text-center mt-1">
 				{name}
 			</p>
-			<p style={{ fontSize: "11px", color: "#8E8E93", margin: "1px 0" }}>{steps} Steps</p>
-			<p
-				style={{
-					fontSize: rank === 1 ? "14px" : "12px",
-					fontWeight: 700,
-					color: "#00C853",
-					margin: 0,
-				}}
-			>
+
+			{/* Steps */}
+			<p className="font-label text-[10px] text-primary mt-0.5">
+				{steps} steps
+			</p>
+
+			{/* Prize */}
+			<p className={`font-headline ${prizeColor} font-bold text-xs mt-0.5`}>
 				{etb} ETB
 			</p>
 
 			{/* Pedestal */}
 			<div
-				style={{
-					width: "100%",
-					height: `${height}px`,
-					borderRadius: "12px 12px 0 0",
-					background: `linear-gradient(180deg, ${color} 0%, ${darkColor} 100%)`,
-					marginTop: "8px",
-					display: "flex",
-					alignItems: "flex-start",
-					justifyContent: "center",
-					paddingTop: "8px",
-				}}
+				className={`w-full ${heightClass} rounded-t-xl bg-gradient-to-b from-surface-container-low to-surface-container-lowest mt-2 flex items-start justify-center pt-3 border border-b-0 border-secondary-container/10`}
 			>
-				<span
-					style={{
-						fontSize: rank === 1 ? "16px" : "14px",
-						fontWeight: 700,
-						color: "#0a0a0a",
-					}}
-				>
-					{ordinal}
+				<span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">
+					{rank === 1 ? "1st" : rank === 2 ? "2nd" : "3rd"}
 				</span>
 			</div>
 		</div>

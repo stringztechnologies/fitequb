@@ -207,6 +207,7 @@ export function EqubDetail() {
 		: room.completion_pct;
 	const payout = room.stake_amount * room.max_members;
 	const myProgress = 34000; // Demo: user's current progress toward payout
+	const progressPct = Math.min(100, (daysElapsed / room.duration_days) * 100);
 
 	async function handleJoin() {
 		if (!id) return;
@@ -235,282 +236,230 @@ export function EqubDetail() {
 	}
 
 	return (
-		<div style={{ backgroundColor: "#0a0a0a", paddingBottom: "96px" }}>
-			{/* Back button */}
-			<button
-				type="button"
-				onClick={() => navigate(-1)}
-				style={{
-					display: "flex",
-					alignItems: "center",
-					gap: "4px",
-					color: "#8E8E93",
-					fontSize: "14px",
-					background: "none",
-					border: "none",
-					cursor: "pointer",
-					padding: "16px 16px 0",
-				}}
-			>
-				<svg
-					viewBox="0 0 24 24"
-					style={{ width: "16px", height: "16px" }}
-					fill="none"
-					stroke="currentColor"
-					strokeWidth={2}
+		<div className="min-h-screen bg-surface pb-24">
+			{/* Fixed Header */}
+			<header className="fixed top-0 w-full z-50 bg-[#131313]/70 backdrop-blur-xl flex items-center justify-between px-5 h-16">
+				<button
+					type="button"
+					onClick={() => navigate(-1)}
+					className="text-on-surface active:scale-95 transition-transform"
+					aria-label="Go back"
 				>
-					<path d="M15 18l-6-6 6-6" />
-				</svg>
-				Back
-			</button>
-
-			{/* Header — room name + payout */}
-			<div style={{ textAlign: "center", padding: "12px 16px 0" }}>
-				<h1
-					style={{
-						fontSize: "22px",
-						fontWeight: 700,
-						color: "#FFF",
-						margin: 0,
-					}}
-				>
-					{room.name}
+					<span className="material-symbols-rounded text-2xl">arrow_back</span>
+				</button>
+				<h1 className="font-headline font-bold text-xl tracking-tight text-primary-container">
+					Equb Room
 				</h1>
-				<p
-					style={{
-						fontSize: "36px",
-						fontWeight: 700,
-						color: "#FFD700",
-						margin: "4px 0 0",
-					}}
+				<button
+					type="button"
+					className="text-on-surface-variant active:scale-95 transition-transform"
+					aria-label="Room info"
 				>
-					{payout.toLocaleString()} ETB
+					<span className="material-symbols-rounded text-2xl">info</span>
+				</button>
+			</header>
+
+			{/* Spacer for fixed header */}
+			<div className="h-16" />
+
+			{/* Hero Section */}
+			<section className="bg-surface-container-low p-6 mx-4 mt-4 rounded-lg text-center">
+				{/* Status Badge */}
+				<div className="flex items-center justify-center gap-2 mb-4">
+					<span className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-full px-3 py-1">
+						<span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+						<span className="font-label text-2xs tracking-widest uppercase text-primary font-bold">
+							{room.status === "active" ? "Active" : room.status === "pending" ? "Pending" : room.status}
+						</span>
+					</span>
+				</div>
+
+				{/* Room Name */}
+				<h2 className="font-headline text-3xl font-black text-on-surface mb-2">
+					{room.name}
+				</h2>
+
+				{/* Prize Pool */}
+				<p className="font-headline text-5xl font-extrabold text-secondary-container drop-shadow-[0_0_15px_rgba(255,219,60,0.3)] mb-1">
+					{payout.toLocaleString()}
 				</p>
-			</div>
+				<p className="font-label text-xs text-on-surface-variant tracking-wider uppercase">
+					ETB Prize Pool
+				</p>
 
-			{/* Rules Section */}
-			<div style={{ padding: "20px 16px 0" }}>
-				<h2
-					style={{
-						fontSize: "18px",
-						fontWeight: 700,
-						color: "#FFF",
-						margin: "0 0 12px",
-					}}
-				>
-					Rules
-				</h2>
-				<div
-					style={{
-						display: "flex",
-						flexDirection: "column",
-						gap: "10px",
-					}}
-				>
-					<RuleItem
-						icon="M22 12 18 12 15 21 9 3 6 12 2 12"
-						title={`${room.workout_target} Workouts in ${room.duration_days} Days`}
-						subtitle={`Complete at least ${Math.ceil(target * pct)} of ${target} to qualify (${Math.round(pct * 100)}% threshold)`}
-					/>
-					<RuleItem
-						icon="M6.5 6.5h11M4 12h16M6.5 17.5h11M2 10h2v4H2zm18 0h2v4h-2z"
-						title="Gym Check-ins Count"
-						subtitle="Check-ins at partner gyms count toward your target"
-					/>
-				</div>
-			</div>
-
-			{/* Member List — grid layout like Stitch */}
-			<div style={{ padding: "20px 16px 0" }}>
-				<h2
-					style={{
-						fontSize: "18px",
-						fontWeight: 700,
-						color: "#FFF",
-						margin: "0 0 12px",
-					}}
-				>
-					Member List
-				</h2>
-				<div
-					style={{
-						display: "grid",
-						gridTemplateColumns: "1fr 1fr",
-						gap: "10px",
-					}}
-				>
-					{members.map((m, idx) => {
-						const memberPct = target > 0 ? m.completed_days / target : 0;
-						const onTrack = memberPct >= (daysElapsed / room.duration_days) * 0.8;
-						const isCurrentUser = idx === 0; // First member = current user in demo
-						return (
+				{/* Progress Bar */}
+				{room.status === "active" && (
+					<div className="mt-6">
+						<div className="flex justify-between mb-2">
+							<span className="font-label text-2xs text-on-surface-variant">
+								Day {daysElapsed} of {room.duration_days}
+							</span>
+							<span className="font-label text-2xs text-primary">
+								{daysLeft} days left
+							</span>
+						</div>
+						<div className="h-[2px] w-full bg-outline-variant/20 rounded-full overflow-hidden">
 							<div
-								key={m.id}
-								style={{
-									backgroundColor: isCurrentUser ? "rgba(0,200,83,0.08)" : "#1c1c1e",
-									borderRadius: "12px",
-									padding: "12px",
-									display: "flex",
-									flexDirection: "column",
-									alignItems: "center",
-									gap: "6px",
-									border: isCurrentUser ? "1px solid rgba(0,200,83,0.4)" : "none",
-								}}
-							>
-								<span
-									style={{
-										fontSize: "10px",
-										fontWeight: 600,
-										color: onTrack ? "#00C853" : "#FF9500",
-									}}
-								>
-									{isCurrentUser ? "YOU" : onTrack ? "On Track" : "Warning"}
-								</span>
-								<div
-									style={{
-										width: "48px",
-										height: "48px",
-										borderRadius: "50%",
-										border: `2px solid ${onTrack ? "#00C853" : "#FF9500"}`,
-										backgroundColor: "#2c2c2e",
-										display: "flex",
-										alignItems: "center",
-										justifyContent: "center",
-									}}
-								>
-									<span style={{ fontSize: "20px", fontWeight: 700, color: "#FFF" }}>
-										{m.users.full_name.charAt(0)}
-									</span>
-								</div>
-								<p
-									style={{
-										fontSize: "13px",
-										fontWeight: 600,
-										color: "#FFF",
-										margin: 0,
-										textAlign: "center",
-									}}
-								>
-									{m.users.full_name
-										.split(" ")
-										.map((n) => `${n.charAt(0)}.`)
-										.slice(0, 2)
-										.join(" ")
-										.replace(/\.\s/, ". ")}
-								</p>
-								<p style={{ fontSize: "11px", color: "#8E8E93", margin: 0 }}>
-									Next Payout in {daysLeft ?? 0} Days
-								</p>
-							</div>
-						);
-					})}
-				</div>
-			</div>
+								className="h-full bg-gradient-to-r from-primary to-primary-container rounded-full transition-all duration-500"
+								style={{ width: `${progressPct}%` }}
+							/>
+						</div>
+					</div>
+				)}
+			</section>
 
-			{/* My Progress — bottom bar like Stitch */}
-			<div
-				style={{
-					margin: "20px 16px 0",
-					backgroundColor: "#1c1c1e",
-					borderRadius: "16px",
-					padding: "16px",
-				}}
-			>
-				<h2
-					style={{
-						fontSize: "16px",
-						fontWeight: 700,
-						color: "#FFF",
-						margin: "0 0 10px",
-					}}
-				>
-					My Progress
-				</h2>
-				<div
-					style={{
-						width: "100%",
-						height: "8px",
-						backgroundColor: "#2c2c2e",
-						borderRadius: "4px",
-						overflow: "hidden",
-					}}
-				>
-					<div
-						style={{
-							width: `${Math.min(100, (myProgress / payout) * 100)}%`,
-							height: "100%",
-							backgroundColor: "#00C853",
-							borderRadius: "4px",
-						}}
-					/>
+			{/* Rules Grid */}
+			<section className="px-4 mt-6">
+				<h3 className="font-headline text-lg font-bold text-on-surface mb-3">Rules</h3>
+				<div className="grid grid-cols-2 gap-4">
+					<div className="bg-surface-container-low p-5 rounded-lg border border-outline-variant/10">
+						<div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+							<span className="material-symbols-rounded text-primary text-2xl">footprint</span>
+						</div>
+						<p className="font-headline text-sm font-bold text-on-surface mb-1">
+							{room.workout_target} Workouts
+						</p>
+						<p className="text-xs text-on-surface-variant">
+							Complete {Math.ceil(target * pct)} of {target} in {room.duration_days} days ({Math.round(pct * 100)}%)
+						</p>
+					</div>
+					<div className="bg-surface-container-low p-5 rounded-lg border border-outline-variant/10">
+						<div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+							<span className="material-symbols-rounded text-primary text-2xl">fitness_center</span>
+						</div>
+						<p className="font-headline text-sm font-bold text-on-surface mb-1">
+							Gym Check-ins
+						</p>
+						<p className="text-xs text-on-surface-variant">
+							Check-ins at partner gyms count toward your target
+						</p>
+					</div>
 				</div>
-				<div
-					style={{
-						display: "flex",
-						justifyContent: "space-between",
-						marginTop: "6px",
-					}}
-				>
-					<span style={{ fontSize: "13px", color: "#8E8E93" }}>
-						{myProgress.toLocaleString()} / {payout.toLocaleString()} ETB Goal
-					</span>
-					<span style={{ fontSize: "13px", color: "#FFD700", fontWeight: 600 }}>
-						Rank: 3rd of {members.length}
-					</span>
-				</div>
-			</div>
+			</section>
 
-			{/* Join CTA */}
-			{(room.status === "pending" || room.status === "active") && (
-				<div style={{ padding: "20px 16px 0" }}>
-					<button
-						type="button"
-						onClick={handleJoin}
-						disabled={joining}
-						style={{
-							width: "100%",
-							padding: "16px",
-							borderRadius: "16px",
-							backgroundColor: "#00C853",
-							color: "#0a0a0a",
-							fontSize: "16px",
-							fontWeight: 700,
-							border: "none",
-							cursor: "pointer",
-							boxShadow: "0 0 20px rgba(0,200,83,0.4)",
-							opacity: joining ? 0.5 : 1,
-						}}
-					>
-						{joining
-							? "Processing..."
-							: room.stake_amount > 0
-								? `Join This Equb \u2014 ${room.stake_amount} ETB`
-								: "Join This Equb \u2014 Free"}
-					</button>
-					{room.status === "pending" && members.length < room.max_members && (
-						<p
-							style={{
-								fontSize: "11px",
-								color: "#8E8E93",
-								textAlign: "center",
-								marginTop: "6px",
-							}}
+			{/* My Progress Card */}
+			<section className="px-4 mt-6">
+				<div className="bg-surface-container rounded-lg p-6 border border-primary/10">
+					<div className="flex items-center justify-between mb-4">
+						<h3 className="font-headline text-lg font-bold text-on-surface">My Progress</h3>
+						<span className="font-label text-xs text-secondary-container font-bold">
+							Rank: 3rd of {members.length}
+						</span>
+					</div>
+
+					{/* Progress Bar */}
+					<div className="h-4 bg-surface-container-highest rounded-full overflow-hidden mb-3">
+						<div
+							className="h-full bg-gradient-to-r from-primary to-primary-container rounded-full transition-all duration-500"
+							style={{ width: `${Math.min(100, (myProgress / payout) * 100)}%` }}
+						/>
+					</div>
+					<div className="flex justify-between">
+						<span className="font-label text-xs text-on-surface-variant">
+							{myProgress.toLocaleString()} / {payout.toLocaleString()} ETB
+						</span>
+						<span className="font-label text-xs text-primary font-bold">
+							{Math.round((myProgress / payout) * 100)}%
+						</span>
+					</div>
+
+					{/* CTA Button */}
+					{(room.status === "pending" || room.status === "active") && (
+						<button
+							type="button"
+							onClick={handleJoin}
+							disabled={joining}
+							className="mt-6 w-full bg-gradient-to-br from-primary to-primary-container text-on-primary py-4 rounded-full font-headline font-bold text-base active:scale-[0.98] transition-transform disabled:opacity-50 shadow-glow-strong"
 						>
+							{joining
+								? "Processing..."
+								: room.stake_amount > 0
+									? `Join This Equb \u2014 ${room.stake_amount} ETB`
+									: "Join This Equb \u2014 Free"}
+						</button>
+					)}
+					{room.status === "pending" && members.length < room.max_members && (
+						<p className="text-center font-label text-2xs text-on-surface-variant mt-2">
 							{room.max_members - members.length} spots remaining
 						</p>
 					)}
 				</div>
-			)}
+			</section>
+
+			{/* Participants */}
+			<section className="px-4 mt-6">
+				<h3 className="font-headline text-lg font-bold text-on-surface mb-3">
+					Participants ({members.length})
+				</h3>
+				<div className="flex flex-col gap-3">
+					{members.map((m, idx) => {
+						const memberPct = target > 0 ? m.completed_days / target : 0;
+						const onTrack = memberPct >= (daysElapsed / room.duration_days) * 0.8;
+						const isCurrentUser = idx === 0;
+						return (
+							<div
+								key={m.id}
+								className={`bg-surface-container-low p-4 rounded-lg flex items-center justify-between ${
+									isCurrentUser ? "border border-primary/30" : ""
+								}`}
+							>
+								<div className="flex items-center gap-3">
+									{/* Avatar */}
+									<div
+										className={`w-12 h-12 rounded-full border-2 flex items-center justify-center bg-surface-container-highest ${
+											onTrack ? "border-primary/20" : "border-secondary-container/20"
+										}`}
+									>
+										<span className="font-headline text-lg font-bold text-on-surface">
+											{m.users.full_name.charAt(0)}
+										</span>
+									</div>
+									{/* Name and meta */}
+									<div>
+										<p className="font-headline text-sm font-bold text-on-surface">
+											{m.users.full_name}
+											{isCurrentUser && (
+												<span className="text-primary ml-1 text-xs">(You)</span>
+											)}
+										</p>
+										<p className="font-label text-2xs text-on-surface-variant mt-0.5">
+											{m.completed_days}/{target} workouts
+											{daysLeft !== null && ` \u00b7 ${daysLeft}d left`}
+										</p>
+									</div>
+								</div>
+								{/* Status badge */}
+								<span
+									className={`px-3 py-1.5 rounded-md border font-label text-2xs font-bold uppercase ${
+										onTrack
+											? "bg-primary/10 border-primary/20 text-primary"
+											: "bg-secondary-container/10 border-secondary-container/20 text-secondary-container"
+									}`}
+								>
+									{onTrack ? (
+										<span className="flex items-center gap-1">
+											<span className="material-symbols-rounded text-sm">check</span>
+											On Track
+										</span>
+									) : (
+										"Warning"
+									)}
+								</span>
+							</div>
+						);
+					})}
+				</div>
+			</section>
 
 			{/* Invite Friends */}
-			<div style={{ padding: "12px 16px 0" }}>
+			<section className="px-4 mt-6">
 				<button
 					type="button"
 					onClick={() => {
 						const deepLink = `https://t.me/fitequb_bot?start=EQUB-${id}`;
 						const text = `Join my FitEqub! Stake ${room.stake_amount} ETB, work out for ${room.duration_days} days, and win ${payout.toLocaleString()} ETB. Join here: ${deepLink}`;
 						if (navigator.share) {
-							navigator.share({ title: `FitEqub — ${room.name}`, text }).catch(() => {});
+							navigator.share({ title: `FitEqub \u2014 ${room.name}`, text }).catch(() => {});
 						} else if (window.Telegram?.WebApp?.openTelegramLink) {
 							window.Telegram.WebApp.openTelegramLink(
 								`https://t.me/share/url?url=${encodeURIComponent(deepLink)}&text=${encodeURIComponent(text)}`,
@@ -522,86 +471,12 @@ export function EqubDetail() {
 							);
 						}
 					}}
-					style={{
-						width: "100%",
-						padding: "14px",
-						borderRadius: "16px",
-						backgroundColor: "transparent",
-						color: "#FFD700",
-						fontSize: "15px",
-						fontWeight: 700,
-						border: "2px solid #FFD700",
-						cursor: "pointer",
-						display: "flex",
-						alignItems: "center",
-						justifyContent: "center",
-						gap: "8px",
-					}}
+					className="w-full py-4 rounded-full border-2 border-secondary-container text-secondary-container font-headline font-bold text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
 				>
-					<svg
-						viewBox="0 0 24 24"
-						style={{ width: "18px", height: "18px" }}
-						fill="none"
-						stroke="#FFD700"
-						strokeWidth={2}
-					>
-						<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-						<polyline points="16 6 12 2 8 6" />
-						<line x1="12" y1="2" x2="12" y2="15" />
-					</svg>
+					<span className="material-symbols-rounded text-xl">share</span>
 					Invite Friends
 				</button>
-			</div>
-		</div>
-	);
-}
-
-function RuleItem({
-	icon,
-	title,
-	subtitle,
-}: {
-	icon: string;
-	title: string;
-	subtitle: string;
-}) {
-	return (
-		<div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
-			<div
-				style={{
-					width: "36px",
-					height: "36px",
-					minWidth: "36px",
-					borderRadius: "10px",
-					backgroundColor: "rgba(0,200,83,0.1)",
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "center",
-				}}
-			>
-				<svg
-					viewBox="0 0 24 24"
-					style={{ width: "18px", height: "18px" }}
-					fill="none"
-					stroke="#00C853"
-					strokeWidth={2}
-				>
-					<path d={icon} />
-				</svg>
-			</div>
-			<div>
-				<p
-					style={{
-						fontSize: "15px",
-						fontWeight: 600,
-						color: "#FFF",
-						margin: 0,
-					}}
-				>
-					{title}
-				</p>
-				<p style={{ fontSize: "12px", color: "#8E8E93", margin: "2px 0 0" }}>{subtitle}</p>
-			</div>
+			</section>
 		</div>
 	);
 }

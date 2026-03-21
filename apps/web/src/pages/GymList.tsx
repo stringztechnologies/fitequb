@@ -91,93 +91,42 @@ export function GymList() {
 		});
 
 	return (
-		<div style={{ backgroundColor: "#0a0a0a", paddingBottom: "96px" }}>
-			<h1
-				style={{
-					fontSize: "22px",
-					fontWeight: 700,
-					color: "#FFF",
-					textAlign: "center",
-					padding: "20px 16px 12px",
-				}}
-			>
-				Gym Day Passes List
-			</h1>
+		<div className="bg-surface pb-24 min-h-screen">
+			{/* Title */}
+			<div className="px-5 pt-10 pb-2">
+				<h1 className="text-3xl font-headline font-extrabold text-on-surface">
+					Gym Day
+					<br />
+					<span className="text-primary-fixed">Passes</span>
+				</h1>
+			</div>
 
 			{/* Search bar */}
-			<div
-				style={{
-					margin: "0 16px 12px",
-					display: "flex",
-					alignItems: "center",
-					gap: "10px",
-					backgroundColor: "#2c2c2e",
-					border: "1px solid rgba(255,215,0,0.3)",
-					borderRadius: "10px",
-					padding: "12px 16px",
-				}}
-			>
-				<svg
-					viewBox="0 0 24 24"
-					style={{ width: "16px", height: "16px", flexShrink: 0 }}
-					fill="none"
-					stroke="#8E8E93"
-					strokeWidth={2}
-				>
-					<circle cx="11" cy="11" r="8" />
-					<line x1="21" y1="21" x2="16.65" y2="16.65" />
-				</svg>
+			<div className="mx-5 mb-4 flex items-center gap-3 bg-surface-container border border-outline-variant rounded-full px-4 py-3">
+				<span className="material-symbols-rounded text-on-surface-variant text-lg shrink-0">
+					search
+				</span>
 				<input
 					type="text"
 					placeholder="Search gyms, locations..."
 					value={search}
 					onChange={(e) => setSearch(e.target.value)}
-					style={{
-						flex: 1,
-						backgroundColor: "transparent",
-						border: "none",
-						outline: "none",
-						color: "#FFF",
-						fontSize: "14px",
-					}}
+					className="flex-1 bg-transparent border-none outline-none text-on-surface font-body text-sm placeholder:text-on-surface-variant"
 				/>
-				<svg
-					viewBox="0 0 24 24"
-					style={{ width: "16px", height: "16px", flexShrink: 0 }}
-					fill="none"
-					stroke="#8E8E93"
-					strokeWidth={2}
-				>
-					<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-					<path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-				</svg>
 			</div>
 
 			{/* Filter chips */}
-			<div
-				style={{
-					display: "flex",
-					gap: "8px",
-					padding: "0 16px 16px",
-					overflowX: "auto",
-				}}
-			>
+			<div className="flex gap-3 overflow-x-auto pb-6 px-5 no-scrollbar">
 				{FILTERS.map((f) => (
 					<button
 						key={f}
 						type="button"
 						onClick={() => setFilter(f)}
-						style={{
-							padding: "6px 16px",
-							borderRadius: "20px",
-							fontSize: "13px",
-							fontWeight: 500,
-							border: filter === f ? "1px solid #FFD700" : "1px solid rgba(255,255,255,0.15)",
-							color: filter === f ? "#FFD700" : "#FFF",
-							backgroundColor: "transparent",
-							cursor: "pointer",
-							flexShrink: 0,
-						}}
+						className={
+							filter === f
+								? "px-5 py-2 bg-primary-container text-on-primary-container font-label font-bold rounded-full shadow-[0_4px_15px_rgba(0,200,83,0.3)] shrink-0 transition-all"
+								: "px-5 py-2 bg-surface-container text-on-surface-variant font-label font-bold rounded-full shrink-0 transition-all"
+						}
 					>
 						{f}
 					</button>
@@ -185,27 +134,13 @@ export function GymList() {
 			</div>
 
 			{/* Equb Eligible explainer */}
-			<p
-				style={{
-					fontSize: "11px",
-					color: "#8E8E93",
-					padding: "0 16px 8px",
-					margin: 0,
-				}}
-			>
-				<span style={{ color: "#00C853", fontWeight: 700 }}>Equb Eligible</span> = Check-ins count
+			<p className="text-xs font-body text-on-surface-variant px-5 pb-4">
+				<span className="text-primary font-bold">Equb Eligible</span> = Check-ins count
 				toward your Equb workout target
 			</p>
 
 			{/* Gym cards */}
-			<div
-				style={{
-					padding: "0 16px",
-					display: "flex",
-					flexDirection: "column",
-					gap: "12px",
-				}}
-			>
+			<div className="px-5 flex flex-col gap-5">
 				{hasReal
 					? filteredReal.map((g) => <RealGymCard key={g.id} gym={g} />)
 					: filteredDemos.map((g) => (
@@ -238,103 +173,73 @@ function DemoGymCard({
 	onBuy: () => void;
 }) {
 	return (
-		<div
-			style={{
-				position: "relative",
-				borderRadius: "12px",
-				border: "1px solid rgba(255,215,0,0.3)",
-				overflow: "hidden",
-				minHeight: "110px",
-				backgroundColor: "#1c1c1e",
-			}}
-		>
-			{/* Content */}
-			<div
-				style={{
-					position: "relative",
-					padding: "14px 16px",
-					display: "flex",
-					justifyContent: "space-between",
-					zIndex: 1,
-				}}
-			>
-				<div>
-					<h3
-						style={{
-							fontSize: "18px",
-							fontWeight: 700,
-							color: "#FFF",
-							margin: 0,
-						}}
-					>
-						{gym.name}
-					</h3>
-					<div
-						style={{
-							display: "flex",
-							alignItems: "center",
-							gap: "8px",
-							marginTop: "2px",
-						}}
-					>
-						<span style={{ fontSize: "12px", color: "#8E8E93" }}>{gym.location}</span>
-						<span style={{ fontSize: "11px", color: "#FFD700" }}>{gym.distance}</span>
-						<span style={{ fontSize: "11px", color: "#FF9500" }}>&#9733; {gym.rating}</span>
-					</div>
-					<p
-						style={{
-							fontSize: "20px",
-							fontWeight: 700,
-							color: "#FFD700",
-							margin: "6px 0 0",
-						}}
-					>
-						{gym.price} ETB
-					</p>
+		<div className="rounded-lg overflow-hidden bg-surface-container-low shadow-2xl">
+			{/* Image area with gradient overlay */}
+			<div className="h-64 relative bg-surface-container">
+				{/* Placeholder gym icon */}
+				<div className="absolute inset-0 flex items-center justify-center">
+					<span className="material-symbols-rounded text-outline-variant text-7xl">
+						fitness_center
+					</span>
 				</div>
-				<div
-					style={{
-						display: "flex",
-						flexDirection: "column",
-						alignItems: "flex-end",
-						gap: "8px",
-					}}
-				>
+
+				{/* Gradient overlay */}
+				<div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent" />
+
+				{/* Top badges */}
+				<div className="absolute top-3 left-3 right-3 flex items-start justify-between">
 					{gym.equbEligible && (
 						<span
-							style={{
-								padding: "4px 8px",
-								borderRadius: "4px",
-								backgroundColor: "#00C853",
-								color: "#FFF",
-								fontSize: "11px",
-								fontWeight: 700,
-								display: "flex",
-								alignItems: "center",
-								gap: "4px",
-							}}
+							className="bg-primary/20 backdrop-blur-md border border-primary/30 px-3 py-1.5 rounded-md flex items-center gap-1.5 text-primary font-label text-xs font-bold"
 							title="Check-ins here count toward your Equb workout target"
 						>
-							Equb Eligible &#10003;
+							<span className="material-symbols-rounded text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
+								eco
+							</span>
+							Equb Eligible
 						</span>
 					)}
-					<button
-						type="button"
-						onClick={onBuy}
-						style={{
-							padding: "8px 20px",
-							borderRadius: "8px",
-							backgroundColor: gym.equbEligible ? "#00C853" : "#FFD700",
-							color: gym.equbEligible ? "#FFF" : "#0a0a0a",
-							fontSize: "14px",
-							fontWeight: 700,
-							border: "none",
-							cursor: "pointer",
-						}}
-					>
-						Buy Pass
-					</button>
+					{/* Distance chip */}
+					<span className="glass-card px-3 py-1 rounded-full border border-white/10 flex items-center gap-1 ml-auto">
+						<span className="material-symbols-rounded text-on-surface-variant text-2xs">
+							location_on
+						</span>
+						<span className="font-label text-2xs text-on-surface-variant">
+							{gym.distance}
+						</span>
+					</span>
 				</div>
+
+				{/* Bottom content over gradient */}
+				<div className="absolute bottom-4 left-4 right-4">
+					<h3 className="text-2xl font-headline font-bold text-on-surface">
+						{gym.name}
+					</h3>
+					<div className="flex items-center gap-1 mt-1">
+						<span className="material-symbols-rounded text-on-surface-variant text-xs">
+							location_on
+						</span>
+						<span className="text-xs font-body text-on-surface-variant">
+							{gym.location}
+						</span>
+					</div>
+				</div>
+			</div>
+
+			{/* Card footer */}
+			<div className="p-4 flex items-center justify-between">
+				<p className="text-2xl font-label font-bold text-secondary-container">
+					{gym.price}
+					<span className="text-xs ml-1">ETB</span>
+				</p>
+				<button
+					type="button"
+					onClick={onBuy}
+					className="w-full ml-4 py-4 bg-gradient-to-r from-primary to-primary-container text-on-primary font-body font-bold rounded-full shadow-[0_8px_20px_rgba(0,200,83,0.2)] flex items-center justify-center gap-2 active:scale-95 transition-transform"
+				>
+					Buy Day Pass
+					<span className="material-symbols-rounded text-lg">arrow_forward</span>
+				</button>
 			</div>
 		</div>
 	);
@@ -352,57 +257,50 @@ function RealGymCard({ gym }: { gym: PartnerGym }) {
 		if (res.data?.checkout_url) window.open(res.data.checkout_url, "_blank");
 	}
 	return (
-		<div
-			style={{
-				borderRadius: "12px",
-				border: "1px solid rgba(255,215,0,0.3)",
-				backgroundColor: "#1c1c1e",
-				padding: "14px 16px",
-				display: "flex",
-				justifyContent: "space-between",
-			}}
-		>
-			<div>
-				<h3
-					style={{
-						fontSize: "18px",
-						fontWeight: 700,
-						color: "#FFF",
-						margin: 0,
-					}}
-				>
-					{gym.name}
-				</h3>
-				<p style={{ fontSize: "12px", color: "#8E8E93", margin: "2px 0 0" }}>{gym.location}</p>
-				<p
-					style={{
-						fontSize: "20px",
-						fontWeight: 700,
-						color: "#FFD700",
-						margin: "6px 0 0",
-					}}
-				>
-					{gym.app_day_pass} ETB
-				</p>
+		<div className="rounded-lg overflow-hidden bg-surface-container-low shadow-2xl">
+			{/* Image area with gradient overlay */}
+			<div className="h-64 relative bg-surface-container">
+				<div className="absolute inset-0 flex items-center justify-center">
+					<span className="material-symbols-rounded text-outline-variant text-7xl">
+						fitness_center
+					</span>
+				</div>
+
+				{/* Gradient overlay */}
+				<div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent" />
+
+				{/* Bottom content over gradient */}
+				<div className="absolute bottom-4 left-4 right-4">
+					<h3 className="text-2xl font-headline font-bold text-on-surface">
+						{gym.name}
+					</h3>
+					<div className="flex items-center gap-1 mt-1">
+						<span className="material-symbols-rounded text-on-surface-variant text-xs">
+							location_on
+						</span>
+						<span className="text-xs font-body text-on-surface-variant">
+							{gym.location}
+						</span>
+					</div>
+				</div>
 			</div>
-			<button
-				type="button"
-				onClick={handleBuy}
-				disabled={buying}
-				style={{
-					padding: "8px 20px",
-					borderRadius: "8px",
-					backgroundColor: "#00C853",
-					color: "#FFF",
-					fontSize: "14px",
-					fontWeight: 700,
-					border: "none",
-					cursor: "pointer",
-					alignSelf: "flex-end",
-				}}
-			>
-				{buying ? "..." : "Buy Pass"}
-			</button>
+
+			{/* Card footer */}
+			<div className="p-4 flex items-center justify-between">
+				<p className="text-2xl font-label font-bold text-secondary-container">
+					{gym.app_day_pass}
+					<span className="text-xs ml-1">ETB</span>
+				</p>
+				<button
+					type="button"
+					onClick={handleBuy}
+					disabled={buying}
+					className="w-full ml-4 py-4 bg-gradient-to-r from-primary to-primary-container text-on-primary font-body font-bold rounded-full shadow-[0_8px_20px_rgba(0,200,83,0.2)] flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 transition-transform"
+				>
+					{buying ? "..." : "Buy Day Pass"}
+					<span className="material-symbols-rounded text-lg">arrow_forward</span>
+				</button>
+			</div>
 		</div>
 	);
 }

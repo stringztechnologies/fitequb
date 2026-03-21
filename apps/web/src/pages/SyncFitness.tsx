@@ -4,126 +4,82 @@ export function SyncFitness() {
 	const navigate = useNavigate();
 
 	return (
-		<div className="px-4 pt-5 pb-24">
-			{/* Back button */}
-			<button
-				type="button"
-				onClick={() => navigate(-1)}
-				className="flex items-center gap-1 text-[#8E8E93] text-[14px] mb-4"
-				style={{ background: "none", border: "none", cursor: "pointer" }}
-			>
-				<svg
-					viewBox="0 0 24 24"
-					className="w-4 h-4"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth={2}
+		<div className="min-h-screen bg-surface px-4 pt-8 pb-32 flex flex-col items-center">
+			{/* Hero section with concentric circles */}
+			<div className="relative flex items-center justify-center mb-8">
+				{/* Outermost ring */}
+				<div className="absolute w-80 h-80 border border-primary/[0.02] rounded-full" />
+				{/* Middle ring */}
+				<div className="absolute w-64 h-64 border border-primary/5 rounded-full" />
+				{/* Inner ring */}
+				<div className="absolute w-48 h-48 border border-primary/10 rounded-full" />
+				{/* Main icon */}
+				<div
+					className="relative w-24 h-24 bg-primary-container rounded-full flex items-center justify-center"
+					style={{ filter: "drop-shadow(0 0 15px rgba(63,229,108,0.4))" }}
 				>
-					<path d="M15 18l-6-6 6-6" />
-				</svg>
-				Back
-			</button>
-			<h1 className="text-[20px] font-bold text-white text-center mb-2">Sync Fitness Data</h1>
-
-			{/* Coming soon notice */}
-			<div
-				style={{
-					margin: "0 0 20px",
-					padding: "12px 16px",
-					borderRadius: "12px",
-					backgroundColor: "rgba(255,152,0,0.1)",
-					border: "1px solid rgba(255,152,0,0.25)",
-				}}
-			>
-				<p style={{ fontSize: "13px", color: "#FF9500", margin: 0, lineHeight: 1.5 }}>
-					Automatic fitness tracking is coming soon. For now, log your workouts manually from the
-					home screen.
-				</p>
-			</div>
-
-			{/* Pulse icon */}
-			<div className="flex justify-center mb-8">
-				<div className="relative w-20 h-20">
-					<div className="absolute inset-0 rounded-full bg-[rgba(0,200,83,0.1)] animate-ping" />
-					<div className="absolute inset-2 rounded-full bg-[rgba(0,200,83,0.15)] animate-pulse" />
-					<div className="absolute inset-4 rounded-full bg-[rgba(0,200,83,0.2)] flex items-center justify-center">
-						<svg
-							viewBox="0 0 24 24"
-							className="w-8 h-8 text-[#00C853]"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth={2}
-						>
-							<polyline points="23 4 23 10 17 10" />
-							<polyline points="1 20 1 14 7 14" />
-							<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-						</svg>
-					</div>
+					<span className="material-symbols-rounded text-5xl text-surface">sync</span>
 				</div>
 			</div>
 
-			{/* Provider Cards — all Coming Soon */}
-			<div className="space-y-3 mb-6">
+			{/* Title */}
+			<h1 className="font-headline font-extrabold text-3xl text-center text-white tracking-tight mb-2">
+				Sync Fitness Data
+			</h1>
+
+			{/* Subtitle */}
+			<p className="font-body text-on-surface-variant text-center opacity-80 mb-8 max-w-xs">
+				Connect your fitness apps to automatically track workouts and earn rewards.
+			</p>
+
+			{/* Last synced card */}
+			<div className="w-full bg-surface-container-low rounded-lg p-4 flex items-center justify-between border border-outline-variant/10 mb-6">
+				<div className="flex items-center gap-3">
+					<span className="material-symbols-rounded text-on-surface-variant text-xl">schedule</span>
+					<div>
+						<p className="font-label text-xs font-bold text-on-surface-variant uppercase tracking-wide">
+							Last Synced
+						</p>
+						<p className="font-body text-sm text-white">Never</p>
+					</div>
+				</div>
+				<button
+					type="button"
+					className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container transition-colors"
+					aria-label="Refresh sync"
+				>
+					<span className="material-symbols-rounded text-on-surface-variant text-xl">refresh</span>
+				</button>
+			</div>
+
+			{/* Connection cards */}
+			<div className="w-full space-y-3 mb-8">
 				<ProviderCard
 					name="Google Fit"
-					icon={
-						<svg
-							viewBox="0 0 24 24"
-							className="w-5 h-5 text-[#FF3B30]"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth={2}
-						>
-							<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-						</svg>
-					}
+					subtitle="Steps, calories, workouts"
+					iconName="fitbit"
+					iconColor="text-[#4285F4]"
 				/>
 				<ProviderCard
 					name="Apple Health"
-					icon={
-						<svg
-							viewBox="0 0 24 24"
-							className="w-5 h-5 text-[#FF6B6B]"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth={2}
-						>
-							<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-						</svg>
-					}
+					subtitle="Activity rings, workouts"
+					iconName="health_metrics"
+					iconColor="text-[#ff2d55]"
+					iconFilled
 				/>
 				<ProviderCard
-					name="Telegram Activity"
-					icon={
-						<svg
-							viewBox="0 0 24 24"
-							className="w-5 h-5 text-[#00BCD4]"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth={2}
-						>
-							<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z" />
-						</svg>
-					}
+					name="Telegram"
+					subtitle="Step challenges, activity"
+					iconName="send"
+					iconColor="text-[#24A1DE]"
 				/>
 			</div>
 
-			{/* Manual log CTA */}
+			{/* Sync Now CTA */}
 			<button
 				type="button"
 				onClick={() => navigate("/equbs")}
-				style={{
-					width: "100%",
-					padding: "16px",
-					borderRadius: "12px",
-					backgroundColor: "#00C853",
-					color: "#0a0a0a",
-					fontSize: "16px",
-					fontWeight: 700,
-					border: "none",
-					cursor: "pointer",
-					boxShadow: "0 0 20px rgba(0,200,83,0.4)",
-				}}
+				className="w-full bg-gradient-to-tr from-primary to-primary-container text-on-primary py-5 rounded-full font-headline font-black text-lg tracking-tighter uppercase shadow-[0_10px_30px_rgba(0,200,83,0.3)] active:scale-[0.98] transition-transform"
 			>
 				Log Workout Manually
 			</button>
@@ -131,25 +87,36 @@ export function SyncFitness() {
 	);
 }
 
-function ProviderCard({ name, icon }: { name: string; icon: React.ReactNode }) {
+function ProviderCard({
+	name,
+	subtitle,
+	iconName,
+	iconColor,
+	iconFilled,
+}: {
+	name: string;
+	subtitle: string;
+	iconName: string;
+	iconColor: string;
+	iconFilled?: boolean;
+}) {
 	return (
-		<div className="rounded-[12px] bg-[#1c1c1e] p-3.5 flex items-center justify-between">
-			<div className="flex items-center gap-3">
-				<div className="w-9 h-9 rounded-[8px] bg-[#2c2c2e] flex items-center justify-center">
-					{icon}
+		<div className="p-5 bg-surface-container rounded-lg flex items-center justify-between hover:bg-surface-container-high transition-all">
+			<div className="flex items-center gap-4">
+				<div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center">
+					<span
+						className={`material-symbols-rounded text-2xl ${iconColor}`}
+						style={iconFilled ? { fontVariationSettings: "'FILL' 1" } : undefined}
+					>
+						{iconName}
+					</span>
 				</div>
-				<span className="text-[15px] font-semibold text-white">{name}</span>
+				<div>
+					<p className="font-label text-sm font-bold text-white tracking-wide uppercase">{name}</p>
+					<p className="font-body text-xs text-on-surface-variant">{subtitle}</p>
+				</div>
 			</div>
-			<span
-				style={{
-					padding: "6px 14px",
-					borderRadius: "8px",
-					backgroundColor: "#2c2c2e",
-					color: "#8E8E93",
-					fontSize: "13px",
-					fontWeight: 600,
-				}}
-			>
+			<span className="bg-secondary-container text-on-secondary-container px-6 py-2 rounded-full font-label text-xs font-bold uppercase tracking-wider">
 				Coming Soon
 			</span>
 		</div>
