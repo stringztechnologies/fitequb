@@ -130,6 +130,10 @@ export function Payment() {
 				</div>
 			</div>
 
+			<p className="text-[11px] text-[#8E8E93] text-center mt-1 mb-4">
+				More payment methods coming soon
+			</p>
+
 			{/* Confirm CTA */}
 			<button
 				type="button"

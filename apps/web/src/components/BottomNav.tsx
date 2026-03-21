@@ -24,7 +24,7 @@ const tabs = [
 	},
 	{
 		path: "/challenges",
-		label: "Steps",
+		label: "Challenges",
 		activeColor: "#E040FB",
 		glowColor: "rgba(224,64,251,0.4)",
 		d: "M22 12 18 12 15 21 9 3 6 12 2 12",
@@ -60,7 +60,7 @@ export function BottomNav() {
 							key={tab.path}
 							type="button"
 							onClick={() => navigate(tab.path)}
-							className="flex flex-col items-center gap-0.5 px-3 py-1 text-[10px] font-medium transition-colors"
+							className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-2 text-[10px] font-medium transition-colors"
 							style={{ color: active ? tab.activeColor : "#8E8E93" }}
 						>
 							<span

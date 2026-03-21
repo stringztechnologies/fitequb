@@ -122,21 +122,48 @@ export function Profile() {
 					marginBottom: "24px",
 				}}
 			>
-				<div
-					style={{
-						width: "96px",
-						height: "96px",
-						borderRadius: "50%",
-						border: "3px solid #FFD700",
-						backgroundColor: "#1c1c1e",
-						display: "flex",
-						alignItems: "center",
-						justifyContent: "center",
-						marginBottom: "12px",
-						boxShadow: "0 0 20px rgba(255,215,0,0.3)",
-					}}
-				>
-					<span style={{ fontSize: "40px", fontWeight: 700, color: "#FFF" }}>{initial}</span>
+				<div style={{ position: "relative", marginBottom: "12px" }}>
+					<div
+						style={{
+							width: "96px",
+							height: "96px",
+							borderRadius: "50%",
+							border: "3px solid #FFD700",
+							backgroundColor: "#1c1c1e",
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+							boxShadow: "0 0 20px rgba(255,215,0,0.3)",
+						}}
+					>
+						<span style={{ fontSize: "40px", fontWeight: 700, color: "#FFF" }}>{initial}</span>
+					</div>
+					<div
+						style={{
+							position: "absolute",
+							bottom: "0",
+							right: "0",
+							width: "28px",
+							height: "28px",
+							borderRadius: "50%",
+							backgroundColor: "#FFD700",
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+							border: "2px solid #0a0a0a",
+						}}
+					>
+						<svg
+							viewBox="0 0 24 24"
+							style={{ width: "14px", height: "14px" }}
+							fill="none"
+							stroke="#0a0a0a"
+							strokeWidth={2}
+						>
+							<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+							<circle cx="12" cy="13" r="4" />
+						</svg>
+					</div>
 				</div>
 				<h1
 					style={{
@@ -175,7 +202,7 @@ export function Profile() {
 							marginBottom: "4px",
 						}}
 					>
-						<span style={{ fontSize: "12px", color: "#00C853" }}>Total Earned</span>
+						<span style={{ fontSize: "12px", color: "#00C853" }}>Lifetime Earned</span>
 						<span style={{ fontSize: "16px" }}>&#128176;</span>
 					</div>
 					<p
@@ -204,7 +231,7 @@ export function Profile() {
 							marginBottom: "4px",
 						}}
 					>
-						<span style={{ fontSize: "12px", color: "#00BCD4" }}>Total Steps</span>
+						<span style={{ fontSize: "12px", color: "#00BCD4" }}>Lifetime Steps</span>
 						<span style={{ fontSize: "16px" }}>&#127939;</span>
 					</div>
 					<p
@@ -287,16 +314,38 @@ export function Profile() {
 
 			{/* Earning History */}
 			<div style={{ padding: "0 16px", marginBottom: "24px" }}>
-				<h2
+				<div
 					style={{
-						fontSize: "20px",
-						fontWeight: 700,
-						color: "#FFF",
+						display: "flex",
+						justifyContent: "space-between",
+						alignItems: "center",
 						marginBottom: "12px",
 					}}
 				>
-					Earning History
-				</h2>
+					<h2
+						style={{
+							fontSize: "20px",
+							fontWeight: 700,
+							color: "#FFF",
+							margin: 0,
+						}}
+					>
+						Earning History
+					</h2>
+					<button
+						type="button"
+						style={{
+							background: "none",
+							border: "none",
+							color: "#FFD700",
+							fontSize: "13px",
+							fontWeight: 600,
+							cursor: "pointer",
+						}}
+					>
+						View All
+					</button>
+				</div>
 				{earnings.map((e) => (
 					<div
 						key={e.id}

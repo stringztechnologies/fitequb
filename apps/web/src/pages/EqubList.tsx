@@ -7,6 +7,7 @@ import { api } from "../lib/api.js";
 const DEMO_ROOMS = [
 	{
 		id: "demo-1",
+		name: "Bole Elite 10k",
 		stake: 500,
 		payout: 10000,
 		max: 20,
@@ -17,6 +18,7 @@ const DEMO_ROOMS = [
 	},
 	{
 		id: "demo-2",
+		name: "Sarbet Steppers",
 		stake: 1000,
 		payout: 25000,
 		max: 20,
@@ -27,6 +29,7 @@ const DEMO_ROOMS = [
 	},
 	{
 		id: "demo-3",
+		name: "Kazanchis Runners",
 		stake: 250,
 		payout: 5000,
 		max: 15,
@@ -94,9 +97,20 @@ function DemoCard({
 
 	return (
 		<button type="button" onClick={onClick} style={cardStyle}>
+			<p
+				style={{
+					fontSize: "16px",
+					fontWeight: 700,
+					color: "#FFF",
+					margin: 0,
+					padding: "14px 16px 0",
+				}}
+			>
+				{room.name}
+			</p>
 			<div
 				style={{
-					padding: "16px 16px 8px",
+					padding: "8px 16px 8px",
 					display: "flex",
 					justifyContent: "space-between",
 					alignItems: "flex-start",
@@ -224,9 +238,20 @@ function RealCard({ room, onClick }: { room: EqubRoom; onClick: () => void }) {
 	const countdown = useCd(room.end_date);
 	return (
 		<button type="button" onClick={onClick} style={cardStyle}>
+			<p
+				style={{
+					fontSize: "16px",
+					fontWeight: 700,
+					color: "#FFF",
+					margin: 0,
+					padding: "14px 16px 0",
+				}}
+			>
+				{room.name}
+			</p>
 			<div
 				style={{
-					padding: "16px",
+					padding: "8px 16px 16px",
 					display: "flex",
 					justifyContent: "space-between",
 				}}

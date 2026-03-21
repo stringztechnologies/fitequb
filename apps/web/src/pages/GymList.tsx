@@ -78,7 +78,7 @@ export function GymList() {
 		(g) => !q || g.name.toLowerCase().includes(q) || g.location.toLowerCase().includes(q),
 	).sort((a, b) => {
 		if (filter === "Cheapest") return a.price - b.price;
-		if (filter === "Top Rated") return a.name.localeCompare(b.name);
+		if (filter === "Top Rated") return b.rating - a.rating;
 		return 0;
 	});
 
