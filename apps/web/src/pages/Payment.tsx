@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { api } from "../lib/api.js";
 
 interface PaymentState {
-	equbId: string;
+	type?: "gym_pass";
+	equbId?: string;
 	equbName: string;
 	stakeAmount: number;
 	payout: number;
@@ -22,13 +23,14 @@ export function Payment() {
 	const [error, setError] = useState<string | null>(null);
 
 	// Fallback demo values if no route state
-	const equbName = routeState?.equbName ?? "Bole Elite 10k";
+	const isGymPass = routeState?.type === "gym_pass";
+	const itemName = routeState?.equbName ?? "Bole Elite 10k";
 	const stakeAmount = routeState?.stakeAmount ?? 1000;
 	const payout = routeState?.payout ?? 25000;
 	const requirement = routeState?.requirement ?? "5 Gym Sessions/Week";
 	const equbId = routeState?.equbId;
 	const total = stakeAmount + PROCESSING_FEE;
-	const isDemo = !equbId;
+	const isDemo = !equbId && !isGymPass;
 
 	useEffect(() => {
 		const t = setInterval(() => setTimeLeft((s) => Math.max(0, s - 1)), 1000);
@@ -88,7 +90,7 @@ export function Payment() {
 				>
 					<polyline points="15 18 9 12 15 6" />
 				</svg>
-				Cancel
+				Back
 			</button>
 
 			{/* Demo banner */}
@@ -103,7 +105,7 @@ export function Payment() {
 			{/* Header with timer badge */}
 			<div className="flex items-center justify-between mb-5">
 				<div>
-					<h1 className="text-[18px] font-bold text-white">{equbName}</h1>
+					<h1 className="text-[18px] font-bold text-white">{itemName}</h1>
 					<p className="text-[12px] text-[#8E8E93]">
 						Payment expires in {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
 					</p>
@@ -130,31 +132,55 @@ export function Payment() {
 
 			{/* Payment Summary Card */}
 			<div className="rounded-[16px] bg-[#1c1c1e] p-4 mb-4">
-				<p className="text-[18px] font-bold text-white">
-					<span className="text-[#FFD700]">{stakeAmount.toLocaleString()} ETB</span> Entry
-				</p>
-				<p className="text-[18px] font-bold text-white">
-					<span className="text-[#FFD700]">{payout.toLocaleString()} ETB</span> Payout
-				</p>
-				<div className="flex items-center gap-2 mt-2">
-					<svg
-						viewBox="0 0 24 24"
-						className="w-4 h-4 text-[#00C853]"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth={2}
-					>
-						<path d="M6.5 6.5h11M4 12h16" />
-					</svg>
-					<span className="text-[13px] text-[#8E8E93]">{requirement}</span>
-				</div>
+				{isGymPass ? (
+					<>
+						<p className="text-[18px] font-bold text-white">
+							<span className="text-[#FFD700]">{stakeAmount.toLocaleString()} ETB</span> Day Pass
+						</p>
+						<div className="flex items-center gap-2 mt-2">
+							<svg
+								viewBox="0 0 24 24"
+								className="w-4 h-4 text-[#00C853]"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth={2}
+							>
+								<path d="M6.5 6.5h11M4 12h16M6.5 17.5h11M2 10h2v4H2zm18 0h2v4h-2z" />
+							</svg>
+							<span className="text-[13px] text-[#8E8E93]">{requirement}</span>
+						</div>
+					</>
+				) : (
+					<>
+						<p className="text-[18px] font-bold text-white">
+							<span className="text-[#FFD700]">{stakeAmount.toLocaleString()} ETB</span> Entry
+						</p>
+						<p className="text-[18px] font-bold text-white">
+							<span className="text-[#FFD700]">{payout.toLocaleString()} ETB</span> Payout
+						</p>
+						<div className="flex items-center gap-2 mt-2">
+							<svg
+								viewBox="0 0 24 24"
+								className="w-4 h-4 text-[#00C853]"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth={2}
+							>
+								<path d="M6.5 6.5h11M4 12h16" />
+							</svg>
+							<span className="text-[13px] text-[#8E8E93]">{requirement}</span>
+						</div>
+					</>
+				)}
 			</div>
 
 			{/* Payment Breakdown Table */}
 			<div className="rounded-[16px] bg-[#1c1c1e] border border-[rgba(255,215,0,0.3)] p-4 mb-4">
 				<h2 className="text-[16px] font-semibold text-white mb-3">Payment Breakdown</h2>
 				<div className="flex justify-between py-2">
-					<span className="text-[14px] text-[#8E8E93]">Entry Fee:</span>
+					<span className="text-[14px] text-[#8E8E93]">
+						{isGymPass ? "Day Pass:" : "Entry Fee:"}
+					</span>
 					<span className="text-[14px] text-white">{stakeAmount.toLocaleString()} ETB</span>
 				</div>
 				<div className="flex justify-between py-2">

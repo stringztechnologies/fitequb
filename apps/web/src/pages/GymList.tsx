@@ -209,7 +209,21 @@ export function GymList() {
 				{hasReal
 					? filteredReal.map((g) => <RealGymCard key={g.id} gym={g} />)
 					: filteredDemos.map((g) => (
-							<DemoGymCard key={g.id} gym={g} onBuy={() => navigate("/payment")} />
+							<DemoGymCard
+								key={g.id}
+								gym={g}
+								onBuy={() =>
+									navigate("/payment", {
+										state: {
+											type: "gym_pass",
+											equbName: g.name,
+											stakeAmount: g.price,
+											payout: 0,
+											requirement: `Day pass at ${g.name}`,
+										},
+									})
+								}
+							/>
 						))}
 			</div>
 		</div>

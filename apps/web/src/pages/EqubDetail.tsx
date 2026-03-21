@@ -236,8 +236,36 @@ export function EqubDetail() {
 
 	return (
 		<div style={{ backgroundColor: "#0a0a0a", paddingBottom: "96px" }}>
+			{/* Back button */}
+			<button
+				type="button"
+				onClick={() => navigate(-1)}
+				style={{
+					display: "flex",
+					alignItems: "center",
+					gap: "4px",
+					color: "#8E8E93",
+					fontSize: "14px",
+					background: "none",
+					border: "none",
+					cursor: "pointer",
+					padding: "16px 16px 0",
+				}}
+			>
+				<svg
+					viewBox="0 0 24 24"
+					style={{ width: "16px", height: "16px" }}
+					fill="none"
+					stroke="currentColor"
+					strokeWidth={2}
+				>
+					<path d="M15 18l-6-6 6-6" />
+				</svg>
+				Back
+			</button>
+
 			{/* Header — room name + payout */}
-			<div style={{ textAlign: "center", padding: "24px 16px 0" }}>
+			<div style={{ textAlign: "center", padding: "12px 16px 0" }}>
 				<h1
 					style={{
 						fontSize: "22px",
@@ -311,20 +339,22 @@ export function EqubDetail() {
 						gap: "10px",
 					}}
 				>
-					{members.map((m) => {
+					{members.map((m, idx) => {
 						const memberPct = target > 0 ? m.completed_days / target : 0;
 						const onTrack = memberPct >= (daysElapsed / room.duration_days) * 0.8;
+						const isCurrentUser = idx === 0; // First member = current user in demo
 						return (
 							<div
 								key={m.id}
 								style={{
-									backgroundColor: "#1c1c1e",
+									backgroundColor: isCurrentUser ? "rgba(0,200,83,0.08)" : "#1c1c1e",
 									borderRadius: "12px",
 									padding: "12px",
 									display: "flex",
 									flexDirection: "column",
 									alignItems: "center",
 									gap: "6px",
+									border: isCurrentUser ? "1px solid rgba(0,200,83,0.4)" : "none",
 								}}
 							>
 								<span
@@ -334,7 +364,7 @@ export function EqubDetail() {
 										color: onTrack ? "#00C853" : "#FF9500",
 									}}
 								>
-									{onTrack ? "On Track" : "Warning"}
+									{isCurrentUser ? "YOU" : onTrack ? "On Track" : "Warning"}
 								</span>
 								<div
 									style={{
