@@ -22,6 +22,7 @@ import { SyncFitness } from "./pages/SyncFitness.js";
 import { TrainerDashboard } from "./pages/TrainerDashboard.js";
 import { DuelChallenge } from "./pages/DuelChallenge.js";
 import { QuickJoin } from "./pages/QuickJoin.js";
+import { AdminDashboard } from "./pages/AdminDashboard.js";
 import { WinCelebration } from "./pages/WinCelebration.js";
 
 export function App() {
@@ -54,6 +55,7 @@ export function App() {
               <Route path="/challenges/:id" element={<Leaderboard />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/trainer" element={<TrainerDashboard />} />
+              <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/payment" element={<Payment />} />
               <Route path="/win" element={<WinCelebration />} />
