@@ -4,6 +4,45 @@ import { useNavigate } from "react-router-dom";
 import { Loading } from "../components/Loading.js";
 import { api } from "../lib/api.js";
 
+const DEMO_CHALLENGES = [
+	{
+		id: "c1",
+		name: "Addis 100K",
+		desc: "Walk 100,000 steps in 30 days",
+		target: "100,000 steps",
+		reward: "1GB Ethio Telecom data",
+		sponsor: "Ethio Telecom",
+		daysLeft: 25,
+		participants: 342,
+		icon: "hiking",
+		color: "primary",
+	},
+	{
+		id: "c2",
+		name: "Morning Warrior",
+		desc: "5,000 steps before 9am for 14 days",
+		target: "5,000 steps/morning",
+		reward: "500 ETB prize pool",
+		sponsor: null,
+		daysLeft: 10,
+		participants: 128,
+		icon: "wb_sunny",
+		color: "secondary-container",
+	},
+	{
+		id: "c3",
+		name: "Gym Rat",
+		desc: "12 gym check-ins in 30 days",
+		target: "12 check-ins",
+		reward: "Free month gym pass",
+		sponsor: "Infinity Fitness",
+		daysLeft: 22,
+		participants: 89,
+		icon: "fitness_center",
+		color: "tertiary",
+	},
+];
+
 const DEMO_LEADERS = [
 	{ name: "Abeba T.", steps: 50000, etb: 7500 },
 	{ name: "Dawit K.", steps: 48200, etb: 3750 },
@@ -31,34 +70,24 @@ export function ChallengeList() {
 
 	const hasReal = challenges.length > 0;
 
-	const totalPrize = 15000;
-	const progressPercent = 72;
-
 	return (
 		<div className="bg-surface min-h-screen pb-24 px-4 pt-5">
 			{/* Header */}
-			<div className="flex items-center justify-between mb-6">
-				<button
-					type="button"
-					onClick={() => navigate(-1)}
-					className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-low"
+			<div className="flex items-center gap-2 mb-6">
+				<span
+					className="material-symbols-outlined text-secondary-container text-2xl"
+					style={{ fontVariationSettings: "'FILL' 1" }}
 				>
-					<span className="material-symbols-rounded text-on-surface text-xl">arrow_back</span>
-				</button>
-				<h1 className="font-headline font-bold text-xl tracking-tight text-on-surface">
-					<span className="material-symbols-rounded text-secondary-container align-middle mr-1.5 text-xl">
-						emoji_events
-					</span>
-					Step Challenge
-				</h1>
-				<div className="w-10" />
+					emoji_events
+				</span>
+				<h1 className="font-headline font-bold text-xl tracking-tight text-on-surface">Challenges</h1>
 			</div>
 
 			{/* Free entry callout */}
-			<div className="bg-primary/5 border border-primary/20 rounded-lg px-4 py-3 mb-4 flex items-center gap-3">
+			<div className="bg-primary/5 border border-primary/20 rounded-lg px-4 py-3 mb-6 flex items-center gap-3">
 				<div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
 					<span
-						className="material-symbols-rounded text-primary text-xl"
+						className="material-symbols-outlined text-primary text-xl"
 						style={{ fontVariationSettings: "'FILL' 1" }}
 					>
 						redeem
@@ -72,41 +101,38 @@ export function ChallengeList() {
 				</div>
 			</div>
 
-			{/* Prize Pool Banner */}
-			<div className="bg-surface-container-low p-6 gold-glow rounded-lg border border-secondary-container/10 mb-4 text-center">
-				<p className="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant flex items-center justify-center gap-1.5 mb-2">
+			{/* Available Challenges */}
+			<div className="mb-6">
+				<h2 className="font-headline font-bold text-base text-on-surface mb-3 flex items-center gap-1.5">
+					<span className="material-symbols-outlined text-primary text-lg">bolt</span>
+					Available Challenges
+				</h2>
+				<div className="flex flex-col gap-3">
+					{DEMO_CHALLENGES.map((ch) => (
+						<ChallengeCard key={ch.id} challenge={ch} onJoin={() => navigate(`/challenges/${ch.id}`)} />
+					))}
+				</div>
+			</div>
+
+			{/* Leaderboard divider */}
+			<div className="flex items-center gap-3 mb-4">
+				<div className="flex-1 h-px bg-outline-variant/20" />
+				<h2 className="font-headline font-bold text-base text-on-surface flex items-center gap-1.5 shrink-0">
 					<span
-						className="material-symbols-rounded text-sm"
+						className="material-symbols-outlined text-secondary-container text-lg"
 						style={{ fontVariationSettings: "'FILL' 1" }}
 					>
-						payments
+						leaderboard
 					</span>
-					Current Prize Pool
-				</p>
-				<p className="font-headline text-4xl font-black text-secondary-container">
-					{totalPrize.toLocaleString()}
-					<span className="font-label text-lg ml-1">ETB</span>
-				</p>
-				<p className="font-label text-[10px] text-on-surface-variant mt-2">
-					1st: 50% &middot; 2nd: 25% &middot; 3rd: 12.5% &middot; Others: shared
-				</p>
-				{/* Progress bar */}
-				<div className="h-1 bg-surface-container-highest rounded-full mt-4 overflow-hidden">
-					<div
-						className="h-full bg-gradient-to-r from-primary to-primary-container rounded-full transition-all duration-500"
-						style={{ width: `${progressPercent}%` }}
-					/>
-				</div>
-				<p className="font-label text-[10px] text-on-surface-variant mt-1.5">Resets in 5 days</p>
+					Weekly Leaderboard
+				</h2>
+				<div className="flex-1 h-px bg-outline-variant/20" />
 			</div>
 
 			{/* Podium */}
 			<div className="flex items-end justify-center gap-3 mb-6 pt-4">
-				{/* 2nd Place */}
 				<PodiumCard name="Dawit K." steps="48,200" etb="3,750" rank={2} />
-				{/* 1st Place */}
 				<PodiumCard name="Abeba T." steps="50,000" etb="7,500" rank={1} crown />
-				{/* 3rd Place */}
 				<PodiumCard name="Sara M." steps="45,200" etb="1,875" rank={3} />
 			</div>
 
@@ -157,11 +183,100 @@ export function ChallengeList() {
 			{/* CTA Button */}
 			<button
 				type="button"
-				onClick={() => (hasReal ? navigate(`/challenges/${challenges[0]?.id}`) : undefined)}
+				onClick={() => {
+					if (hasReal) {
+						navigate(`/challenges/${challenges[0]?.id}`);
+					}
+				}}
 				className="w-full bg-gradient-to-r from-primary to-primary-container text-on-primary py-4 rounded-full font-body font-bold text-sm tracking-wide shadow-[0_10px_30px_rgba(0,200,83,0.3)] active:scale-[0.98] transition-transform"
 			>
 				UPDATE MY STEPS
 			</button>
+		</div>
+	);
+}
+
+function ChallengeCard({
+	challenge,
+	onJoin,
+}: {
+	challenge: (typeof DEMO_CHALLENGES)[number];
+	onJoin: () => void;
+}) {
+	const iconBgMap: Record<string, string> = {
+		primary: "bg-primary/15 text-primary",
+		"secondary-container": "bg-secondary-container/15 text-secondary-container",
+		tertiary: "bg-tertiary/15 text-tertiary",
+	};
+	const iconClasses = iconBgMap[challenge.color] ?? "bg-primary/15 text-primary";
+
+	return (
+		<div className="bg-surface-container-low rounded-lg p-5 border border-outline-variant/10">
+			<div className="flex items-start gap-3.5">
+				{/* Icon */}
+				<div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${iconClasses}`}>
+					<span className="material-symbols-outlined text-xl">{challenge.icon}</span>
+				</div>
+
+				{/* Content */}
+				<div className="flex-1 min-w-0">
+					<div className="flex items-center gap-2 mb-0.5">
+						<h3 className="font-headline text-base font-bold text-on-surface truncate">
+							{challenge.name}
+						</h3>
+						{challenge.sponsor && (
+							<span className="bg-secondary-container/10 text-secondary-container font-label text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5 shrink-0">
+								<span
+									className="material-symbols-outlined text-[10px]"
+									style={{ fontVariationSettings: "'FILL' 1", fontSize: "10px" }}
+								>
+									verified
+								</span>
+								{challenge.sponsor}
+							</span>
+						)}
+					</div>
+					<p className="text-on-surface-variant text-xs mb-3">{challenge.desc}</p>
+
+					{/* Meta row */}
+					<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-3">
+						<span className="flex items-center gap-1 text-on-surface-variant font-label text-[10px]">
+							<span className="material-symbols-outlined text-xs">flag</span>
+							{challenge.target}
+						</span>
+						<span className="flex items-center gap-1 text-on-surface-variant font-label text-[10px]">
+							<span
+								className="material-symbols-outlined text-xs text-primary"
+								style={{ fontVariationSettings: "'FILL' 1" }}
+							>
+								card_giftcard
+							</span>
+							{challenge.reward}
+						</span>
+					</div>
+
+					<div className="flex items-center justify-between">
+						<div className="flex items-center gap-3">
+							<span className="flex items-center gap-1 text-on-surface-variant font-label text-[10px]">
+								<span className="material-symbols-outlined text-xs">group</span>
+								{challenge.participants}
+							</span>
+							<span className="flex items-center gap-1 text-on-surface-variant font-label text-[10px]">
+								<span className="material-symbols-outlined text-xs">schedule</span>
+								{challenge.daysLeft}d left
+							</span>
+						</div>
+
+						<button
+							type="button"
+							onClick={onJoin}
+							className="border border-primary text-primary rounded-full px-4 py-2 font-label text-xs font-bold active:scale-[0.97] transition-transform"
+						>
+							Join Challenge
+						</button>
+					</div>
+				</div>
+			</div>
 		</div>
 	);
 }
@@ -202,7 +317,7 @@ function PodiumCard({
 			<div className="relative mb-2">
 				{crown && (
 					<span
-						className="material-symbols-rounded absolute -top-5 left-1/2 -translate-x-1/2 text-secondary-container text-2xl"
+						className="material-symbols-outlined absolute -top-5 left-1/2 -translate-x-1/2 text-secondary-container text-2xl"
 						style={{ fontVariationSettings: "'FILL' 1" }}
 					>
 						workspace_premium
