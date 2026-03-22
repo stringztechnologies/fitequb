@@ -193,42 +193,55 @@ export function Home() {
       </div>
 
       {/* Quick Actions Row */}
-      <div className="grid grid-cols-2 gap-3 px-5 pt-5">
+      <div className="grid grid-cols-3 gap-3 px-5 pt-5">
+        <button
+          type="button"
+          onClick={() => navigate("/coach")}
+          className="flex flex-col items-center gap-2 bg-surface-container-low p-4 rounded-lg active:scale-[0.98] transition-transform"
+        >
+          <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center">
+            <span
+              className="material-symbols-outlined text-xl text-primary"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              auto_awesome
+            </span>
+          </div>
+          <div className="text-center">
+            <p className="font-headline text-xs font-bold text-on-surface">
+              AI Coach
+            </p>
+          </div>
+        </button>
         <button
           type="button"
           onClick={() => navigate("/duel")}
-          className="flex items-center gap-3 bg-surface-container-low p-4 rounded-lg active:scale-[0.98] transition-transform"
+          className="flex flex-col items-center gap-2 bg-surface-container-low p-4 rounded-lg active:scale-[0.98] transition-transform"
         >
           <div className="w-10 h-10 rounded-lg bg-secondary-container/15 flex items-center justify-center">
             <span className="material-symbols-outlined text-xl text-secondary-container">
               bolt
             </span>
           </div>
-          <div className="text-left">
-            <p className="font-headline text-sm font-bold text-on-surface">
+          <div className="text-center">
+            <p className="font-headline text-xs font-bold text-on-surface">
               1v1 Duel
-            </p>
-            <p className="text-on-surface-variant text-xs">
-              Challenge a friend
             </p>
           </div>
         </button>
         <button
           type="button"
           onClick={() => navigate("/how-it-works")}
-          className="flex items-center gap-3 bg-surface-container-low p-4 rounded-lg active:scale-[0.98] transition-transform"
+          className="flex flex-col items-center gap-2 bg-surface-container-low p-4 rounded-lg active:scale-[0.98] transition-transform"
         >
-          <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center">
-            <span className="material-symbols-outlined text-xl text-primary">
+          <div className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center">
+            <span className="material-symbols-outlined text-xl text-on-surface-variant">
               help
             </span>
           </div>
-          <div className="text-left">
-            <p className="font-headline text-sm font-bold text-on-surface">
-              How It Works
-            </p>
-            <p className="text-on-surface-variant text-xs">
-              New here? Start here
+          <div className="text-center">
+            <p className="font-headline text-xs font-bold text-on-surface">
+              How To
             </p>
           </div>
         </button>

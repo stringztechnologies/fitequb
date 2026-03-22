@@ -5,6 +5,7 @@ import { logger } from "hono/logger";
 import { initSentry } from "./lib/sentry.js";
 import { telegramAuth } from "./middleware/telegram-auth.js";
 import { admin } from "./routes/admin.js";
+import { ai } from "./routes/ai.js";
 import { auth } from "./routes/auth.js";
 import { challenges } from "./routes/challenges.js";
 import { cron } from "./routes/cron.js";
@@ -47,6 +48,7 @@ app.route("/api/challenges", challenges);
 app.route("/api/gamification", gamification);
 app.route("/api/trainers", trainers);
 app.route("/api/admin", admin);
+app.route("/api/ai", ai);
 
 const port = Number(process.env.PORT) || 3000;
 
