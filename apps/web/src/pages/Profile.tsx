@@ -44,19 +44,29 @@ export function Profile() {
 
   if (authLoading || loading) return <Loading />;
 
-  if (!profile && !user) {
-    return (
-      <div className="bg-background min-h-screen flex items-center justify-center px-4">
-        <EmptyState
-          icon="person"
-          title="Sign in to see your profile"
-          subtitle="Open FitEqub in Telegram to get started"
-        />
-      </div>
-    );
+  if (!user) {
+    const tgCheck = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    if (!tgCheck && !profile) {
+      return (
+        <div className="bg-background min-h-screen flex items-center justify-center px-4">
+          <EmptyState
+            icon="person"
+            title="Sign in to see your profile"
+            subtitle="Open FitEqub in Telegram to get started"
+          />
+        </div>
+      );
+    }
   }
 
-  const name = user?.full_name ?? "User";
+  const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user as
+    | { first_name?: string; last_name?: string }
+    | undefined;
+  const name =
+    user?.full_name ??
+    (tgUser?.first_name
+      ? `${tgUser.first_name}${tgUser.last_name ? ` ${tgUser.last_name}` : ""}`
+      : "User");
   const initial = name.charAt(0).toUpperCase();
   const totalEarned = profile?.total_points ?? 0;
   const totalSteps = profile?.total_steps ?? 0;
