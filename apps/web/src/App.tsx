@@ -20,6 +20,8 @@ import { Payment } from "./pages/Payment.js";
 import { Profile } from "./pages/Profile.js";
 import { SyncFitness } from "./pages/SyncFitness.js";
 import { TrainerDashboard } from "./pages/TrainerDashboard.js";
+import { DuelChallenge } from "./pages/DuelChallenge.js";
+import { QuickJoin } from "./pages/QuickJoin.js";
 import { WinCelebration } from "./pages/WinCelebration.js";
 
 export function App() {
@@ -42,6 +44,8 @@ export function App() {
               />
               <Route path="/equbs" element={<EqubList />} />
               <Route path="/equbs/create" element={<CreateEqub />} />
+              <Route path="/quick-join" element={<QuickJoin />} />
+              <Route path="/duel" element={<DuelChallenge />} />
               <Route path="/equbs/:id" element={<EqubDetail />} />
               <Route path="/equbs/:id/log" element={<LogWorkout />} />
               <Route path="/gyms" element={<GymList />} />

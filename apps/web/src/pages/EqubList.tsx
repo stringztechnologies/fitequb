@@ -1,4 +1,4 @@
-import type { EqubRoom } from "@fitequb/shared";
+import type { EqubRoom, EqubRoomType, EqubTier } from "@fitequb/shared";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loading } from "../components/Loading.js";
@@ -15,6 +15,8 @@ const DEMO_ROOMS = [
     req: "10k Steps/Day",
     endMs: 2 * 3600000 + 45 * 60000,
     status: "active",
+    roomType: "public" as EqubRoomType,
+    tier: "elite" as EqubTier,
   },
   {
     id: "demo-2",
@@ -26,6 +28,8 @@ const DEMO_ROOMS = [
     req: "5 Gym Sessions/Week",
     endMs: 8 * 3600000 + 12 * 60000,
     status: "active",
+    roomType: "private" as EqubRoomType,
+    tier: "regular" as EqubTier,
   },
   {
     id: "demo-3",
@@ -37,12 +41,56 @@ const DEMO_ROOMS = [
     req: "15k Steps/Day",
     endMs: 55 * 60000,
     status: "pending",
+    roomType: "sponsored" as EqubRoomType,
+    tier: "starter" as EqubTier,
   },
 ];
+
+const TIER_OPTIONS = [
+  { value: "all", label: "All" },
+  { value: "starter", label: "Starter" },
+  { value: "regular", label: "Regular" },
+  { value: "elite", label: "Elite" },
+] as const;
+
+function RoomTypeBadge({ roomType }: { roomType: EqubRoomType }) {
+  const config = {
+    public: {
+      className:
+        "bg-primary/10 text-primary border border-primary/20",
+      icon: "public",
+      label: "Public",
+    },
+    private: {
+      className:
+        "bg-secondary-container/10 text-secondary-container border border-secondary-container/20",
+      icon: "lock",
+      label: "Private",
+    },
+    sponsored: {
+      className:
+        "bg-gradient-to-r from-secondary-container/20 to-secondary-fixed/20 text-secondary-container border border-secondary-container/20",
+      icon: "verified",
+      label: "Sponsored",
+    },
+  } as const;
+
+  const c = config[roomType];
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 font-label text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full ${c.className}`}
+    >
+      <span className="material-symbols-outlined text-xs">{c.icon}</span>
+      {c.label}
+    </span>
+  );
+}
 
 export function EqubList() {
   const [rooms, setRooms] = useState<EqubRoom[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tierFilter, setTierFilter] = useState<string>("all");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -59,6 +107,13 @@ export function EqubList() {
   const totalPayout = hasReal
     ? rooms.reduce((sum, r) => sum + r.stake_amount * r.max_members, 0)
     : DEMO_ROOMS.reduce((sum, r) => sum + r.payout, 0);
+
+  const filteredRooms =
+    tierFilter === "all" ? rooms : rooms.filter((r) => r.tier === tierFilter);
+  const filteredDemo =
+    tierFilter === "all"
+      ? DEMO_ROOMS
+      : DEMO_ROOMS.filter((r) => r.tier === tierFilter);
 
   return (
     <div className="bg-background text-on-surface font-body min-h-screen pb-32">
@@ -99,6 +154,24 @@ export function EqubList() {
         </div>
       </div>
 
+      {/* Difficulty Tier Filter Chips */}
+      <div className="flex gap-2 overflow-x-auto pb-3 px-4">
+        {TIER_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => setTierFilter(opt.value)}
+            className={
+              tierFilter === opt.value
+                ? "bg-primary text-on-primary font-label font-bold text-xs px-4 py-2 rounded-full whitespace-nowrap"
+                : "bg-surface-container text-on-surface-variant font-label text-xs px-4 py-2 rounded-full whitespace-nowrap"
+            }
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
       {/* Section Header */}
       <div className="flex items-center justify-between px-4 pb-3">
         <h2 className="font-headline text-xl">Active Rooms</h2>
@@ -110,14 +183,14 @@ export function EqubList() {
       {/* Room Cards */}
       <div className="px-4 flex flex-col gap-3">
         {hasReal
-          ? rooms.map((r) => (
+          ? filteredRooms.map((r) => (
               <RealCard
                 key={r.id}
                 room={r}
                 onClick={() => navigate(`/equbs/${r.id}`)}
               />
             ))
-          : DEMO_ROOMS.map((r) => (
+          : filteredDemo.map((r) => (
               <DemoCard
                 key={r.id}
                 room={r}
@@ -125,6 +198,15 @@ export function EqubList() {
               />
             ))}
       </div>
+
+      {/* Quick Join Button */}
+      <button
+        type="button"
+        onClick={() => navigate("/quick-join")}
+        className="fixed bottom-24 right-20 w-14 h-14 bg-secondary-container text-on-secondary-container rounded-full shadow-[0_4px_20px_rgba(255,219,60,0.3)] flex items-center justify-center z-50"
+      >
+        <span className="material-symbols-outlined text-2xl">bolt</span>
+      </button>
 
       {/* FAB Create Button */}
       <button
@@ -156,9 +238,12 @@ function DemoCard({
       onClick={onClick}
       className="w-full text-left bg-surface-container-low rounded-lg p-5 space-y-5"
     >
-      {/* Top row: name + requirement */}
+      {/* Top row: name + badge + requirement */}
       <div className="space-y-1">
-        <h3 className="font-headline text-lg leading-tight">{room.name}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-headline text-lg leading-tight">{room.name}</h3>
+          <RoomTypeBadge roomType={room.roomType} />
+        </div>
         <div className="flex items-center gap-1.5">
           <span className="material-symbols-outlined text-sm text-primary">
             {isSteps ? "directions_run" : "fitness_center"}
@@ -258,9 +343,12 @@ function RealCard({ room, onClick }: { room: EqubRoom; onClick: () => void }) {
       onClick={onClick}
       className="w-full text-left bg-surface-container-low rounded-lg p-5 space-y-5"
     >
-      {/* Top row: name + requirement */}
+      {/* Top row: name + badge + requirement */}
       <div className="space-y-1">
-        <h3 className="font-headline text-lg leading-tight">{room.name}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-headline text-lg leading-tight">{room.name}</h3>
+          <RoomTypeBadge roomType={room.room_type} />
+        </div>
         <div className="flex items-center gap-1.5">
           <span className="material-symbols-outlined text-sm text-primary">
             {isSteps ? "directions_run" : "fitness_center"}
