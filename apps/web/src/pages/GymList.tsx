@@ -1,56 +1,8 @@
 import type { PartnerGym } from "@fitequb/shared";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { EmptyState } from "../components/EmptyState.js";
 import { Loading } from "../components/Loading.js";
 import { api } from "../lib/api.js";
-
-const DEMO_GYMS = [
-  {
-    id: "d1",
-    name: "Kuriftu Gym",
-    location: "Bole",
-    price: 150,
-    equbEligible: true,
-    distance: "1.2 km",
-    rating: 4.8,
-  },
-  {
-    id: "d2",
-    name: "Zebra Fitness",
-    location: "Lideta",
-    price: 180,
-    equbEligible: true,
-    distance: "2.5 km",
-    rating: 4.6,
-  },
-  {
-    id: "d3",
-    name: "O-Zone Gym",
-    location: "Kazanchis",
-    price: 200,
-    equbEligible: true,
-    distance: "3.1 km",
-    rating: 4.9,
-  },
-  {
-    id: "d4",
-    name: "Golden Gym",
-    location: "Bole",
-    price: 120,
-    equbEligible: false,
-    distance: "0.8 km",
-    rating: 4.2,
-  },
-  {
-    id: "d5",
-    name: "Fitness Point",
-    location: "Sarbet",
-    price: 160,
-    equbEligible: false,
-    distance: "4.0 km",
-    rating: 4.4,
-  },
-];
 
 const FILTERS = ["Near Me", "Top Rated", "Cheapest"] as const;
 
@@ -59,33 +11,20 @@ export function GymList() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("Near Me");
   const [search, setSearch] = useState("");
-  const navigate = useNavigate();
 
   useEffect(() => {
     api<PartnerGym[]>("/api/gyms")
       .then((res) => {
-        if (res.data && res.data.length > 0) setGyms(res.data);
+        if (res.data) setGyms(res.data);
       })
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <Loading />;
 
-  const hasReal = gyms.length > 0;
   const q = search.toLowerCase();
 
-  const filteredDemos = DEMO_GYMS.filter(
-    (g) =>
-      !q ||
-      g.name.toLowerCase().includes(q) ||
-      g.location.toLowerCase().includes(q),
-  ).sort((a, b) => {
-    if (filter === "Cheapest") return a.price - b.price;
-    if (filter === "Top Rated") return b.rating - a.rating;
-    return 0;
-  });
-
-  const filteredReal = gyms
+  const filteredGyms = gyms
     .filter(
       (g) =>
         !q ||
@@ -149,115 +88,15 @@ export function GymList() {
 
       {/* Gym cards */}
       <div className="px-5 flex flex-col gap-5">
-        {hasReal
-          ? filteredReal.map((g) => <RealGymCard key={g.id} gym={g} />)
-          : filteredDemos.map((g) => (
-              <DemoGymCard
-                key={g.id}
-                gym={g}
-                onBuy={() =>
-                  navigate("/payment", {
-                    state: {
-                      type: "gym_pass",
-                      equbName: g.name,
-                      stakeAmount: g.price,
-                      payout: 0,
-                      requirement: `Day pass at ${g.name}`,
-                    },
-                  })
-                }
-              />
-            ))}
-      </div>
-    </div>
-  );
-}
-
-function DemoGymCard({
-  gym,
-  onBuy,
-}: {
-  gym: (typeof DEMO_GYMS)[number];
-  onBuy: () => void;
-}) {
-  return (
-    <div className="rounded-lg overflow-hidden bg-surface-container-low border border-outline-variant/10">
-      <div className="p-5">
-        {/* Top section: gym info + distance */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
-              <span
-                className="material-symbols-outlined text-primary text-2xl"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                fitness_center
-              </span>
-            </div>
-            <div>
-              <h3 className="font-headline text-lg font-bold text-on-surface">
-                {gym.name}
-              </h3>
-              <div className="flex items-center gap-1 mt-0.5">
-                <span className="material-symbols-outlined text-on-surface-variant text-xs">
-                  location_on
-                </span>
-                <span className="text-xs font-body text-on-surface-variant">
-                  {gym.location}, Addis Ababa
-                </span>
-              </div>
-            </div>
-          </div>
-          <span className="font-label text-2xs text-on-surface-variant bg-surface-container px-2 py-1 rounded-full">
-            {gym.distance}
-          </span>
-        </div>
-
-        {/* Rating + Equb badge row */}
-        <div className="flex items-center gap-2 mb-4">
-          <span className="flex items-center gap-1 text-secondary-container font-label text-xs">
-            <span
-              className="material-symbols-outlined text-sm"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              star
-            </span>
-            {gym.rating}
-          </span>
-          {gym.equbEligible && (
-            <span className="bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full font-label text-2xs font-bold flex items-center gap-1">
-              <span
-                className="material-symbols-outlined text-xs"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                eco
-              </span>
-              Equb Eligible
-            </span>
-          )}
-        </div>
-
-        {/* Price + Buy button */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-label text-2xs text-on-surface-variant uppercase tracking-widest">
-              Day Pass
-            </p>
-            <p className="font-headline text-2xl font-bold text-secondary-container">
-              {gym.price} <span className="text-xs">ETB</span>
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onBuy}
-            className="bg-gradient-to-r from-primary to-primary-container text-on-primary font-body font-bold py-3 px-6 rounded-full shadow-[0_4px_15px_rgba(0,200,83,0.2)] flex items-center gap-2 active:scale-95 transition-transform"
-          >
-            Buy Pass
-            <span className="material-symbols-outlined text-lg">
-              arrow_forward
-            </span>
-          </button>
-        </div>
+        {filteredGyms.length > 0 ? (
+          filteredGyms.map((g) => <RealGymCard key={g.id} gym={g} />)
+        ) : (
+          <EmptyState
+            icon="fitness_center"
+            title="No gyms available"
+            subtitle="Partner gyms will appear here soon"
+          />
+        )}
       </div>
     </div>
   );

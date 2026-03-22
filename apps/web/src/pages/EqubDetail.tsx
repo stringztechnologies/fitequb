@@ -1,6 +1,7 @@
 import type { EqubRoom } from "@fitequb/shared";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { EmptyState } from "../components/EmptyState.js";
 import { Loading } from "../components/Loading.js";
 import { api } from "../lib/api.js";
 
@@ -15,176 +16,12 @@ interface RoomDetail {
   }>;
 }
 
-const DEMO_DETAILS: Record<string, RoomDetail> = {
-  "demo-1": {
-    room: {
-      id: "demo-1",
-      name: "10k Steps Challenge",
-      creator_id: "demo-creator",
-      stake_amount: 500,
-      duration_days: 30,
-      workout_target: 25,
-      completion_pct: 0.8,
-      min_members: 5,
-      max_members: 20,
-      status: "active",
-      start_date: new Date(Date.now() - 10 * 86400000).toISOString(),
-      end_date: new Date(Date.now() + 20 * 86400000).toISOString(),
-      sponsor_prize: 0,
-      is_tsom: false,
-      tsom_workout_target: null,
-      tsom_completion_pct: null,
-      created_at: new Date(Date.now() - 12 * 86400000).toISOString(),
-      room_type: "public",
-      tier: "elite",
-      invite_code: null,
-    },
-    members: [
-      {
-        id: "m1",
-        user_id: "u1",
-        completed_days: 9,
-        qualified: null,
-        users: { full_name: "Abebe Kebede", username: "abebe_k" },
-      },
-      {
-        id: "m2",
-        user_id: "u2",
-        completed_days: 7,
-        qualified: null,
-        users: { full_name: "Tigist Haile", username: "tigist_h" },
-      },
-      {
-        id: "m3",
-        user_id: "u3",
-        completed_days: 5,
-        qualified: null,
-        users: { full_name: "Dawit Mekonnen", username: "dawit_m" },
-      },
-      {
-        id: "m4",
-        user_id: "u4",
-        completed_days: 3,
-        qualified: null,
-        users: { full_name: "Marali A.", username: null },
-      },
-      {
-        id: "m5",
-        user_id: "u5",
-        completed_days: 8,
-        qualified: null,
-        users: { full_name: "Hana A.", username: null },
-      },
-      {
-        id: "m6",
-        user_id: "u6",
-        completed_days: 6,
-        qualified: null,
-        users: { full_name: "Pagra C.", username: null },
-      },
-    ],
-  },
-  "demo-2": {
-    room: {
-      id: "demo-2",
-      name: "Gym Warriors",
-      creator_id: "demo-creator",
-      stake_amount: 1000,
-      duration_days: 30,
-      workout_target: 20,
-      completion_pct: 0.75,
-      min_members: 5,
-      max_members: 20,
-      status: "active",
-      start_date: new Date(Date.now() - 5 * 86400000).toISOString(),
-      end_date: new Date(Date.now() + 25 * 86400000).toISOString(),
-      sponsor_prize: 0,
-      is_tsom: false,
-      tsom_workout_target: null,
-      tsom_completion_pct: null,
-      created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
-      room_type: "private",
-      tier: "regular",
-      invite_code: "GYM-WAR-2024",
-    },
-    members: [
-      {
-        id: "m4",
-        user_id: "u4",
-        completed_days: 4,
-        qualified: null,
-        users: { full_name: "Selam Tadesse", username: "selam_t" },
-      },
-      {
-        id: "m5",
-        user_id: "u5",
-        completed_days: 3,
-        qualified: null,
-        users: { full_name: "Yonas Girma", username: "yonas_g" },
-      },
-      {
-        id: "m6",
-        user_id: "u6",
-        completed_days: 2,
-        qualified: null,
-        users: { full_name: "Hanna Bekele", username: null },
-      },
-    ],
-  },
-  "demo-3": {
-    room: {
-      id: "demo-3",
-      name: "15k Steps Elite",
-      creator_id: "demo-creator",
-      stake_amount: 250,
-      duration_days: 14,
-      workout_target: 12,
-      completion_pct: 0.8,
-      min_members: 3,
-      max_members: 15,
-      status: "pending",
-      start_date: new Date(Date.now() + 1 * 86400000).toISOString(),
-      end_date: new Date(Date.now() + 15 * 86400000).toISOString(),
-      sponsor_prize: 0,
-      is_tsom: false,
-      tsom_workout_target: null,
-      tsom_completion_pct: null,
-      created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
-      room_type: "sponsored",
-      tier: "starter",
-      invite_code: null,
-    },
-    members: [
-      {
-        id: "m7",
-        user_id: "u7",
-        completed_days: 0,
-        qualified: null,
-        users: { full_name: "Meron Assefa", username: "meron_a" },
-      },
-      {
-        id: "m8",
-        user_id: "u8",
-        completed_days: 0,
-        qualified: null,
-        users: { full_name: "Bereket Wolde", username: "bereket_w" },
-      },
-      {
-        id: "m9",
-        user_id: "u9",
-        completed_days: 0,
-        qualified: null,
-        users: { full_name: "Lidya Tesfaye", username: null },
-      },
-    ],
-  },
-};
-
 export function EqubDetail() {
   const { id } = useParams<{ id: string }>();
   const [detail, setDetail] = useState<RoomDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
+  const [notFound, setNotFound] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -193,17 +30,46 @@ export function EqubDetail() {
       .then((res) => {
         if (res.data) {
           setDetail(res.data);
-        } else if (DEMO_DETAILS[id]) {
-          setDetail(DEMO_DETAILS[id]);
+        } else {
+          setNotFound(true);
         }
       })
       .catch(() => {
-        if (DEMO_DETAILS[id]) setDetail(DEMO_DETAILS[id]);
+        setNotFound(true);
       })
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading || !detail) return <Loading />;
+  if (loading) return <Loading />;
+
+  if (notFound || !detail) {
+    return (
+      <div className="min-h-screen bg-surface">
+        <header className="fixed top-0 w-full z-50 bg-[#131313]/70 backdrop-blur-xl flex items-center justify-between px-5 h-16">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="text-on-surface active:scale-95 transition-transform"
+            aria-label="Go back"
+          >
+            <span className="material-symbols-rounded text-2xl">arrow_back</span>
+          </button>
+          <h1 className="font-headline font-bold text-xl tracking-tight text-primary-container">
+            Equb Room
+          </h1>
+          <div className="w-6" />
+        </header>
+        <div className="h-16" />
+        <EmptyState
+          icon="error"
+          title="Room not found"
+          subtitle="This room may have been removed"
+          ctaLabel="Browse Rooms"
+          onCta={() => navigate("/equbs")}
+        />
+      </div>
+    );
+  }
 
   const { room, members } = detail;
   const daysLeft =
@@ -216,23 +82,10 @@ export function EqubDetail() {
     ? (room.tsom_completion_pct ?? room.completion_pct)
     : room.completion_pct;
   const payout = room.stake_amount * room.max_members;
-  const myProgress = 34000; // Demo: user's current progress toward payout
   const progressPct = Math.min(100, (daysElapsed / room.duration_days) * 100);
 
   async function handleJoin() {
     if (!id) return;
-    if (id.startsWith("demo-")) {
-      navigate("/payment", {
-        state: {
-          equbId: undefined,
-          equbName: room.name,
-          stakeAmount: room.stake_amount,
-          payout,
-          requirement: `${target} workouts in ${room.duration_days} days`,
-        },
-      });
-      return;
-    }
     setJoining(true);
     const res = await api<{ checkout_url: string | null }>(
       `/api/equb-rooms/${id}/join`,
@@ -369,25 +222,7 @@ export function EqubDetail() {
               My Progress
             </h3>
             <span className="font-label text-xs text-secondary-container font-bold">
-              Rank: 3rd of {members.length}
-            </span>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="h-4 bg-surface-container-highest rounded-full overflow-hidden mb-3">
-            <div
-              className="h-full bg-gradient-to-r from-primary to-primary-container rounded-full transition-all duration-500"
-              style={{
-                width: `${Math.min(100, (myProgress / payout) * 100)}%`,
-              }}
-            />
-          </div>
-          <div className="flex justify-between">
-            <span className="font-label text-xs text-on-surface-variant">
-              {myProgress.toLocaleString()} / {payout.toLocaleString()} ETB
-            </span>
-            <span className="font-label text-xs text-primary font-bold">
-              {Math.round((myProgress / payout) * 100)}%
+              {members.length} participants
             </span>
           </div>
 

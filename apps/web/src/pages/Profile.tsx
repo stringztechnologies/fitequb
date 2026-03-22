@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { EmptyState } from "../components/EmptyState.js";
 import { Loading } from "../components/Loading.js";
 import { useAuth } from "../hooks/useAuth.js";
 import { api } from "../lib/api.js";
 
 interface ProfileData {
   total_points: number;
-  referral_code: string;
+  referral_code: string | null;
   badges: { id: string; name: string; icon: string; earned: boolean }[];
+  total_steps?: number;
+  current_streak?: number;
+  referral_invited?: number;
+  referral_joined?: number;
+  referral_earned?: number;
 }
 
 interface PointEntry {
@@ -16,51 +22,6 @@ interface PointEntry {
   reason: string;
   created_at: string;
 }
-
-const BADGE_ICON_MAP: Record<string, string> = {
-  "Early Bird": "wb_sunny",
-  "100k Steps": "workspace_premium",
-  Marathoner: "directions_run",
-  "Team Player": "groups",
-  "Iron Will": "fitness_center",
-  Champion: "military_tech",
-};
-
-const DEMO_BADGES = [
-  { id: "1", name: "Early Bird", icon: "wb_sunny", earned: true },
-  { id: "2", name: "100k Steps", icon: "workspace_premium", earned: true },
-  { id: "3", name: "Marathoner", icon: "directions_run", earned: true },
-  { id: "4", name: "Team Player", icon: "groups", earned: true },
-  { id: "5", name: "Iron Will", icon: "fitness_center", earned: false },
-  { id: "6", name: "Champion", icon: "military_tech", earned: false },
-];
-
-const DEMO_EARNINGS = [
-  {
-    id: "1",
-    reason: "Oct 15, 2023 - Equb Payout",
-    points: 3200,
-    created_at: "2023-10-15",
-  },
-  {
-    id: "2",
-    reason: "Sep 10, 2023 - Step Challenge",
-    points: 850,
-    created_at: "2023-09-10",
-  },
-  {
-    id: "3",
-    reason: "Aug 28, 2023 - Equb Payout",
-    points: 2900,
-    created_at: "2023-08-28",
-  },
-  {
-    id: "4",
-    reason: "Aug 5, 2023 - Early Goal Bonus",
-    points: 500,
-    created_at: "2023-08-05",
-  },
-];
 
 export function Profile() {
   const { user, loading: authLoading } = useAuth();
@@ -83,17 +44,29 @@ export function Profile() {
 
   if (authLoading || loading) return <Loading />;
 
-  // Use demo data if not authenticated
-  const name = user?.full_name ?? "Abebe Kebede";
+  if (!profile && !user) {
+    return (
+      <div className="bg-background min-h-screen flex items-center justify-center px-4">
+        <EmptyState
+          icon="person"
+          title="Sign in to see your profile"
+          subtitle="Open FitEqub in Telegram to get started"
+        />
+      </div>
+    );
+  }
+
+  const name = user?.full_name ?? "User";
   const initial = name.charAt(0).toUpperCase();
-  const totalEarned = profile?.total_points ?? 15400;
-  const totalSteps = 2543000;
-  const badges = profile?.badges ?? DEMO_BADGES;
-  const earnings = points.length > 0 ? points : DEMO_EARNINGS;
+  const totalEarned = profile?.total_points ?? 0;
+  const totalSteps = profile?.total_steps ?? 0;
+  const currentStreak = profile?.current_streak ?? 0;
+  const badges = profile?.badges ?? [];
+  const earnedBadgeCount = badges.filter((b) => b.earned).length;
 
   return (
     <div className="bg-background text-on-surface font-body min-h-screen pb-32 px-4 pt-5 relative">
-      {/* Settings button — navigates to notifications as settings placeholder */}
+      {/* Settings button */}
       <button
         type="button"
         onClick={() => navigate("/notifications")}
@@ -107,7 +80,6 @@ export function Profile() {
 
       {/* Profile hero */}
       <div className="flex flex-col items-center mb-8 pt-4">
-        {/* Avatar with gradient ring */}
         <div className="relative">
           <div className="w-32 h-32 rounded-full p-1 bg-gradient-to-tr from-primary via-primary-container to-secondary shadow-[0_0_30px_rgba(63,229,108,0.3)]">
             <div className="w-full h-full rounded-full bg-surface-container flex items-center justify-center">
@@ -116,23 +88,18 @@ export function Profile() {
               </span>
             </div>
           </div>
-          {/* Level badge */}
-          <span className="absolute -bottom-1 -right-1 bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-[10px] font-label font-bold">
-            LVL 12
-          </span>
         </div>
 
         <h1 className="font-headline text-3xl font-extrabold tracking-tight mt-4">
           {name}
         </h1>
         <p className="font-label text-primary font-medium tracking-widest text-xs uppercase mt-1">
-          Fitness Champion
+          FitEqub Member
         </p>
       </div>
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 gap-4 mb-8">
-        {/* Lifetime Earned */}
         <div className="bg-surface-container-low p-5 rounded-lg border border-outline-variant/10">
           <div className="flex items-center gap-2 mb-2">
             <span className="material-symbols-outlined text-primary text-base">
@@ -147,7 +114,6 @@ export function Profile() {
           </div>
         </div>
 
-        {/* Lifetime Steps */}
         <div className="bg-surface-container-low p-5 rounded-lg border border-outline-variant/10">
           <div className="flex items-center gap-2 mb-2">
             <span className="material-symbols-outlined text-primary text-base">
@@ -162,7 +128,6 @@ export function Profile() {
           </div>
         </div>
 
-        {/* Current Streak */}
         <div className="bg-surface-container-low p-5 rounded-lg border border-outline-variant/10">
           <div className="flex items-center gap-2 mb-2">
             <span className="material-symbols-outlined text-primary text-base">
@@ -172,10 +137,11 @@ export function Profile() {
               Current Streak
             </span>
           </div>
-          <div className="text-primary font-headline text-3xl">7 days</div>
+          <div className="text-primary font-headline text-3xl">
+            {currentStreak} {currentStreak === 1 ? "day" : "days"}
+          </div>
         </div>
 
-        {/* Badges Earned */}
         <div className="bg-surface-container-low p-5 rounded-lg border border-outline-variant/10">
           <div className="flex items-center gap-2 mb-2">
             <span className="material-symbols-outlined text-primary text-base">
@@ -186,7 +152,7 @@ export function Profile() {
             </span>
           </div>
           <div className="text-primary font-headline text-3xl">
-            {badges.filter((b) => b.earned).length}/{badges.length}
+            {badges.length > 0 ? `${earnedBadgeCount}/${badges.length}` : "0"}
           </div>
         </div>
       </div>
@@ -196,10 +162,9 @@ export function Profile() {
         <h2 className="font-headline text-xl font-bold tracking-tight mb-4">
           Fitness Achievements
         </h2>
-        <div className="grid grid-cols-4 gap-4">
-          {badges.map((b) => {
-            const iconName = BADGE_ICON_MAP[b.name] ?? b.icon;
-            return (
+        {badges.length > 0 ? (
+          <div className="grid grid-cols-4 gap-4">
+            {badges.map((b) => (
               <div key={b.id} className="flex flex-col items-center gap-1.5">
                 <div
                   className={`w-14 h-14 rounded-full flex items-center justify-center border ${
@@ -213,16 +178,20 @@ export function Profile() {
                       b.earned ? "text-primary" : "text-on-surface-variant"
                     }`}
                   >
-                    {b.earned ? iconName : "lock"}
+                    {b.earned ? b.icon : "lock"}
                   </span>
                 </div>
                 <span className="font-label text-[8px] uppercase tracking-tighter text-on-surface-variant text-center leading-tight">
                   {b.name}
                 </span>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-on-surface-variant text-center py-6">
+            No badges yet
+          </p>
+        )}
       </div>
 
       {/* Earning History */}
@@ -231,44 +200,52 @@ export function Profile() {
           <h2 className="font-headline text-xl font-bold tracking-tight">
             Earning History
           </h2>
-          <button
-            type="button"
-            className="font-label text-xs text-primary font-medium uppercase tracking-wider"
-          >
-            View All
-          </button>
-        </div>
-        <div className="flex flex-col gap-3">
-          {earnings.map((e) => (
-            <div
-              key={e.id}
-              className="bg-surface-container p-4 rounded-lg flex justify-between items-center"
+          {points.length > 4 && (
+            <button
+              type="button"
+              className="font-label text-xs text-primary font-medium uppercase tracking-wider"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-primary text-lg">
-                    account_balance_wallet
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm text-on-surface font-medium">
-                    {e.reason}
-                  </p>
-                  <p className="font-label text-[10px] text-on-surface-variant uppercase mt-0.5">
-                    {new Date(e.created_at).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </p>
-                </div>
-              </div>
-              <span className="font-headline text-primary text-sm font-bold">
-                +ETB {e.points.toLocaleString()}
-              </span>
-            </div>
-          ))}
+              View All
+            </button>
+          )}
         </div>
+        {points.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            {points.map((e) => (
+              <div
+                key={e.id}
+                className="bg-surface-container p-4 rounded-lg flex justify-between items-center"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary text-lg">
+                      account_balance_wallet
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-on-surface font-medium">
+                      {e.reason}
+                    </p>
+                    <p className="font-label text-[10px] text-on-surface-variant uppercase mt-0.5">
+                      {new Date(e.created_at).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
+                </div>
+                <span className="font-headline text-primary text-sm font-bold">
+                  +ETB {e.points.toLocaleString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-on-surface-variant text-center py-6">
+            No earnings yet
+          </p>
+        )}
       </div>
 
       {/* Referral Section */}
@@ -300,42 +277,47 @@ export function Profile() {
                 Your Referral Code
               </p>
               <p className="font-headline text-lg font-bold text-primary mt-0.5">
-                {profile?.referral_code ?? "FITEQUB-AK12"}
+                {profile?.referral_code ?? "Sign in to get your code"}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                const code = profile?.referral_code ?? "FITEQUB-AK12";
-                navigator.clipboard?.writeText(code).catch(() => {});
-              }}
-              className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center active:scale-90 transition-transform"
-            >
-              <span className="material-symbols-outlined text-primary text-lg">
-                content_copy
-              </span>
-            </button>
+            {profile?.referral_code && (
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard
+                    ?.writeText(profile.referral_code as string)
+                    .catch(() => {});
+                }}
+                className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center active:scale-90 transition-transform"
+              >
+                <span className="material-symbols-outlined text-primary text-lg">
+                  content_copy
+                </span>
+              </button>
+            )}
           </div>
 
           {/* Referral Stats */}
           <div className="grid grid-cols-3 gap-3">
             <div className="text-center">
               <p className="font-headline text-xl font-bold text-on-surface">
-                5
+                {profile?.referral_invited ?? 0}
               </p>
               <p className="font-label text-[9px] text-on-surface-variant uppercase tracking-widest">
                 Invited
               </p>
             </div>
             <div className="text-center">
-              <p className="font-headline text-xl font-bold text-primary">3</p>
+              <p className="font-headline text-xl font-bold text-primary">
+                {profile?.referral_joined ?? 0}
+              </p>
               <p className="font-label text-[9px] text-on-surface-variant uppercase tracking-widest">
                 Joined
               </p>
             </div>
             <div className="text-center">
               <p className="font-headline text-xl font-bold text-secondary-container">
-                300
+                {profile?.referral_earned ?? 0}
               </p>
               <p className="font-label text-[9px] text-on-surface-variant uppercase tracking-widest">
                 ETB Earned
@@ -344,27 +326,29 @@ export function Profile() {
           </div>
 
           {/* Share Button */}
-          <button
-            type="button"
-            onClick={() => {
-              const code = profile?.referral_code ?? "FITEQUB-AK12";
-              const text = `Join FitEqub! Stake money on your fitness goals and win real ETB. Use my referral code: ${code}\nhttps://t.me/fitequb_bot?start=REF-${code}`;
-              if (navigator.share) {
-                navigator
-                  .share({ title: "Join FitEqub!", text })
-                  .catch(() => {});
-              } else {
-                window.open(
-                  `https://t.me/share/url?url=${encodeURIComponent(`https://t.me/fitequb_bot?start=REF-${code}`)}&text=${encodeURIComponent(text)}`,
-                  "_blank",
-                );
-              }
-            }}
-            className="mt-4 w-full py-3 rounded-full border-2 border-primary text-primary font-headline font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
-          >
-            <span className="material-symbols-outlined text-lg">share</span>
-            Share Invite Link
-          </button>
+          {profile?.referral_code && (
+            <button
+              type="button"
+              onClick={() => {
+                const code = profile.referral_code as string;
+                const text = `Join FitEqub! Stake money on your fitness goals and win real ETB. Use my referral code: ${code}\nhttps://t.me/fitequb_bot?start=REF-${code}`;
+                if (navigator.share) {
+                  navigator
+                    .share({ title: "Join FitEqub!", text })
+                    .catch(() => {});
+                } else {
+                  window.open(
+                    `https://t.me/share/url?url=${encodeURIComponent(`https://t.me/fitequb_bot?start=REF-${code}`)}&text=${encodeURIComponent(text)}`,
+                    "_blank",
+                  );
+                }
+              }}
+              className="mt-4 w-full py-3 rounded-full border-2 border-primary text-primary font-headline font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+            >
+              <span className="material-symbols-outlined text-lg">share</span>
+              Share Invite Link
+            </button>
+          )}
         </div>
       </div>
 
@@ -379,9 +363,6 @@ export function Profile() {
           Sync Fitness Data
         </span>
       </button>
-      <p className="text-center mt-2 font-label text-[10px] text-on-surface-variant uppercase tracking-wider">
-        Last synced: 2 hours ago
-      </p>
     </div>
   );
 }

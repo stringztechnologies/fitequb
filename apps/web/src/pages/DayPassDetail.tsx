@@ -1,6 +1,7 @@
 import type { DayPass } from "@fitequb/shared";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { EmptyState } from "../components/EmptyState.js";
 import { Loading } from "../components/Loading.js";
 import { api } from "../lib/api.js";
 
@@ -8,23 +9,12 @@ interface PassWithGym extends DayPass {
   partner_gyms: { name: string; location: string };
 }
 
-const DEMO_PASS: PassWithGym = {
-  id: "demo-pass",
-  user_id: "demo-user",
-  gym_id: "d1",
-  qr_token: "FITEQUB-DEMO-QR-2024-ABCD",
-  status: "active",
-  purchased_at: new Date().toISOString(),
-  expires_at: new Date(Date.now() + 24 * 3600000).toISOString(),
-  redeemed_at: null,
-  partner_gyms: { name: "Kuriftu Gym", location: "Bole" },
-};
-
 export function DayPassDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [pass, setPass] = useState<PassWithGym | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [timeLeft, setTimeLeft] = useState("");
 
   useEffect(() => {
@@ -34,11 +24,11 @@ export function DayPassDetail() {
         if (res.data) {
           setPass(res.data);
         } else {
-          setPass(DEMO_PASS);
+          setNotFound(true);
         }
       })
       .catch(() => {
-        setPass(DEMO_PASS);
+        setNotFound(true);
       })
       .finally(() => setLoading(false));
   }, [id]);
@@ -62,7 +52,37 @@ export function DayPassDetail() {
     return () => clearInterval(interval);
   }, [pass]);
 
-  if (loading || !pass) return <Loading />;
+  if (loading) return <Loading />;
+
+  if (notFound || !pass) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="fixed top-0 w-full z-50 bg-[#131313]/70 backdrop-blur-xl flex items-center gap-3 px-5 h-16">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container active:scale-95 transition-all"
+            aria-label="Go back"
+          >
+            <span className="material-symbols-outlined text-on-surface-variant text-xl">
+              arrow_back
+            </span>
+          </button>
+          <h1 className="font-headline font-bold text-xl text-primary-container">
+            Day Pass
+          </h1>
+        </header>
+        <div className="h-16" />
+        <EmptyState
+          icon="confirmation_number"
+          title="Pass not found"
+          subtitle="This day pass may have expired"
+          ctaLabel="Browse Gyms"
+          onCta={() => navigate("/gyms")}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-24">

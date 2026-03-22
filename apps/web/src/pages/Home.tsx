@@ -1,3 +1,4 @@
+import type { EqubRoom } from "@fitequb/shared";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loading } from "../components/Loading.js";
@@ -6,6 +7,9 @@ import { api } from "../lib/api.js";
 
 interface ProfileSummary {
   total_points: number;
+  streak: number;
+  days_completed: number;
+  days_total: number;
   level: {
     level: number;
     name: string;
@@ -19,15 +23,24 @@ interface ProfileSummary {
 export function Home() {
   const { user, loading } = useAuth();
   const [profile, setProfile] = useState<ProfileSummary | null>(null);
+  const [rooms, setRooms] = useState<EqubRoom[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     api<ProfileSummary>("/api/gamification/profile").then((res) => {
       if (res.data) setProfile(res.data);
     });
+    api<EqubRoom[]>("/api/equb-rooms").then((res) => {
+      if (res.data) setRooms(res.data);
+    });
   }, []);
 
   if (loading) return <Loading />;
+
+  const potentialPayout = rooms.reduce(
+    (sum, r) => sum + r.stake_amount * r.max_members,
+    0,
+  );
 
   const progressPct = profile?.next_level
     ? Math.min(
@@ -36,12 +49,15 @@ export function Home() {
           (profile.next_level.min_points - profile.level.min_points)) *
           100,
       )
-    : 75;
+    : 0;
+
+  const streak = profile?.streak ?? 0;
+  const daysCompleted = profile?.days_completed ?? 0;
+  const daysTotal = profile?.days_total ?? 0;
 
   const circ = 2 * Math.PI * 80;
-  const displayAmount = profile?.total_points ?? 12500;
 
-  const isDemo = !profile;
+  const isDemo = !user;
 
   return (
     <div className="bg-background text-on-surface font-body pb-24">
@@ -52,9 +68,9 @@ export function Home() {
         </h1>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1 bg-secondary-container/15 px-2.5 py-1 rounded-full">
-            <span className="text-sm">🔥</span>
+            <span className="text-sm">&#x1F525;</span>
             <span className="text-sm font-bold text-secondary-container">
-              7
+              {streak}
             </span>
           </div>
           <button
@@ -124,7 +140,7 @@ export function Home() {
             {/* Center text */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="font-headline text-4xl font-extrabold text-white">
-                {displayAmount.toLocaleString()}
+                {potentialPayout.toLocaleString()}
                 <span className="font-label text-sm text-primary font-bold ml-1">
                   ETB
                 </span>
@@ -133,7 +149,9 @@ export function Home() {
                 Potential Payout
               </span>
               <span className="font-label text-2xs text-on-surface-variant mt-1.5">
-                18/25 days completed
+                {daysTotal > 0
+                  ? `${daysCompleted}/${daysTotal} days completed`
+                  : "No active equbs"}
               </span>
             </div>
           </div>
@@ -144,29 +162,31 @@ export function Home() {
       <div className="grid grid-cols-1 gap-5 px-5 pt-5">
         <FeatureCard
           title="Equb Rooms"
-          subtitle="Join a fitness accountability group"
-          badgeText="Ends in 2 days"
-          badgeGreen={false}
+          subtitle={`${rooms.length} rooms available`}
+          badgeText={
+            rooms.length > 0 ? `${rooms.length} Active` : "No Active Rooms"
+          }
+          badgeGreen={rooms.length > 0}
           icon="groups"
-          progress={65}
+          progress={rooms.length > 0 ? Math.min(100, rooms.length * 10) : 0}
           onClick={() => navigate("/equbs")}
         />
         <FeatureCard
           title="Gym Day Passes"
           subtitle="Discounted single-visit passes"
-          badgeText="Discount Active"
-          badgeGreen
+          badgeText="Browse Gyms"
+          badgeGreen={false}
           icon="fitness_center"
-          progress={40}
+          progress={0}
           onClick={() => navigate("/gyms")}
         />
         <FeatureCard
           title="Step Challenge"
           subtitle="Compete on the city leaderboard"
-          badgeText="15,450 Steps"
-          badgeGreen
+          badgeText="View Challenges"
+          badgeGreen={false}
           icon="directions_walk"
-          progress={80}
+          progress={0}
           variant="challenge"
           onClick={() => navigate("/challenges")}
         />

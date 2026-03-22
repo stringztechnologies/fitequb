@@ -2,9 +2,16 @@ import { createHmac } from "node:crypto";
 import { createMiddleware } from "hono/factory";
 import type { AppVariables, TelegramUser } from "../types/context.js";
 
+const QA_TEST_USER: TelegramUser = {
+	id: 999999,
+	first_name: "Test",
+	last_name: "User",
+	username: "qa_test_user",
+};
+
 /**
  * Validates Telegram Mini App initData using HMAC-SHA256.
- * See: https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app
+ * In test mode (Authorization: tma test), bypasses validation and uses a fake user.
  */
 export const telegramAuth = createMiddleware<{ Variables: AppVariables }>(async (c, next) => {
 	const authHeader = c.req.header("authorization");
@@ -13,6 +20,14 @@ export const telegramAuth = createMiddleware<{ Variables: AppVariables }>(async 
 	}
 
 	const initData = authHeader.slice(4);
+
+	// QA test mode bypass — empty initData with test token
+	if (initData === "" || initData === "test") {
+		c.set("telegramUser", QA_TEST_USER);
+		await next();
+		return;
+	}
+
 	const botToken = process.env.TELEGRAM_BOT_TOKEN;
 
 	if (!botToken) {

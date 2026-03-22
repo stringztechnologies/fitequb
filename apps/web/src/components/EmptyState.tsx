@@ -1,5 +1,5 @@
 interface EmptyStateProps {
-	icon: React.ReactNode;
+	icon: string;
 	title: string;
 	subtitle: string;
 	ctaLabel?: string;
@@ -8,35 +8,17 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon, title, subtitle, ctaLabel, onCta }: EmptyStateProps) {
 	return (
-		<div
-			style={{
-				display: "flex",
-				flexDirection: "column",
-				alignItems: "center",
-				justifyContent: "center",
-				padding: "64px 32px",
-				textAlign: "center",
-			}}
-		>
-			<div style={{ marginBottom: "16px", color: "#8E8E93" }}>{icon}</div>
-			<p style={{ fontSize: "16px", fontWeight: 600, color: "#FFFFFF", margin: "0 0 8px" }}>
-				{title}
-			</p>
-			<p style={{ fontSize: "14px", color: "#8E8E93", margin: "0 0 24px" }}>{subtitle}</p>
+		<div className="flex flex-col items-center justify-center py-16 px-8 text-center">
+			<div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mb-4">
+				<span className="material-symbols-outlined text-on-surface-variant text-3xl">{icon}</span>
+			</div>
+			<p className="font-headline text-base font-bold text-on-surface mb-2">{title}</p>
+			<p className="text-sm text-on-surface-variant mb-6">{subtitle}</p>
 			{ctaLabel && onCta && (
 				<button
 					type="button"
 					onClick={onCta}
-					style={{
-						padding: "12px 32px",
-						borderRadius: "12px",
-						backgroundColor: "#00C853",
-						color: "#FFF",
-						fontSize: "15px",
-						fontWeight: 700,
-						border: "none",
-						cursor: "pointer",
-					}}
+					className="px-8 py-3 rounded-full bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-bold text-sm active:scale-95 transition-transform"
 				>
 					{ctaLabel}
 				</button>
