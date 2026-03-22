@@ -43,9 +43,7 @@ export function ChallengeList() {
 					onClick={() => navigate(-1)}
 					className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-low"
 				>
-					<span className="material-symbols-rounded text-on-surface text-xl">
-						arrow_back
-					</span>
+					<span className="material-symbols-rounded text-on-surface text-xl">arrow_back</span>
 				</button>
 				<h1 className="font-headline font-bold text-xl tracking-tight text-on-surface">
 					<span className="material-symbols-rounded text-secondary-container align-middle mr-1.5 text-xl">
@@ -56,10 +54,31 @@ export function ChallengeList() {
 				<div className="w-10" />
 			</div>
 
+			{/* Free entry callout */}
+			<div className="bg-primary/5 border border-primary/20 rounded-lg px-4 py-3 mb-4 flex items-center gap-3">
+				<div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+					<span
+						className="material-symbols-rounded text-primary text-xl"
+						style={{ fontVariationSettings: "'FILL' 1" }}
+					>
+						redeem
+					</span>
+				</div>
+				<div>
+					<p className="font-headline text-sm font-bold text-primary">FREE to Join</p>
+					<p className="text-on-surface-variant text-xs">
+						No stake required. Walk, earn, win real ETB prizes.
+					</p>
+				</div>
+			</div>
+
 			{/* Prize Pool Banner */}
 			<div className="bg-surface-container-low p-6 gold-glow rounded-lg border border-secondary-container/10 mb-4 text-center">
 				<p className="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant flex items-center justify-center gap-1.5 mb-2">
-					<span className="material-symbols-rounded text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
+					<span
+						className="material-symbols-rounded text-sm"
+						style={{ fontVariationSettings: "'FILL' 1" }}
+					>
 						payments
 					</span>
 					Current Prize Pool
@@ -78,35 +97,17 @@ export function ChallengeList() {
 						style={{ width: `${progressPercent}%` }}
 					/>
 				</div>
-				<p className="font-label text-[10px] text-on-surface-variant mt-1.5">
-					Resets in 5 days
-				</p>
+				<p className="font-label text-[10px] text-on-surface-variant mt-1.5">Resets in 5 days</p>
 			</div>
 
 			{/* Podium */}
 			<div className="flex items-end justify-center gap-3 mb-6 pt-4">
 				{/* 2nd Place */}
-				<PodiumCard
-					name="Dawit K."
-					steps="48,200"
-					etb="3,750"
-					rank={2}
-				/>
+				<PodiumCard name="Dawit K." steps="48,200" etb="3,750" rank={2} />
 				{/* 1st Place */}
-				<PodiumCard
-					name="Abeba T."
-					steps="50,000"
-					etb="7,500"
-					rank={1}
-					crown
-				/>
+				<PodiumCard name="Abeba T." steps="50,000" etb="7,500" rank={1} crown />
 				{/* 3rd Place */}
-				<PodiumCard
-					name="Sara M."
-					steps="45,200"
-					etb="1,875"
-					rank={3}
-				/>
+				<PodiumCard name="Sara M." steps="45,200" etb="1,875" rank={3} />
 			</div>
 
 			{/* Leaderboard List (4th+) */}
@@ -125,9 +126,7 @@ export function ChallengeList() {
 							</span>
 							<div
 								className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-									isYou
-										? "bg-primary/20 ring-2 ring-primary"
-										: "bg-surface-container-highest"
+									isYou ? "bg-primary/20 ring-2 ring-primary" : "bg-surface-container-highest"
 								}`}
 							>
 								<span className="font-body font-bold text-sm text-on-surface">
@@ -136,9 +135,7 @@ export function ChallengeList() {
 							</div>
 							<div className="flex-1 min-w-0">
 								<div className="flex items-center gap-1.5">
-									<p className="font-body font-bold text-sm text-on-surface truncate">
-										{l.name}
-									</p>
+									<p className="font-body font-bold text-sm text-on-surface truncate">{l.name}</p>
 									{isYou && (
 										<span className="font-label text-[9px] font-bold text-on-primary bg-primary px-1.5 py-0.5 rounded">
 											YOU
@@ -227,19 +224,13 @@ function PodiumCard({
 			</div>
 
 			{/* Name */}
-			<p className="font-body font-bold text-xs text-on-surface text-center mt-1">
-				{name}
-			</p>
+			<p className="font-body font-bold text-xs text-on-surface text-center mt-1">{name}</p>
 
 			{/* Steps */}
-			<p className="font-label text-[10px] text-primary mt-0.5">
-				{steps} steps
-			</p>
+			<p className="font-label text-[10px] text-primary mt-0.5">{steps} steps</p>
 
 			{/* Prize */}
-			<p className={`font-headline ${prizeColor} font-bold text-xs mt-0.5`}>
-				{etb} ETB
-			</p>
+			<p className={`font-headline ${prizeColor} font-bold text-xs mt-0.5`}>{etb} ETB</p>
 
 			{/* Pedestal */}
 			<div

@@ -85,10 +85,7 @@ export function Home() {
 				{/* SVG Ring */}
 				<div className="flex justify-center">
 					<div className="relative w-[200px] h-[200px] drop-shadow-[0_0_20px_rgba(63,229,108,0.5)]">
-						<svg
-							viewBox="0 0 200 200"
-							className="w-full h-full -rotate-90"
-						>
+						<svg viewBox="0 0 200 200" className="w-full h-full -rotate-90">
 							<circle
 								cx="100"
 								cy="100"
@@ -113,9 +110,7 @@ export function Home() {
 						<div className="absolute inset-0 flex flex-col items-center justify-center">
 							<span className="font-headline text-4xl font-extrabold text-white">
 								{displayAmount.toLocaleString()}
-								<span className="font-label text-sm text-primary font-bold ml-1">
-									ETB
-								</span>
+								<span className="font-label text-sm text-primary font-bold ml-1">ETB</span>
 							</span>
 							<span className="font-label text-xs text-secondary-container mt-1">
 								Potential Payout
@@ -158,6 +153,36 @@ export function Home() {
 					variant="challenge"
 					onClick={() => navigate("/challenges")}
 				/>
+			</div>
+
+			{/* Quick Actions Row */}
+			<div className="grid grid-cols-2 gap-3 px-5 pt-5">
+				<button
+					type="button"
+					onClick={() => navigate("/duel")}
+					className="flex items-center gap-3 bg-surface-container-low p-4 rounded-lg active:scale-[0.98] transition-transform"
+				>
+					<div className="w-10 h-10 rounded-lg bg-secondary-container/15 flex items-center justify-center">
+						<span className="material-symbols-outlined text-xl text-secondary-container">bolt</span>
+					</div>
+					<div className="text-left">
+						<p className="font-headline text-sm font-bold text-on-surface">1v1 Duel</p>
+						<p className="text-on-surface-variant text-xs">Challenge a friend</p>
+					</div>
+				</button>
+				<button
+					type="button"
+					onClick={() => navigate("/how-it-works")}
+					className="flex items-center gap-3 bg-surface-container-low p-4 rounded-lg active:scale-[0.98] transition-transform"
+				>
+					<div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center">
+						<span className="material-symbols-outlined text-xl text-primary">help</span>
+					</div>
+					<div className="text-left">
+						<p className="font-headline text-sm font-bold text-on-surface">How It Works</p>
+						<p className="text-on-surface-variant text-xs">New here? Start here</p>
+					</div>
+				</button>
 			</div>
 
 			{/* Create Equb FAB */}
@@ -207,15 +232,11 @@ function FeatureCard({
 				<div className="flex items-center gap-3">
 					{/* Icon */}
 					<div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center">
-						<span className="material-symbols-outlined text-xl text-primary">
-							{icon}
-						</span>
+						<span className="material-symbols-outlined text-xl text-primary">{icon}</span>
 					</div>
 					<div>
 						<h3 className="font-headline text-xl text-white">{title}</h3>
-						<p className="text-on-surface-variant text-sm font-body mt-0.5">
-							{subtitle}
-						</p>
+						<p className="text-on-surface-variant text-sm font-body mt-0.5">{subtitle}</p>
 					</div>
 				</div>
 

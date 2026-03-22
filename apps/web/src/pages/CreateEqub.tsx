@@ -31,11 +31,11 @@ export function CreateEqub() {
 	const [requirements, setRequirements] = useState<FitnessRequirement[]>(DEFAULT_REQUIREMENTS);
 	const [showAddReq, setShowAddReq] = useState(false);
 	const [customReq, setCustomReq] = useState("");
+	const [roomType, setRoomType] = useState<"public" | "private">("public");
+	const [isTsom, setIsTsom] = useState(false);
 
 	function toggleRequirement(id: string) {
-		setRequirements((prev) =>
-			prev.map((r) => (r.id === id ? { ...r, selected: !r.selected } : r)),
-		);
+		setRequirements((prev) => prev.map((r) => (r.id === id ? { ...r, selected: !r.selected } : r)));
 	}
 
 	function addCustomRequirement() {
@@ -78,6 +78,8 @@ export function CreateEqub() {
 				max_members: members,
 				start_date: startDate.toISOString(),
 				sponsor_prize: 0,
+				room_type: roomType,
+				is_tsom: isTsom,
 			}),
 		});
 		setSubmitting(false);
@@ -249,6 +251,71 @@ export function CreateEqub() {
 						placeholder="30"
 						className="w-full bg-surface-container-low border-b-2 border-secondary-container/40 focus:border-secondary-container text-on-surface px-4 py-4 rounded-t-xl outline-none transition-colors placeholder:text-on-surface-variant/40 font-body"
 					/>
+				</div>
+
+				{/* Room Type Toggle */}
+				<div>
+					<label className="font-label text-xs uppercase tracking-widest text-on-surface-variant ml-1 block mb-2">
+						Room Type
+					</label>
+					<div className="flex bg-surface-container-low rounded-full p-1 border border-outline-variant/10">
+						{(["public", "private"] as const).map((type) => {
+							const selected = roomType === type;
+							const icon = type === "public" ? "public" : "lock";
+							const label = type === "public" ? "Public" : "Private";
+							return (
+								<button
+									type="button"
+									key={type}
+									onClick={() => setRoomType(type)}
+									className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-label font-semibold transition-all ${
+										selected
+											? "bg-primary/15 text-primary border border-primary/30"
+											: "text-on-surface-variant border border-transparent"
+									}`}
+								>
+									<span className="material-symbols-outlined text-lg">{icon}</span>
+									{label}
+								</button>
+							);
+						})}
+					</div>
+				</div>
+
+				{/* Tsom (Fasting) Mode Toggle */}
+				<div>
+					<div className="flex items-center justify-between">
+						<div>
+							<label className="font-label text-xs uppercase tracking-widest text-on-surface-variant ml-1 block">
+								Tsom / Fasting Mode
+							</label>
+							<p className="text-on-surface-variant text-xs ml-1 mt-1">
+								Reduces targets to 60% during fasting seasons
+							</p>
+						</div>
+						<button
+							type="button"
+							onClick={() => setIsTsom(!isTsom)}
+							className={`w-12 h-7 rounded-full transition-all relative ${
+								isTsom ? "bg-primary" : "bg-surface-container-highest"
+							}`}
+						>
+							<div
+								className={`w-5 h-5 rounded-full bg-white absolute top-1 transition-all ${
+									isTsom ? "left-6" : "left-1"
+								}`}
+							/>
+						</button>
+					</div>
+					{isTsom && (
+						<div className="mt-3 bg-primary/5 border border-primary/20 rounded-lg px-4 py-3 flex items-start gap-2">
+							<span className="material-symbols-outlined text-primary text-lg mt-0.5">info</span>
+							<p className="text-xs text-on-surface-variant">
+								Workout targets will be reduced to 60% and completion threshold adjusts to
+								accommodate fasting periods.
+							</p>
+						</div>
+					)}
 				</div>
 
 				{/* Fitness Requirements — Interactive */}

@@ -19,9 +19,7 @@ export function DuelChallenge() {
 						arrow_back
 					</span>
 				</button>
-				<h1 className="font-headline font-bold text-xl text-primary-container">
-					1v1 Duel
-				</h1>
+				<h1 className="font-headline font-bold text-xl text-primary-container">1v1 Duel</h1>
 			</header>
 
 			{/* Spacer for fixed header */}
@@ -39,9 +37,7 @@ export function DuelChallenge() {
 							className="w-20 h-20 rounded-full bg-primary/20 border-2 border-primary/30 flex items-center justify-center"
 							aria-label="Your avatar"
 						>
-							<span className="font-headline text-2xl font-bold text-primary">
-								Y
-							</span>
+							<span className="font-headline text-2xl font-bold text-primary">Y</span>
 						</div>
 						<span className="font-label text-xs text-on-surface-variant uppercase tracking-widest">
 							You
@@ -62,9 +58,7 @@ export function DuelChallenge() {
 							className="w-20 h-20 rounded-full bg-secondary-container/20 border-2 border-secondary-container/30 flex items-center justify-center"
 							aria-label="Opponent avatar"
 						>
-							<span className="font-headline text-2xl font-bold text-secondary-container">
-								?
-							</span>
+							<span className="font-headline text-2xl font-bold text-secondary-container">?</span>
 						</div>
 						<span className="font-label text-xs text-on-surface-variant uppercase tracking-widest">
 							Opponent
@@ -96,9 +90,7 @@ export function DuelChallenge() {
 								<p className="font-label text-xs text-on-surface-variant uppercase tracking-wider">
 									Duration
 								</p>
-								<p className="font-label text-sm text-on-surface font-medium">
-									7 Days
-								</p>
+								<p className="font-label text-sm text-on-surface font-medium">7 Days</p>
 							</div>
 						</div>
 
@@ -111,9 +103,7 @@ export function DuelChallenge() {
 								<p className="font-label text-xs text-on-surface-variant uppercase tracking-wider">
 									Requirement
 								</p>
-								<p className="font-label text-sm text-on-surface font-medium">
-									10,000 steps/day
-								</p>
+								<p className="font-label text-sm text-on-surface font-medium">10,000 steps/day</p>
 							</div>
 						</div>
 
@@ -126,9 +116,7 @@ export function DuelChallenge() {
 								<p className="font-label text-xs text-on-surface-variant uppercase tracking-wider">
 									Prize Pool
 								</p>
-								<p className="font-label text-sm text-primary font-bold">
-									1,000 ETB
-								</p>
+								<p className="font-label text-sm text-primary font-bold">1,000 ETB</p>
 							</div>
 						</div>
 					</div>
@@ -180,7 +168,25 @@ export function DuelChallenge() {
 			<div className="fixed bottom-16 left-0 right-0 z-40 px-5 pb-4 pt-3 bg-gradient-to-t from-background via-background to-transparent">
 				<button
 					type="button"
-					className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-primary-container text-on-primary py-5 rounded-full font-headline font-bold text-base shadow-glow active:scale-[0.97] transition-transform"
+					onClick={() => {
+						if (!username.trim()) return;
+						const deepLink = `https://t.me/fitequb_bot?start=DUEL-${username.trim()}`;
+						const text = `I'm challenging you to a 1v1 Duel on FitEqub! 500 ETB each, 10k steps/day for 7 days. Winner takes all. Accept here: ${deepLink}`;
+						if (navigator.share) {
+							navigator.share({ title: "FitEqub Duel Challenge", text }).catch(() => {});
+						} else if (window.Telegram?.WebApp?.openTelegramLink) {
+							window.Telegram.WebApp.openTelegramLink(
+								`https://t.me/share/url?url=${encodeURIComponent(deepLink)}&text=${encodeURIComponent(text)}`,
+							);
+						} else {
+							window.open(
+								`https://t.me/share/url?url=${encodeURIComponent(deepLink)}&text=${encodeURIComponent(text)}`,
+								"_blank",
+							);
+						}
+					}}
+					disabled={!username.trim()}
+					className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-primary-container text-on-primary py-5 rounded-full font-headline font-bold text-base shadow-glow active:scale-[0.97] transition-transform disabled:opacity-50"
 				>
 					<span className="material-symbols-outlined text-xl">bolt</span>
 					Challenge a Friend
