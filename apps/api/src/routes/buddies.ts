@@ -26,7 +26,7 @@ buddies.post("/request", async (c) => {
 	if (!userId) return c.json({ data: null, error: "User not found" }, 404);
 
 	const parsed = requestSchema.safeParse(await c.req.json());
-	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0].message }, 400);
+	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" }, 400);
 
 	const { equb_id, partner_user_id } = parsed.data;
 
@@ -75,7 +75,7 @@ buddies.post("/accept", async (c) => {
 	if (!userId) return c.json({ data: null, error: "User not found" }, 404);
 
 	const parsed = acceptSchema.safeParse(await c.req.json());
-	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0].message }, 400);
+	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" }, 400);
 
 	const { data: buddy, error } = await supabase
 		.from("workout_buddies")

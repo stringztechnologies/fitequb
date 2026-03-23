@@ -103,18 +103,13 @@ async function updateDailySummary(
 
 async function awardPoints(userId: string, points: number, reason: string) {
 	await supabase.from("point_events").insert({ user_id: userId, points, reason });
-	await supabase.rpc("increment_points", { uid: userId, pts: points }).catch(() => {
-		supabase
-			.from("users")
-			.select("total_points")
-			.eq("id", userId)
-			.single()
-			.then(({ data: u }) => {
-				if (u) {
-					supabase.from("users").update({ total_points: (u.total_points ?? 0) + points }).eq("id", userId);
-				}
-			});
-	});
+	const { error } = await supabase.rpc("increment_points", { uid: userId, pts: points });
+	if (error) {
+		const { data: u } = await supabase.from("users").select("total_points").eq("id", userId).single();
+		if (u) {
+			await supabase.from("users").update({ total_points: (u.total_points ?? 0) + points }).eq("id", userId);
+		}
+	}
 }
 
 function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -135,7 +130,7 @@ verify.post("/steps", async (c) => {
 	if (!userId) return c.json({ data: null, error: "User not found" }, 404);
 
 	const parsed = stepsSchema.safeParse(await c.req.json());
-	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0].message }, 400);
+	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" }, 400);
 
 	if (!(await checkRateLimit(userId))) {
 		return c.json({ data: null, error: "Daily verification limit reached (max 10)" }, 429);
@@ -163,7 +158,7 @@ verify.post("/qr", async (c) => {
 	if (!userId) return c.json({ data: null, error: "User not found" }, 404);
 
 	const parsed = qrSchema.safeParse(await c.req.json());
-	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0].message }, 400);
+	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" }, 400);
 
 	if (!(await checkRateLimit(userId))) {
 		return c.json({ data: null, error: "Daily verification limit reached (max 10)" }, 429);
@@ -205,7 +200,7 @@ verify.post("/photo", async (c) => {
 	if (!userId) return c.json({ data: null, error: "User not found" }, 404);
 
 	const parsed = photoSchema.safeParse(await c.req.json());
-	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0].message }, 400);
+	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" }, 400);
 
 	if (!(await checkRateLimit(userId))) {
 		return c.json({ data: null, error: "Daily verification limit reached (max 10)" }, 429);
@@ -276,7 +271,7 @@ verify.post("/buddy", async (c) => {
 	if (!userId) return c.json({ data: null, error: "User not found" }, 404);
 
 	const parsed = buddySchema.safeParse(await c.req.json());
-	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0].message }, 400);
+	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" }, 400);
 
 	if (!(await checkRateLimit(userId))) {
 		return c.json({ data: null, error: "Daily verification limit reached (max 10)" }, 429);
@@ -327,7 +322,7 @@ verify.post("/gps", async (c) => {
 	if (!userId) return c.json({ data: null, error: "User not found" }, 404);
 
 	const parsed = gpsSchema.safeParse(await c.req.json());
-	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0].message }, 400);
+	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" }, 400);
 
 	if (!(await checkRateLimit(userId))) {
 		return c.json({ data: null, error: "Daily verification limit reached (max 10)" }, 429);
