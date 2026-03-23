@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { BottomNav } from "./components/BottomNav.js";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
 import { TelegramGate } from "./components/TelegramGate.js";
+import { GymStaff } from "./pages/GymStaff.js";
 import { Home } from "./pages/Home.js";
 import { Onboarding, isOnboarded } from "./pages/Onboarding.js";
 
@@ -89,6 +90,11 @@ const DuelChallenge = lazy(() =>
     default: m.DuelChallenge,
   })),
 );
+const GymDashboard = lazy(() =>
+  import("./pages/GymDashboard.js").then((m) => ({
+    default: m.GymDashboard,
+  })),
+);
 
 function RouteLoading() {
   return (
@@ -101,50 +107,68 @@ function RouteLoading() {
 export function App() {
   return (
     <ErrorBoundary>
-      <TelegramGate>
-        <BrowserRouter>
-          <div className="min-h-screen bg-background max-w-[430px] mx-auto relative">
-            <Suspense fallback={<RouteLoading />}>
-              <Routes>
-                <Route path="/onboarding" element={<Onboarding />} />
-                <Route
-                  path="/"
-                  element={
-                    isOnboarded() ? (
-                      <Home />
-                    ) : (
-                      <Navigate to="/onboarding" replace />
-                    )
-                  }
-                />
-                <Route path="/equbs" element={<EqubList />} />
-                <Route path="/equbs/create" element={<CreateEqub />} />
-                <Route path="/quick-join" element={<QuickJoin />} />
-                <Route path="/duel" element={<DuelChallenge />} />
-                <Route path="/equbs/:id" element={<EqubDetail />} />
-                <Route path="/equbs/:id/log" element={<LogWorkout />} />
-                <Route path="/gyms" element={<GymList />} />
-                <Route path="/day-passes/:id" element={<DayPassDetail />} />
-                <Route path="/challenges" element={<ChallengeList />} />
-                <Route path="/challenges/:id" element={<Leaderboard />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/trainer" element={<TrainerDashboard />} />
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/coach" element={<AiCoach />} />
-                <Route path="/verify" element={<VerifyWorkout />} />
-                <Route path="/notifications" element={<Notifications />} />
-                <Route path="/payment" element={<Payment />} />
-                <Route path="/win" element={<WinCelebration />} />
-                <Route path="/sync" element={<SyncFitness />} />
-                <Route path="/how-it-works" element={<HowItWorks />} />
-                <Route path="/qr/:id" element={<GymQrCheckin />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-            <BottomNav />
-          </div>
-        </BrowserRouter>
-      </TelegramGate>
+      <BrowserRouter>
+        <Routes>
+          {/* Public routes — accessible without Telegram auth */}
+          <Route path="/gym-staff" element={<GymStaff />} />
+          <Route path="/gym-dashboard" element={<GymDashboard />} />
+
+          {/* All other routes go through TelegramGate */}
+          <Route
+            path="*"
+            element={
+              <TelegramGate>
+                <div className="min-h-screen bg-background max-w-[430px] mx-auto relative">
+                  <Suspense fallback={<RouteLoading />}>
+                    <Routes>
+                      <Route path="/onboarding" element={<Onboarding />} />
+                      <Route
+                        path="/"
+                        element={
+                          isOnboarded() ? (
+                            <Home />
+                          ) : (
+                            <Navigate to="/onboarding" replace />
+                          )
+                        }
+                      />
+                      <Route path="/equbs" element={<EqubList />} />
+                      <Route path="/equbs/create" element={<CreateEqub />} />
+                      <Route path="/quick-join" element={<QuickJoin />} />
+                      <Route path="/duel" element={<DuelChallenge />} />
+                      <Route path="/equbs/:id" element={<EqubDetail />} />
+                      <Route path="/equbs/:id/log" element={<LogWorkout />} />
+                      <Route path="/gyms" element={<GymList />} />
+                      <Route
+                        path="/day-passes/:id"
+                        element={<DayPassDetail />}
+                      />
+                      <Route path="/challenges" element={<ChallengeList />} />
+                      <Route path="/challenges/:id" element={<Leaderboard />} />
+                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/trainer" element={<TrainerDashboard />} />
+                      <Route path="/admin" element={<AdminDashboard />} />
+                      <Route path="/coach" element={<AiCoach />} />
+                      <Route path="/verify" element={<VerifyWorkout />} />
+                      <Route
+                        path="/notifications"
+                        element={<Notifications />}
+                      />
+                      <Route path="/payment" element={<Payment />} />
+                      <Route path="/win" element={<WinCelebration />} />
+                      <Route path="/sync" element={<SyncFitness />} />
+                      <Route path="/how-it-works" element={<HowItWorks />} />
+                      <Route path="/qr/:id" element={<GymQrCheckin />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
+                  <BottomNav />
+                </div>
+              </TelegramGate>
+            }
+          />
+        </Routes>
+      </BrowserRouter>
     </ErrorBoundary>
   );
 }

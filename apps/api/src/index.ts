@@ -13,6 +13,7 @@ import { challenges } from "./routes/challenges.js";
 import { cron } from "./routes/cron.js";
 import { equbRooms } from "./routes/equb-rooms.js";
 import { gamification } from "./routes/gamification.js";
+import { gymPublic } from "./routes/gym-public.js";
 import { gyms } from "./routes/gyms.js";
 import { health } from "./routes/health.js";
 import { trainers } from "./routes/trainers.js";
@@ -41,6 +42,7 @@ app.use(
 app.route("/health", health);
 app.route("/webhooks", webhooks);
 app.route("/cron", cron);
+app.route("/gym", gymPublic);
 
 // Authenticated routes
 app.use("/api/*", telegramAuth);

@@ -1,6 +1,7 @@
 import type { User } from "@fitequb/shared";
 import { useEffect, useState } from "react";
 import { api } from "../lib/api.js";
+import { isQaTestMode } from "../lib/testMode.js";
 
 const QA_TEST_USER: User = {
 	id: "qa-test-user",
@@ -15,10 +16,6 @@ const QA_TEST_USER: User = {
 	referred_by_trainer: null,
 	created_at: new Date().toISOString(),
 };
-
-function isQaTestMode(): boolean {
-	return new URLSearchParams(window.location.search).get("test") === "true";
-}
 
 export function useAuth() {
 	const [user, setUser] = useState<User | null>(null);

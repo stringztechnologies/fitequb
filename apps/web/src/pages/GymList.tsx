@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { EmptyState } from "../components/EmptyState.js";
 import { Loading } from "../components/Loading.js";
 import { api } from "../lib/api.js";
+import { isQaTestMode, MOCK_GYMS } from "../lib/testMode.js";
 
 const FILTERS = ["Near Me", "Top Rated", "Cheapest"] as const;
 
@@ -13,6 +14,11 @@ export function GymList() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
+    if (isQaTestMode()) {
+      setGyms(MOCK_GYMS as unknown as PartnerGym[]);
+      setLoading(false);
+      return;
+    }
     api<PartnerGym[]>("/api/gyms")
       .then((res) => {
         if (res.data) setGyms(res.data);

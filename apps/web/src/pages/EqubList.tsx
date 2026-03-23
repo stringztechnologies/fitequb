@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { EmptyState } from "../components/EmptyState.js";
 import { Loading } from "../components/Loading.js";
 import { api } from "../lib/api.js";
+import { isQaTestMode, MOCK_EQUB_ROOMS } from "../lib/testMode.js";
 
 const TIER_OPTIONS = [
   { value: "all", label: "All" },
@@ -53,6 +54,11 @@ export function EqubList() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (isQaTestMode()) {
+      setRooms(MOCK_EQUB_ROOMS as unknown as EqubRoom[]);
+      setLoading(false);
+      return;
+    }
     api<EqubRoom[]>("/api/equb-rooms")
       .then((res) => {
         if (res.data) setRooms(res.data);
