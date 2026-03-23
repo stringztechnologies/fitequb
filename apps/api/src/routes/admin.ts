@@ -2,11 +2,9 @@ import { Hono } from "hono";
 import { supabase } from "../lib/supabase.js";
 import type { AppVariables } from "../types/context.js";
 
-// Admin Telegram IDs — add your own here
-const ADMIN_IDS = new Set([
-	Number(process.env.ADMIN_TELEGRAM_ID) || 0,
-	999999, // QA test user
-]);
+// Admin Telegram IDs — from environment only
+const adminId = Number(process.env.ADMIN_TELEGRAM_ID);
+const ADMIN_IDS = new Set(adminId ? [adminId] : []);
 
 const admin = new Hono<{ Variables: AppVariables }>();
 
@@ -34,19 +32,33 @@ admin.get("/stats", async (c) => {
 			recentLedgerRes,
 		] = await Promise.all([
 			// Total users
-			supabase.from("users").select("id", { count: "exact", head: true }),
+			supabase
+				.from("users")
+				.select("id", { count: "exact", head: true }),
 			// Rooms by status
-			supabase.from("equb_rooms").select("id, status, room_type, tier, stake_amount, max_members, name, created_at"),
+			supabase
+				.from("equb_rooms")
+				.select("id, status, room_type, tier, stake_amount, max_members, name, created_at"),
 			// Total members
-			supabase.from("equb_members").select("id", { count: "exact", head: true }),
+			supabase
+				.from("equb_members")
+				.select("id", { count: "exact", head: true }),
 			// Ledger aggregates
-			supabase.from("equb_ledger").select("type, amount"),
+			supabase
+				.from("equb_ledger")
+				.select("type, amount"),
 			// Day passes
-			supabase.from("day_passes").select("id, status", { count: "exact" }),
+			supabase
+				.from("day_passes")
+				.select("id, status", { count: "exact" }),
 			// Workouts today
-			supabase.from("workouts").select("id", { count: "exact", head: true }),
+			supabase
+				.from("workouts")
+				.select("id", { count: "exact", head: true }),
 			// Challenge participants
-			supabase.from("challenge_participants").select("id", { count: "exact", head: true }),
+			supabase
+				.from("challenge_participants")
+				.select("id", { count: "exact", head: true }),
 			// Recent signups (last 10)
 			supabase
 				.from("users")

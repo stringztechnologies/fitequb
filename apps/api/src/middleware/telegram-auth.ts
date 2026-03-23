@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { createMiddleware } from "hono/factory";
 import type { AppVariables, TelegramUser } from "../types/context.js";
 
@@ -21,8 +21,8 @@ export const telegramAuth = createMiddleware<{ Variables: AppVariables }>(async 
 
 	const initData = authHeader.slice(4);
 
-	// QA test mode bypass — empty initData with test token
-	if (initData === "" || initData === "test") {
+	// QA test mode bypass — only in development
+	if (process.env.NODE_ENV === "development" && (initData === "" || initData === "test")) {
 		c.set("telegramUser", QA_TEST_USER);
 		await next();
 		return;
@@ -64,5 +64,8 @@ function validateInitData(initData: string, botToken: string): boolean {
 	const secretKey = createHmac("sha256", "WebAppData").update(botToken).digest();
 	const computedHash = createHmac("sha256", secretKey).update(dataCheckString).digest("hex");
 
-	return computedHash === hash;
+	const a = Buffer.from(computedHash, "hex");
+	const b = Buffer.from(hash, "hex");
+	if (a.length !== b.length) return false;
+	return timingSafeEqual(a, b);
 }
