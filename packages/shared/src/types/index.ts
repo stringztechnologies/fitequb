@@ -217,6 +217,10 @@ export interface Challenge {
   start_date: string;
   end_date: string;
   reward_description: string | null;
+  target_steps: number;
+  reward_desc: string | null;
+  sponsor_name: string | null;
+  is_active: boolean;
 }
 
 export interface ChallengeParticipant {

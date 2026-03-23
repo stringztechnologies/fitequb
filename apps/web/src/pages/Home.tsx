@@ -57,7 +57,8 @@ export function Home() {
 
   const circ = 2 * Math.PI * 80;
 
-  const isDemo = !user;
+  const isTelegramApp = Boolean(window.Telegram?.WebApp?.initData);
+  const isDemo = !user && !isTelegramApp;
 
   return (
     <div className="bg-background text-on-surface font-body pb-24">
@@ -102,7 +103,11 @@ export function Home() {
       {/* Tagline */}
       <div className="px-5 pt-6 pb-2">
         <p className="text-on-surface-variant text-sm font-body">
-          {user ? `Welcome, ${user.full_name}` : "Stake. Sweat. Split the pot."}
+          {user
+            ? `Welcome, ${user.full_name}`
+            : isTelegramApp
+              ? `Welcome, ${(window.Telegram?.WebApp?.initDataUnsafe?.user as { first_name?: string } | undefined)?.first_name ?? "Champion"}`
+              : "Stake. Sweat. Split the pot."}
         </p>
       </div>
 
