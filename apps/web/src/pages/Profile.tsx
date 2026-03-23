@@ -4,7 +4,6 @@ import { EmptyState } from "../components/EmptyState.js";
 import { Loading } from "../components/Loading.js";
 import { useAuth } from "../hooks/useAuth.js";
 import { api } from "../lib/api.js";
-import { isQaTestMode, MOCK_PROFILE, MOCK_POINTS } from "../lib/testMode.js";
 
 interface ProfileData {
   total_points: number;
@@ -32,12 +31,6 @@ export function Profile() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isQaTestMode()) {
-      setProfile(MOCK_PROFILE);
-      setPoints(MOCK_POINTS);
-      setLoading(false);
-      return;
-    }
     Promise.all([
       api<ProfileData>("/api/gamification/profile"),
       api<PointEntry[]>("/api/gamification/points"),

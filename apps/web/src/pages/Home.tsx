@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { Loading } from "../components/Loading.js";
 import { useAuth } from "../hooks/useAuth.js";
 import { api } from "../lib/api.js";
-import { isQaTestMode, MOCK_EQUB_ROOMS } from "../lib/testMode.js";
 
 interface ProfileSummary {
   total_points: number;
@@ -28,19 +27,6 @@ export function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isQaTestMode()) {
-      setRooms(MOCK_EQUB_ROOMS as unknown as EqubRoom[]);
-      setProfile({
-        total_points: 15400,
-        streak: 7,
-        days_completed: 22,
-        days_total: 30,
-        level: { level: 12, name: "Gold", min_points: 10000, perk: "5% bonus" },
-        next_level: { level: 13, name: "Platinum", min_points: 20000 },
-        points_to_next: 4600,
-      });
-      return;
-    }
     api<ProfileSummary>("/api/gamification/profile").then((res) => {
       if (res.data) setProfile(res.data);
     });
@@ -184,7 +170,12 @@ export function Home() {
           onClick={() => navigate("/verify")}
           className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-bold text-base active:scale-[0.98] transition-transform flex items-center justify-center gap-2 shadow-lg"
         >
-          <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+          <span
+            className="material-symbols-outlined text-xl"
+            style={{ fontVariationSettings: "'FILL' 1" }}
+          >
+            verified
+          </span>
           Verify Today's Workout
         </button>
       </div>
@@ -196,7 +187,12 @@ export function Home() {
           onClick={() => navigate("/coach")}
           className="w-full py-3 rounded-2xl bg-surface-container-low border border-primary/20 text-primary font-headline font-bold text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
         >
-          <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+          <span
+            className="material-symbols-outlined text-lg"
+            style={{ fontVariationSettings: "'FILL' 1" }}
+          >
+            auto_awesome
+          </span>
           AI Coach
         </button>
       </div>

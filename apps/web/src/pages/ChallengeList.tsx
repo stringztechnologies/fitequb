@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { EmptyState } from "../components/EmptyState.js";
 import { Loading } from "../components/Loading.js";
 import { api } from "../lib/api.js";
-import { isQaTestMode, MOCK_CHALLENGES, MOCK_LEADERBOARD } from "../lib/testMode.js";
 
 interface LeaderboardEntry {
   name: string;
@@ -19,12 +18,6 @@ export function ChallengeList() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isQaTestMode()) {
-      setChallenges(MOCK_CHALLENGES as unknown as Challenge[]);
-      setLeaders(MOCK_LEADERBOARD);
-      setLoading(false);
-      return;
-    }
     Promise.all([
       api<Challenge[]>("/api/challenges"),
       api<LeaderboardEntry[]>("/api/gamification/leaderboard"),
