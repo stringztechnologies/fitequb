@@ -7,8 +7,7 @@ let _isTestMode: boolean | null = null;
 
 export function isQaTestMode(): boolean {
 	if (_isTestMode !== null) return _isTestMode;
-	_isTestMode =
-		new URLSearchParams(window.location.search).get("test") === "true";
+	_isTestMode = new URLSearchParams(window.location.search).get("test") === "true";
 	return _isTestMode;
 }
 
@@ -192,7 +191,22 @@ export const MOCK_PROFILE = {
 };
 
 export const MOCK_POINTS = [
-	{ id: "p1", points: 5000, reason: "Won Morning Movers Equb", created_at: new Date(Date.now() - 2 * 86400000).toISOString() },
-	{ id: "p2", points: 3200, reason: "Addis 100K Challenge Prize", created_at: new Date(Date.now() - 5 * 86400000).toISOString() },
-	{ id: "p3", points: 100, reason: "Referral bonus — Sara T.", created_at: new Date(Date.now() - 7 * 86400000).toISOString() },
+	{
+		id: "p1",
+		points: 5000,
+		reason: "Won Morning Movers Equb",
+		created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
+	},
+	{
+		id: "p2",
+		points: 3200,
+		reason: "Addis 100K Challenge Prize",
+		created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
+	},
+	{
+		id: "p3",
+		points: 100,
+		reason: "Referral bonus — Sara T.",
+		created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
+	},
 ];

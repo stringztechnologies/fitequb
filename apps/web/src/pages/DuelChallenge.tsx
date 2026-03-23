@@ -192,7 +192,7 @@ export function DuelChallenge() {
       </section>
 
       {/* Fixed Action Buttons */}
-      <div className="fixed bottom-16 left-0 right-0 z-40 px-5 pb-4 pt-3 bg-gradient-to-t from-background via-background to-transparent">
+      <div className="fixed bottom-16 left-0 right-0 z-40 px-5 pb-4 pt-6 bg-gradient-to-t from-background via-background/95 to-transparent">
         <button
           type="button"
           onClick={() => {

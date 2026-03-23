@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Loading } from "../components/Loading.js";
 import { useAuth } from "../hooks/useAuth.js";
 import { api } from "../lib/api.js";
+import { isQaTestMode, MOCK_EQUB_ROOMS } from "../lib/testMode.js";
 
 interface ProfileSummary {
   total_points: number;
@@ -27,6 +28,19 @@ export function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (isQaTestMode()) {
+      setRooms(MOCK_EQUB_ROOMS as unknown as EqubRoom[]);
+      setProfile({
+        total_points: 15400,
+        streak: 7,
+        days_completed: 22,
+        days_total: 30,
+        level: { level: 12, name: "Gold", min_points: 10000, perk: "5% bonus" },
+        next_level: { level: 13, name: "Platinum", min_points: 20000 },
+        points_to_next: 4600,
+      });
+      return;
+    }
     api<ProfileSummary>("/api/gamification/profile").then((res) => {
       if (res.data) setProfile(res.data);
     });
