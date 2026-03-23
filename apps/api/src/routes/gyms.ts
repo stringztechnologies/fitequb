@@ -4,6 +4,7 @@ import { DAY_PASS_EXPIRY_MINUTES } from "@fitequb/shared";
 import { Hono } from "hono";
 import { z } from "zod";
 import { initializePayment } from "../lib/chapa.js";
+import { generateDailyQR } from "../lib/qr.js";
 import { supabase } from "../lib/supabase.js";
 import type { AppVariables } from "../types/context.js";
 
@@ -182,6 +183,42 @@ gyms.post("/day-passes/:id/redeem", async (c) => {
 	}
 
 	return c.json<ApiResponse<DayPass>>({ data: pass as DayPass, error: null });
+});
+
+// GET /gyms/:id/qr — generate daily QR code (admin/gym owner only)
+gyms.get("/:id/qr", async (c) => {
+	const gymId = c.req.param("id");
+	const telegramUser = c.get("telegramUser");
+
+	// Admin check
+	const adminId = process.env.ADMIN_TELEGRAM_ID;
+	if (adminId && String(telegramUser.id) !== adminId) {
+		return c.json<ApiResponse<null>>({ data: null, error: "Admin access required" }, 403);
+	}
+
+	const { data: gym } = await supabase
+		.from("partner_gyms")
+		.select("id, name")
+		.eq("id", gymId)
+		.eq("active", true)
+		.single();
+
+	if (!gym) {
+		return c.json<ApiResponse<null>>({ data: null, error: "Gym not found" }, 404);
+	}
+
+	const qrCode = generateDailyQR(gym.id);
+	const today = new Date();
+	const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+
+	return c.json({
+		data: {
+			qr_code: qrCode,
+			gym_name: gym.name,
+			valid_until: endOfDay.toISOString(),
+		},
+		error: null,
+	});
 });
 
 export { gyms };

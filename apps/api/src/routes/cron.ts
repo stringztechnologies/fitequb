@@ -255,4 +255,95 @@ cron.post("/payouts", async (c) => {
 	});
 });
 
+// POST /cron/daily-reset — process daily verification results and reset
+cron.post("/daily-reset", async (c) => {
+	const secret = c.req.header("x-cron-secret");
+	if (!verifyCronSecret(secret)) {
+		return c.json({ error: "Unauthorized" }, 401);
+	}
+
+	const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+	let updatedStreaks = 0;
+	let completedDays = 0;
+	let missedDays = 0;
+
+	// Get all active equb members
+	const { data: activeRooms } = await supabase
+		.from("equb_rooms")
+		.select("id")
+		.eq("status", "active");
+
+	if (activeRooms && activeRooms.length > 0) {
+		const roomIds = activeRooms.map((r) => r.id);
+
+		const { data: members } = await supabase
+			.from("equb_members")
+			.select("user_id, equb_room_id, completed_days")
+			.in("equb_room_id", roomIds);
+
+		if (members) {
+			for (const member of members) {
+				// Check if yesterday was complete
+				const { data: summary } = await supabase
+					.from("daily_verification_summary")
+					.select("is_day_complete")
+					.eq("user_id", member.user_id)
+					.eq("date", yesterday)
+					.single();
+
+				if (summary?.is_day_complete) {
+					// Increment completed_days
+					await supabase
+						.from("equb_members")
+						.update({ completed_days: (member.completed_days ?? 0) + 1 })
+						.eq("user_id", member.user_id)
+						.eq("equb_room_id", member.equb_room_id);
+					completedDays++;
+				} else {
+					missedDays++;
+				}
+			}
+		}
+	}
+
+	// Update streak_days for ALL users
+	const { data: allUsers } = await supabase.from("users").select("id, streak_days");
+	if (allUsers) {
+		for (const user of allUsers) {
+			const { data: summary } = await supabase
+				.from("daily_verification_summary")
+				.select("is_day_complete")
+				.eq("user_id", user.id)
+				.eq("date", yesterday)
+				.single();
+
+			if (summary?.is_day_complete) {
+				await supabase
+					.from("users")
+					.update({ streak_days: (user.streak_days ?? 0) + 1 })
+					.eq("id", user.id);
+				updatedStreaks++;
+			} else if ((user.streak_days ?? 0) > 0) {
+				// Reset streak
+				await supabase.from("users").update({ streak_days: 0 }).eq("id", user.id);
+			}
+		}
+	}
+
+	// Clean up old verification data (> 30 days)
+	const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+	await supabase.from("workout_verifications").delete().lt("verified_at", thirtyDaysAgo);
+	await supabase.from("daily_verification_summary").delete().lt("date", thirtyDaysAgo.slice(0, 10));
+
+	return c.json({
+		data: {
+			date: yesterday,
+			completed_days: completedDays,
+			missed_days: missedDays,
+			streaks_updated: updatedStreaks,
+		},
+		error: null,
+	});
+});
+
 export { cron };

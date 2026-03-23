@@ -24,6 +24,7 @@ import { DuelChallenge } from "./pages/DuelChallenge.js";
 import { QuickJoin } from "./pages/QuickJoin.js";
 import { AdminDashboard } from "./pages/AdminDashboard.js";
 import { AiCoach } from "./pages/AiCoach.js";
+import { VerifyWorkout } from "./pages/VerifyWorkout.js";
 import { WinCelebration } from "./pages/WinCelebration.js";
 
 export function App() {
@@ -58,6 +59,7 @@ export function App() {
               <Route path="/trainer" element={<TrainerDashboard />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/coach" element={<AiCoach />} />
+              <Route path="/verify" element={<VerifyWorkout />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/payment" element={<Payment />} />
               <Route path="/win" element={<WinCelebration />} />

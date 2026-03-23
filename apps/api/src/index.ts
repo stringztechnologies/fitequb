@@ -6,6 +6,7 @@ import { initSentry } from "./lib/sentry.js";
 import { telegramAuth } from "./middleware/telegram-auth.js";
 import { admin } from "./routes/admin.js";
 import { ai } from "./routes/ai.js";
+import { buddies } from "./routes/buddies.js";
 import { auth } from "./routes/auth.js";
 import { challenges } from "./routes/challenges.js";
 import { cron } from "./routes/cron.js";
@@ -50,6 +51,7 @@ app.route("/api/gamification", gamification);
 app.route("/api/trainers", trainers);
 app.route("/api/admin", admin);
 app.route("/api/ai", ai);
+app.route("/api/buddies", buddies);
 app.route("/api/verify", verify);
 
 const port = Number(process.env.PORT) || 3000;

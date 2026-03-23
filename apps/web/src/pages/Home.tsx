@@ -163,6 +163,30 @@ export function Home() {
         </div>
       </div>
 
+      {/* Verify Workout CTA */}
+      <div className="px-5 pt-5">
+        <button
+          type="button"
+          onClick={() => navigate("/verify")}
+          className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-bold text-base active:scale-[0.98] transition-transform flex items-center justify-center gap-2 shadow-lg"
+        >
+          <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+          Verify Today's Workout
+        </button>
+      </div>
+
+      {/* AI Coach Quick Action */}
+      <div className="px-5 pt-3">
+        <button
+          type="button"
+          onClick={() => navigate("/coach")}
+          className="w-full py-3 rounded-2xl bg-surface-container-low border border-primary/20 text-primary font-headline font-bold text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+        >
+          <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+          AI Coach
+        </button>
+      </div>
+
       {/* Feature Cards */}
       <div className="grid grid-cols-1 gap-5 px-5 pt-5">
         <FeatureCard
