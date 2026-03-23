@@ -60,6 +60,21 @@ webhooks.post("/chapa", async (c) => {
 		return c.json({ status: "already_processed" });
 	}
 
+	// Verify payment amount matches room stake
+	const { data: room } = await supabase
+		.from("equb_rooms")
+		.select("stake_amount, min_members, status")
+		.eq("id", roomId)
+		.single();
+
+	if (!room) {
+		return c.json({ error: "Room not found" }, 404);
+	}
+
+	if (payload.amount < room.stake_amount) {
+		return c.json({ error: "Payment amount below required stake" }, 400);
+	}
+
 	// Create member + ledger entry in parallel
 	const [memberResult, ledgerResult] = await Promise.all([
 		supabase
@@ -71,7 +86,7 @@ webhooks.post("/chapa", async (c) => {
 			room_id: roomId,
 			user_id: userId,
 			type: "stake",
-			amount: payload.amount,
+			amount: room.stake_amount,
 			tx_ref: txRef,
 		}),
 	]);
@@ -86,13 +101,7 @@ webhooks.post("/chapa", async (c) => {
 		.select("*", { count: "exact", head: true })
 		.eq("room_id", roomId);
 
-	const { data: room } = await supabase
-		.from("equb_rooms")
-		.select("min_members, status")
-		.eq("id", roomId)
-		.single();
-
-	if (room?.status === "pending" && count !== null && count >= room.min_members) {
+	if (room.status === "pending" && count !== null && count >= room.min_members) {
 		await supabase.from("equb_rooms").update({ status: "active" }).eq("id", roomId);
 	}
 

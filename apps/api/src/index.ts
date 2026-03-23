@@ -1,5 +1,6 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { initSentry } from "./lib/sentry.js";
@@ -13,6 +14,7 @@ import { challenges } from "./routes/challenges.js";
 import { cron } from "./routes/cron.js";
 import { equbRooms } from "./routes/equb-rooms.js";
 import { gamification } from "./routes/gamification.js";
+import { gymPublic } from "./routes/gym-public.js";
 import { gyms } from "./routes/gyms.js";
 import { health } from "./routes/health.js";
 import { trainers } from "./routes/trainers.js";
@@ -26,6 +28,7 @@ initSentry();
 const app = new Hono<{ Variables: AppVariables }>();
 
 // Global middleware
+app.use("*", bodyLimit({ maxSize: 5 * 1024 * 1024 })); // 5MB
 app.use("*", logger());
 app.use(
   "*",
@@ -40,6 +43,7 @@ app.use(
 app.route("/health", health);
 app.route("/webhooks", webhooks);
 app.route("/cron", cron);
+app.route("/gym", gymPublic);
 
 // Authenticated routes
 app.use("/api/*", telegramAuth);

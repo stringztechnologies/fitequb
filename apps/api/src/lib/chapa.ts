@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 const CHAPA_BASE_URL = "https://api.chapa.co/v1";
 
@@ -86,6 +86,8 @@ export function verifyChapaWebhook(body: string, signature: string): boolean {
 	const secret = process.env.CHAPA_WEBHOOK_SECRET;
 	if (!secret) return false;
 
+	if (!signature) return false;
 	const hash = createHmac("sha256", secret).update(body).digest("hex");
-	return hash === signature;
+	if (hash.length !== signature.length) return false;
+	return timingSafeEqual(Buffer.from(hash), Buffer.from(signature));
 }
