@@ -14,6 +14,7 @@ import { health } from "./routes/health.js";
 import { trainers } from "./routes/trainers.js";
 import { webhooks } from "./routes/webhooks.js";
 import { workouts } from "./routes/workouts.js";
+import { aiCoach } from "./routes/ai-coach.js";
 import type { AppVariables } from "./types/context.js";
 
 initSentry();
@@ -45,6 +46,7 @@ app.route("/api/gyms", gyms);
 app.route("/api/challenges", challenges);
 app.route("/api/gamification", gamification);
 app.route("/api/trainers", trainers);
+app.route("/api/ai-coach", aiCoach);
 
 const port = Number(process.env.PORT) || 3000;
 

@@ -20,6 +20,7 @@ import { Payment } from "./pages/Payment.js";
 import { Profile } from "./pages/Profile.js";
 import { SyncFitness } from "./pages/SyncFitness.js";
 import { TrainerDashboard } from "./pages/TrainerDashboard.js";
+import { AiCoach } from "./pages/AiCoach.js";
 import { WinCelebration } from "./pages/WinCelebration.js";
 
 export function App() {
@@ -56,6 +57,7 @@ export function App() {
 							<Route path="/payment" element={<Payment />} />
 							<Route path="/win" element={<WinCelebration />} />
 							<Route path="/sync" element={<SyncFitness />} />
+							<Route path="/coach" element={<AiCoach />} />
 							<Route path="/how-it-works" element={<HowItWorks />} />
 							<Route path="/qr/:id" element={<GymQrCheckin />} />
 							<Route path="*" element={<NotFound />} />

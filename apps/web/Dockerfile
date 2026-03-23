@@ -12,6 +12,9 @@ COPY packages/shared/ ./packages/shared/
 COPY apps/web/ ./apps/web/
 COPY tsconfig.base.json ./
 
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
+
 RUN pnpm --filter @fitequb/shared build && pnpm --filter @fitequb/web build
 
 # Serve with nginx

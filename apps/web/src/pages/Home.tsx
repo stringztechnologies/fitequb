@@ -247,6 +247,15 @@ export function Home() {
           progress={80}
           onClick={() => navigate("/challenges")}
         />
+        <FeatureCard
+          title="AI Coach"
+          subtitle="Gemini-powered fitness advice"
+          badgeText="Ask Anything"
+          badgeGreen
+          icon="M12 2L2 7l10 5 10-5-10-5z M2 17l10 5 10-5 M2 12l10 5 10-5"
+          progress={100}
+          onClick={() => navigate("/coach")}
+        />
       </div>
 
       {/* Create Equb FAB */}
