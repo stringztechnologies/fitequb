@@ -210,6 +210,15 @@ export function Home() {
           onClick={() => navigate("/gyms")}
         />
         <FeatureCard
+          title="Coach Day Pass"
+          subtitle="Book a session with a personal trainer"
+          badgeText="Browse Coaches"
+          badgeGreen={false}
+          icon="sports_martial_arts"
+          progress={0}
+          onClick={() => navigate("/coaches")}
+        />
+        <FeatureCard
           title="Step Challenge"
           subtitle="Compete on the city leaderboard"
           badgeText="View Challenges"

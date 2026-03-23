@@ -113,6 +113,40 @@ export interface TrainerPayout {
   created_at: string;
 }
 
+// ── Coach Day Pass ──
+
+export type CoachPassStatus = "pending" | "active" | "confirmed" | "completed" | "expired" | "cancelled";
+export type SessionType = "in_person" | "virtual";
+
+export interface CoachSession {
+  id: string;
+  trainer_id: string;
+  title: string;
+  description: string | null;
+  session_type: SessionType;
+  duration_minutes: number;
+  price: number;
+  active: boolean;
+  created_at: string;
+}
+
+export interface CoachPass {
+  id: string;
+  user_id: string;
+  trainer_id: string;
+  session_id: string;
+  status: CoachPassStatus;
+  price_paid: number;
+  trainer_payout: number;
+  platform_fee: number;
+  scheduled_at: string | null;
+  confirmed_at: string | null;
+  completed_at: string | null;
+  qr_token: string;
+  notes: string | null;
+  created_at: string;
+}
+
 // ── Gamification ──
 
 export type PointSourceType =
