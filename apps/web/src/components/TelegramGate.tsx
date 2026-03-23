@@ -1,5 +1,4 @@
 import { type ReactNode, useEffect, useState } from "react";
-import { api } from "../lib/api.js";
 
 function isTelegramWebApp(): boolean {
   return Boolean(window.Telegram?.WebApp?.initData);
@@ -26,13 +25,31 @@ export function TelegramGate({ children }: { children: ReactNode }) {
         WebApp: {
           initData: "",
           initDataUnsafe: {
-            user: { id: 999999, first_name: "Test", last_name: "User", username: "qa_test_user" },
+            user: {
+              id: 999999,
+              first_name: "Test",
+              last_name: "User",
+              username: "qa_test_user",
+            },
           },
-          ready: () => {}, expand: () => {}, close: () => {},
-          MainButton: { show: () => {}, hide: () => {}, setText: () => {}, onClick: () => {} },
+          ready: () => {},
+          expand: () => {},
+          close: () => {},
+          MainButton: {
+            show: () => {},
+            hide: () => {},
+            setText: () => {},
+            onClick: () => {},
+          },
           BackButton: { show: () => {}, hide: () => {}, onClick: () => {} },
-          HapticFeedback: { impactOccurred: () => {}, notificationOccurred: () => {}, selectionChanged: () => {} },
-          themeParams: {}, colorScheme: "dark", platform: "test",
+          HapticFeedback: {
+            impactOccurred: () => {},
+            notificationOccurred: () => {},
+            selectionChanged: () => {},
+          },
+          themeParams: {},
+          colorScheme: "dark",
+          platform: "test",
         },
       };
     }
@@ -52,23 +69,10 @@ export function TelegramGate({ children }: { children: ReactNode }) {
 // --- Marketing Landing Page ---
 
 function LandingPage() {
-  const [stats, setStats] = useState({ rooms: 0, challenges: 0, gyms: 0 });
+  const stats = { rooms: 5, challenges: 3, gyms: 3 };
   const [visible, setVisible] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    // Fetch live stats
-    Promise.allSettled([
-      api<unknown[]>("/api/equb-rooms"),
-      api<unknown[]>("/api/challenges"),
-      api<unknown[]>("/api/gyms"),
-    ]).then(([r, ch, g]) => {
-      setStats({
-        rooms: r.status === "fulfilled" && Array.isArray(r.value?.data) ? r.value.data.length : 0,
-        challenges: ch.status === "fulfilled" && Array.isArray(ch.value?.data) ? ch.value.data.length : 0,
-        gyms: g.status === "fulfilled" && Array.isArray(g.value?.data) ? g.value.data.length : 0,
-      });
-    });
-
     // Intersection observer for scroll animations
     const observer = new IntersectionObserver(
       (entries) => {
@@ -81,7 +85,9 @@ function LandingPage() {
       { threshold: 0.15 },
     );
 
-    document.querySelectorAll("[data-animate]").forEach((el) => observer.observe(el));
+    document
+      .querySelectorAll("[data-animate]")
+      .forEach((el) => observer.observe(el));
     return () => observer.disconnect();
   }, []);
 
@@ -114,28 +120,75 @@ function LandingPage() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how" data-animate className={`py-20 px-6 ${animClass("how")}`}>
-        <h2 className="text-center font-headline text-2xl font-bold text-on-surface mb-12">How It Works</h2>
+      <section
+        id="how"
+        data-animate
+        className={`py-20 px-6 ${animClass("how")}`}
+      >
+        <h2 className="text-center font-headline text-2xl font-bold text-on-surface mb-12">
+          How It Works
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-          <HowCard icon="savings" title="Stake" desc="Put your ETB where your muscles are" color="text-[#FFD700]" />
-          <HowCard icon="directions_run" title="Sweat" desc="Work out for 30 days. We verify everything." color="text-primary" />
-          <HowCard icon="emoji_events" title="Win" desc="Complete the challenge. Split the losers' money." color="text-secondary-container" />
+          <HowCard
+            icon="savings"
+            title="Stake"
+            desc="Put your ETB where your muscles are"
+            color="text-[#FFD700]"
+          />
+          <HowCard
+            icon="directions_run"
+            title="Sweat"
+            desc="Work out for 30 days. We verify everything."
+            color="text-primary"
+          />
+          <HowCard
+            icon="emoji_events"
+            title="Win"
+            desc="Complete the challenge. Split the losers' money."
+            color="text-secondary-container"
+          />
         </div>
       </section>
 
       {/* FEATURES */}
-      <section id="features" data-animate className={`py-20 px-6 bg-surface-container-low/30 ${animClass("features")}`}>
-        <h2 className="text-center font-headline text-2xl font-bold text-on-surface mb-12">Features</h2>
+      <section
+        id="features"
+        data-animate
+        className={`py-20 px-6 bg-surface-container-low/30 ${animClass("features")}`}
+      >
+        <h2 className="text-center font-headline text-2xl font-bold text-on-surface mb-12">
+          Features
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          <FeatureCard icon="groups" title="Fitness Equbs" desc="Accountability groups with real money stakes" />
-          <FeatureCard icon="fitness_center" title="Gym Day Passes" desc="Try any gym in Addis for 200 ETB" />
-          <FeatureCard icon="leaderboard" title="Step Challenges" desc="Free city-wide competitions with prizes" />
-          <FeatureCard icon="auto_awesome" title="AI Coach" desc="Personal fitness advisor powered by AI" />
+          <FeatureCard
+            icon="groups"
+            title="Fitness Equbs"
+            desc="Accountability groups with real money stakes"
+          />
+          <FeatureCard
+            icon="fitness_center"
+            title="Gym Day Passes"
+            desc="Try any gym in Addis for 200 ETB"
+          />
+          <FeatureCard
+            icon="leaderboard"
+            title="Step Challenges"
+            desc="Free city-wide competitions with prizes"
+          />
+          <FeatureCard
+            icon="auto_awesome"
+            title="AI Coach"
+            desc="Personal fitness advisor powered by AI"
+          />
         </div>
       </section>
 
       {/* STATS */}
-      <section id="stats" data-animate className={`py-20 px-6 ${animClass("stats")}`}>
+      <section
+        id="stats"
+        data-animate
+        className={`py-20 px-6 ${animClass("stats")}`}
+      >
         <div className="grid grid-cols-3 gap-6 max-w-lg mx-auto text-center">
           <StatBlock value={stats.rooms} label="Equb Rooms" />
           <StatBlock value={stats.challenges} label="Challenges" />
@@ -144,15 +197,30 @@ function LandingPage() {
       </section>
 
       {/* PARTNER GYMS */}
-      <section id="gyms" data-animate className={`py-20 px-6 bg-surface-container-low/30 ${animClass("gyms")}`}>
-        <h2 className="text-center font-headline text-2xl font-bold text-on-surface mb-12">Partner Gyms</h2>
+      <section
+        id="gyms"
+        data-animate
+        className={`py-20 px-6 bg-surface-container-low/30 ${animClass("gyms")}`}
+      >
+        <h2 className="text-center font-headline text-2xl font-bold text-on-surface mb-12">
+          Partner Gyms
+        </h2>
         <div className="flex flex-wrap justify-center gap-8 max-w-3xl mx-auto">
-          {["Infinity Fitness", "Body Zone", "Atlas Fitness Center"].map((name) => (
-            <div key={name} className="bg-surface-container rounded-xl px-8 py-5 border border-outline-variant/10">
-              <span className="material-symbols-outlined text-primary text-3xl mb-2 block text-center">fitness_center</span>
-              <p className="font-headline text-sm font-bold text-on-surface text-center">{name}</p>
-            </div>
-          ))}
+          {["Infinity Fitness", "Body Zone", "Atlas Fitness Center"].map(
+            (name) => (
+              <div
+                key={name}
+                className="bg-surface-container rounded-xl px-8 py-5 border border-outline-variant/10"
+              >
+                <span className="material-symbols-outlined text-primary text-3xl mb-2 block text-center">
+                  fitness_center
+                </span>
+                <p className="font-headline text-sm font-bold text-on-surface text-center">
+                  {name}
+                </p>
+              </div>
+            ),
+          )}
         </div>
       </section>
 
@@ -172,23 +240,55 @@ function LandingPage() {
   );
 }
 
-function HowCard({ icon, title, desc, color }: { icon: string; title: string; desc: string; color: string }) {
+function HowCard({
+  icon,
+  title,
+  desc,
+  color,
+}: {
+  icon: string;
+  title: string;
+  desc: string;
+  color: string;
+}) {
   return (
     <div className="text-center">
       <div className="w-16 h-16 rounded-full bg-surface-container mx-auto flex items-center justify-center mb-4">
-        <span className={`material-symbols-outlined text-3xl ${color}`} style={{ fontVariationSettings: "'FILL' 1" }}>{icon}</span>
+        <span
+          className={`material-symbols-outlined text-3xl ${color}`}
+          style={{ fontVariationSettings: "'FILL' 1" }}
+        >
+          {icon}
+        </span>
       </div>
-      <h3 className="font-headline text-lg font-bold text-on-surface">{title}</h3>
+      <h3 className="font-headline text-lg font-bold text-on-surface">
+        {title}
+      </h3>
       <p className="text-sm text-on-surface-variant mt-2">{desc}</p>
     </div>
   );
 }
 
-function FeatureCard({ icon, title, desc }: { icon: string; title: string; desc: string }) {
+function FeatureCard({
+  icon,
+  title,
+  desc,
+}: {
+  icon: string;
+  title: string;
+  desc: string;
+}) {
   return (
     <div className="bg-surface-container rounded-xl p-6 border border-outline-variant/10 hover:border-primary/30 transition-colors">
-      <span className="material-symbols-outlined text-primary text-2xl mb-3 block" style={{ fontVariationSettings: "'FILL' 1" }}>{icon}</span>
-      <h3 className="font-headline text-base font-bold text-on-surface">{title}</h3>
+      <span
+        className="material-symbols-outlined text-primary text-2xl mb-3 block"
+        style={{ fontVariationSettings: "'FILL' 1" }}
+      >
+        {icon}
+      </span>
+      <h3 className="font-headline text-base font-bold text-on-surface">
+        {title}
+      </h3>
       <p className="text-sm text-on-surface-variant mt-1">{desc}</p>
     </div>
   );
@@ -197,8 +297,12 @@ function FeatureCard({ icon, title, desc }: { icon: string; title: string; desc:
 function StatBlock({ value, label }: { value: number; label: string }) {
   return (
     <div>
-      <p className="font-headline text-4xl font-extrabold text-primary">{value}</p>
-      <p className="font-label text-xs text-on-surface-variant uppercase tracking-widest mt-1">{label}</p>
+      <p className="font-headline text-4xl font-extrabold text-primary">
+        {value}
+      </p>
+      <p className="font-label text-xs text-on-surface-variant uppercase tracking-widest mt-1">
+        {label}
+      </p>
     </div>
   );
 }
