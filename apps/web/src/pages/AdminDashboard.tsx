@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { EmptyState } from "../components/EmptyState.js";
 import { Loading } from "../components/Loading.js";
 import { api } from "../lib/api.js";
 
@@ -53,33 +54,6 @@ interface AdminStats {
 	}>;
 }
 
-// Demo data for when API is unavailable
-const DEMO_STATS: AdminStats = {
-	overview: { totalUsers: 47, totalMembers: 38, totalWorkouts: 215, totalChallengeParticipants: 128 },
-	rooms: { pending: 2, active: 3, settled: 1, total: 6 },
-	revenue: { totalStaked: 45000, totalPaidOut: 32000, totalFees: 4500, totalDayPassRevenue: 8400, netRevenue: 12900 },
-	dayPasses: { total: 56, active: 4, redeemed: 48 },
-	recentUsers: [
-		{ id: "1", full_name: "Dawit Abraham", username: "dawit_a", created_at: new Date(Date.now() - 2 * 3600000).toISOString() },
-		{ id: "2", full_name: "Selam Tadesse", username: "selam_t", created_at: new Date(Date.now() - 5 * 3600000).toISOString() },
-		{ id: "3", full_name: "Kebede Belay", username: null, created_at: new Date(Date.now() - 12 * 3600000).toISOString() },
-		{ id: "4", full_name: "Hana Mulugeta", username: "hana_m", created_at: new Date(Date.now() - 24 * 3600000).toISOString() },
-		{ id: "5", full_name: "Yonas Girma", username: "yonas_g", created_at: new Date(Date.now() - 36 * 3600000).toISOString() },
-	],
-	recentTransactions: [
-		{ id: "1", type: "stake", amount: 500, tx_ref: "TX-EQB-001", created_at: new Date(Date.now() - 1800000).toISOString() },
-		{ id: "2", type: "day_pass_purchase", amount: 150, tx_ref: "TX-GYM-001", created_at: new Date(Date.now() - 3600000).toISOString() },
-		{ id: "3", type: "stake", amount: 1000, tx_ref: "TX-EQB-002", created_at: new Date(Date.now() - 7200000).toISOString() },
-		{ id: "4", type: "payout", amount: 12000, tx_ref: "TX-PAY-001", created_at: new Date(Date.now() - 14400000).toISOString() },
-		{ id: "5", type: "fee", amount: 450, tx_ref: "TX-FEE-001", created_at: new Date(Date.now() - 18000000).toISOString() },
-	],
-	activeRooms: [
-		{ id: "r1", name: "Bole Elite 10k", status: "active", stakeAmount: 500, maxMembers: 20, roomType: "public", tier: "elite", createdAt: new Date(Date.now() - 5 * 86400000).toISOString() },
-		{ id: "r2", name: "Sarbet Steppers", status: "active", stakeAmount: 1000, maxMembers: 20, roomType: "private", tier: "regular", createdAt: new Date(Date.now() - 3 * 86400000).toISOString() },
-		{ id: "r3", name: "Morning Movers", status: "pending", stakeAmount: 250, maxMembers: 15, roomType: "public", tier: "starter", createdAt: new Date(Date.now() - 86400000).toISOString() },
-	],
-};
-
 export function AdminDashboard() {
 	const [stats, setStats] = useState<AdminStats | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -88,14 +62,18 @@ export function AdminDashboard() {
 	useEffect(() => {
 		api<AdminStats>("/api/admin/stats")
 			.then((res) => {
-				setStats(res.data ?? DEMO_STATS);
+				setStats(res.data ?? null);
 			})
-			.catch(() => setStats(DEMO_STATS))
+			.catch(() => setStats(null))
 			.finally(() => setLoading(false));
 	}, []);
 
 	if (loading) return <Loading />;
-	if (!stats) return null;
+	if (!stats) return (
+		<div className="bg-background text-on-surface font-body min-h-screen flex items-center justify-center">
+			<EmptyState icon="admin_panel_settings" title="No admin data" subtitle="Could not load dashboard stats from the API" />
+		</div>
+	);
 
 	const { overview, rooms, revenue, dayPasses, recentUsers, recentTransactions, activeRooms } = stats;
 

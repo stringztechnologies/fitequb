@@ -14,6 +14,7 @@ import { gamification } from "./routes/gamification.js";
 import { gyms } from "./routes/gyms.js";
 import { health } from "./routes/health.js";
 import { trainers } from "./routes/trainers.js";
+import { verify } from "./routes/verify.js";
 import { webhooks } from "./routes/webhooks.js";
 import { workouts } from "./routes/workouts.js";
 import type { AppVariables } from "./types/context.js";
@@ -49,6 +50,7 @@ app.route("/api/gamification", gamification);
 app.route("/api/trainers", trainers);
 app.route("/api/admin", admin);
 app.route("/api/ai", ai);
+app.route("/api/verify", verify);
 
 const port = Number(process.env.PORT) || 3000;
 
