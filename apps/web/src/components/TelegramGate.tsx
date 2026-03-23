@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 function isTelegramWebApp(): boolean {
   return Boolean(window.Telegram?.WebApp?.initData);
@@ -13,8 +13,12 @@ function isQaTestMode(): boolean {
   return new URLSearchParams(window.location.search).get("test") === "true";
 }
 
+function isPwaStandalone(): boolean {
+  return window.matchMedia("(display-mode: standalone)").matches;
+}
+
 export function TelegramGate({ children }: { children: ReactNode }) {
-  if (isTelegramWebApp() || isDemoOverride()) {
+  if (isTelegramWebApp() || isDemoOverride() || isPwaStandalone()) {
     return <>{children}</>;
   }
 
@@ -71,6 +75,30 @@ export function TelegramGate({ children }: { children: ReactNode }) {
 function LandingPage() {
   const stats = { rooms: 5, challenges: 3, gyms: 3 };
   const [visible, setVisible] = useState<Set<string>>(new Set());
+  const deferredPrompt = useRef<Event | null>(null);
+  const [canInstall, setCanInstall] = useState(false);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      deferredPrompt.current = e;
+      setCanInstall(true);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  async function handleInstall() {
+    const prompt = deferredPrompt.current as {
+      prompt?: () => Promise<void>;
+    } | null;
+    if (prompt?.prompt) {
+      await prompt.prompt();
+      deferredPrompt.current = null;
+      setCanInstall(false);
+    }
+  }
 
   useEffect(() => {
     // Intersection observer for scroll animations
@@ -117,6 +145,28 @@ function LandingPage() {
           </svg>
           Open in Telegram
         </a>
+
+        {/* PWA Install Button */}
+        {canInstall && (
+          <button
+            type="button"
+            onClick={handleInstall}
+            className="mt-4 px-8 py-3 rounded-full bg-primary text-on-primary text-base font-bold flex items-center gap-2 shadow-glow active:scale-95 transition-all relative z-10"
+          >
+            <span className="material-symbols-outlined text-xl">
+              install_mobile
+            </span>
+            Install FitEqub
+          </button>
+        )}
+
+        {/* iOS Install Hint */}
+        {isIOS && !canInstall && (
+          <p className="mt-4 text-xs text-on-surface-variant relative z-10 flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-sm">ios_share</span>
+            Tap Share → "Add to Home Screen" to install
+          </p>
+        )}
       </section>
 
       {/* HOW IT WORKS */}
