@@ -12,6 +12,7 @@ import { coachPasses } from "./routes/coach-passes.js";
 import { auth } from "./routes/auth.js";
 import { challenges } from "./routes/challenges.js";
 import { cron } from "./routes/cron.js";
+import { duels } from "./routes/duels.js";
 import { equbRooms } from "./routes/equb-rooms.js";
 import { gamification } from "./routes/gamification.js";
 import { gymPublic } from "./routes/gym-public.js";
@@ -58,6 +59,7 @@ app.route("/api/admin", admin);
 app.route("/api/ai", ai);
 app.route("/api/buddies", buddies);
 app.route("/api/coach-passes", coachPasses);
+app.route("/api/duels", duels);
 app.route("/api/verify", verify);
 
 const port = Number(process.env.PORT) || 3000;
