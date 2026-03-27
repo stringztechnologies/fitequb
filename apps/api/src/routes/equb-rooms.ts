@@ -326,6 +326,96 @@ equbRooms.post("/quick-join", async (c) => {
   });
 });
 
+// GET /equb-rooms/my-results — unseen settlement results for the user
+equbRooms.get("/my-results", async (c) => {
+  const telegramUser = c.get("telegramUser");
+
+  const { data: user } = await supabase
+    .from("users")
+    .select("id")
+    .eq("telegram_id", telegramUser.id)
+    .single();
+
+  if (!user) {
+    return c.json<ApiResponse<null>>(
+      { data: null, error: "User not found" },
+      404,
+    );
+  }
+
+  // Find settled/completed rooms where user is a member and result hasn't been seen
+  const { data: members } = await supabase
+    .from("equb_members")
+    .select("room_id, qualified, payout_amount")
+    .eq("user_id", user.id)
+    .eq("result_seen", false);
+
+  if (!members || members.length === 0) {
+    return c.json({ data: [], error: null });
+  }
+
+  const roomIds = members.map((m) => m.room_id);
+
+  const { data: settledRooms } = await supabase
+    .from("equb_rooms")
+    .select("id, name, status, total_pot, settled_at")
+    .in("id", roomIds)
+    .in("status", ["completed", "settling"]);
+
+  if (!settledRooms || settledRooms.length === 0) {
+    return c.json({ data: [], error: null });
+  }
+
+  const results = settledRooms.map((room) => {
+    const member = members.find((m) => m.room_id === room.id);
+    return {
+      room_id: room.id,
+      room_name: room.name,
+      total_pot: room.total_pot,
+      settled_at: room.settled_at,
+      qualified: member?.qualified ?? false,
+      payout_amount: member?.payout_amount ?? 0,
+    };
+  });
+
+  return c.json({ data: results, error: null });
+});
+
+// POST /equb-rooms/mark-result-seen — mark a settlement result as seen
+equbRooms.post("/mark-result-seen", async (c) => {
+  const telegramUser = c.get("telegramUser");
+  const body = await c.req.json();
+  const roomId = body?.room_id;
+
+  if (!roomId) {
+    return c.json<ApiResponse<null>>(
+      { data: null, error: "room_id required" },
+      400,
+    );
+  }
+
+  const { data: user } = await supabase
+    .from("users")
+    .select("id")
+    .eq("telegram_id", telegramUser.id)
+    .single();
+
+  if (!user) {
+    return c.json<ApiResponse<null>>(
+      { data: null, error: "User not found" },
+      404,
+    );
+  }
+
+  await supabase
+    .from("equb_members")
+    .update({ result_seen: true })
+    .eq("room_id", roomId)
+    .eq("user_id", user.id);
+
+  return c.json({ data: { marked: true }, error: null });
+});
+
 // Settlement is handled exclusively via POST /cron/settle (requires CRON_SECRET).
 // No public settlement endpoint — prevents unauthorized financial operations.
 

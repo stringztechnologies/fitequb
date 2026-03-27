@@ -33,7 +33,25 @@ export function Home() {
     api<EqubRoom[]>("/api/equb-rooms").then((res) => {
       if (res.data) setRooms(res.data);
     });
-  }, []);
+    // Check for unseen settlement wins
+    api<
+      Array<{
+        room_id: string;
+        room_name: string;
+        payout_amount: number;
+        qualified: boolean;
+      }>
+    >("/api/equb-rooms/my-results").then((res) => {
+      if (res.data) {
+        const win = res.data.find((r) => r.qualified && r.payout_amount > 0);
+        if (win) {
+          navigate(
+            `/win?room=${win.room_id}&payout=${win.payout_amount}&name=${encodeURIComponent(win.room_name)}`,
+          );
+        }
+      }
+    });
+  }, [navigate]);
 
   if (loading) return <Loading />;
 

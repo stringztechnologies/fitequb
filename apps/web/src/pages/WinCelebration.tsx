@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { api } from "../lib/api.js";
 
 interface Particle {
 	id: number;
@@ -9,9 +10,24 @@ interface Particle {
 	color: string;
 }
 
+interface SettlementResult {
+	room_id: string;
+	room_name: string;
+	total_pot: number;
+	settled_at: string;
+	qualified: boolean;
+	payout_amount: number;
+}
+
 export function WinCelebration() {
 	const navigate = useNavigate();
+	const [searchParams] = useSearchParams();
 	const [particles, setParticles] = useState<Particle[]>([]);
+	const [result, setResult] = useState<SettlementResult | null>(null);
+
+	// Load result from URL params or API
+	const roomId = searchParams.get("room");
+	const payoutFromUrl = searchParams.get("payout");
 
 	useEffect(() => {
 		const colors = ["#FFD700", "#00C853", "#FF6B6B", "#E040FB", "#FFFFFF"];
@@ -27,6 +43,50 @@ export function WinCelebration() {
 		}
 		setParticles(ps);
 	}, []);
+
+	useEffect(() => {
+		if (payoutFromUrl && roomId) {
+			setResult({
+				room_id: roomId,
+				room_name: searchParams.get("name") ?? "Your Equb",
+				total_pot: 0,
+				settled_at: new Date().toISOString(),
+				qualified: true,
+				payout_amount: Number(payoutFromUrl),
+			});
+			// Mark as seen
+			api("/api/equb-rooms/mark-result-seen", {
+				method: "POST",
+				body: JSON.stringify({ room_id: roomId }),
+			});
+			return;
+		}
+
+		// Fetch unseen results
+		async function fetchResults() {
+			const res = await api<SettlementResult[]>("/api/equb-rooms/my-results");
+			if (res.data && res.data.length > 0) {
+				// Show the first unseen win
+				const win = res.data.find((r) => r.qualified && r.payout_amount > 0);
+				if (win) {
+					setResult(win);
+					api("/api/equb-rooms/mark-result-seen", {
+						method: "POST",
+						body: JSON.stringify({ room_id: win.room_id }),
+					});
+				} else {
+					// No wins, go home
+					navigate("/");
+				}
+			} else {
+				navigate("/");
+			}
+		}
+
+		fetchResults();
+	}, [roomId, payoutFromUrl, searchParams, navigate]);
+
+	const displayAmount = result?.payout_amount ?? 0;
 
 	return (
 		<div className="relative min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center px-6 overflow-hidden">
@@ -45,7 +105,6 @@ export function WinCelebration() {
 				/>
 			))}
 
-			{/* Confetti keyframes */}
 			<style>
 				{`@keyframes confetti-fall {
 					0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
@@ -70,8 +129,12 @@ export function WinCelebration() {
 				className="text-[46px] font-bold text-[#00E676] leading-none"
 				style={{ textShadow: "0 0 30px rgba(0,230,118,0.5)" }}
 			>
-				25,000 ETB
+				{displayAmount.toLocaleString()} ETB
 			</p>
+
+			{result?.room_name && (
+				<p className="text-[15px] text-[#aaa] mt-2">{result.room_name}</p>
+			)}
 
 			<p className="text-[13px] text-[#8E8E93] text-center mt-4 max-w-[280px] leading-relaxed">
 				Fitness pays off! Your payout is being transferred to your Telebirr account.
@@ -88,7 +151,7 @@ export function WinCelebration() {
 				>
 					<path d="M6.5 6.5h11M4 12h16" />
 				</svg>
-				<span className="text-[13px] text-white">Gym Sessions/Week — Completed</span>
+				<span className="text-[13px] text-white">Equb Challenge — Completed</span>
 			</div>
 
 			{/* Actions */}
@@ -104,8 +167,7 @@ export function WinCelebration() {
 					type="button"
 					onClick={() => {
 						const deepLink = "https://t.me/fitequb_bot?start=ref";
-						const text =
-							"I just won 25,000 ETB on FitEqub by completing my fitness goals! Join me and start earning:";
+						const text = `I just won ${displayAmount.toLocaleString()} ETB on FitEqub by completing my fitness goals! Join me and start earning:`;
 						if (navigator.share) {
 							navigator.share({ title: "I won on FitEqub!", text, url: deepLink }).catch(() => {});
 						} else if (window.Telegram?.WebApp?.openTelegramLink) {
