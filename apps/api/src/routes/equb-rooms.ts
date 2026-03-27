@@ -268,6 +268,64 @@ equbRooms.post("/:id/join", async (c) => {
   });
 });
 
+// POST /equb-rooms/quick-join — find the best available room for a tier
+equbRooms.post("/quick-join", async (c) => {
+  const body = await c.req.json();
+  const tierSchema = z.object({
+    tier: z.enum(["starter", "regular", "elite"]),
+  });
+  const parsed = tierSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return c.json<ApiResponse<null>>(
+      { data: null, error: "Invalid tier" },
+      400,
+    );
+  }
+
+  // Find public pending rooms matching the tier, ordered by most members (closest to starting)
+  const { data: rooms } = await supabase
+    .from("equb_rooms")
+    .select("*, equb_members(count)")
+    .eq("status", "pending")
+    .eq("room_type", "public")
+    .eq("tier", parsed.data.tier)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (!rooms || rooms.length === 0) {
+    return c.json<ApiResponse<null>>(
+      {
+        data: null,
+        error: "No rooms available for this tier. Try creating one!",
+      },
+      404,
+    );
+  }
+
+  // Pick the room with the most members (closest to starting)
+  let bestRoom = rooms[0];
+  let bestCount = 0;
+
+  for (const room of rooms) {
+    const memberCount = Array.isArray(room.equb_members)
+      ? room.equb_members.length
+      : ((room.equb_members as unknown as { count: number })?.count ?? 0);
+    if (memberCount > bestCount) {
+      bestCount = memberCount;
+      bestRoom = room;
+    }
+  }
+
+  // Strip the embedded count from the response
+  const { equb_members: _, ...roomData } = bestRoom;
+
+  return c.json({
+    data: { room: roomData as EqubRoom, member_count: bestCount },
+    error: null,
+  });
+});
+
 // Settlement is handled exclusively via POST /cron/settle (requires CRON_SECRET).
 // No public settlement endpoint — prevents unauthorized financial operations.
 
