@@ -9,10 +9,14 @@ import {
 } from "@fitequb/shared";
 import { Hono } from "hono";
 import { z } from "zod";
+import { rateLimit } from "../middleware/rate-limit.js";
 import { supabase } from "../lib/supabase.js";
 import type { AppVariables } from "../types/context.js";
 
 const equbRooms = new Hono<{ Variables: AppVariables }>();
+
+// 5 requests per minute on join (payment endpoint)
+equbRooms.use("/:id/join", rateLimit(5, 60 * 1000));
 
 const createRoomSchema = z.object({
   name: z.string().min(3).max(50),

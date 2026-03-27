@@ -1,10 +1,14 @@
 import { Hono } from "hono";
+import { rateLimit } from "../middleware/rate-limit.js";
 import { supabase } from "../lib/supabase.js";
 import type { AppVariables } from "../types/context.js";
 
 const SYSTEM_PROMPT = `You are FitEqub Coach, a fitness advisor for young professionals in Addis Ababa, Ethiopia. Keep responses to 2-3 sentences. Be encouraging and motivational. Know about Orthodox fasting (Tsom) and Ethiopian food (injera, shiro, tibs). Suggest fasting-friendly exercises during Tsom periods. Reference local gyms and walking routes in Addis (Bole, Meskel Square, Entoto hills, Churchill Avenue). Speak casually like a friend, not a doctor. If the user asks non-fitness questions, gently redirect to fitness topics. Use ETB for money references. If the user mentions their Equb, encourage them to hit their step targets.`;
 
 const ai = new Hono<{ Variables: AppVariables }>();
+
+// 20 requests per minute
+ai.use("/coach", rateLimit(20, 60 * 1000));
 
 ai.post("/coach", async (c) => {
   const geminiKey = process.env.GEMINI_API_KEY;
