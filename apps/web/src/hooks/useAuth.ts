@@ -32,6 +32,12 @@ export function useAuth() {
       return;
     }
 
+    // Browser guest without Telegram — skip auth call
+    if (!window.Telegram?.WebApp?.initData) {
+      setLoading(false);
+      return;
+    }
+
     const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
     const urlParams = new URLSearchParams(window.location.search);
     const trainerCode =
@@ -47,5 +53,7 @@ export function useAuth() {
       .finally(() => setLoading(false));
   }, []);
 
-  return { user, loading };
+  const isGuest = !user && !window.Telegram?.WebApp?.initData;
+
+  return { user, loading, isGuest };
 }

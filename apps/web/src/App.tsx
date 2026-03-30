@@ -98,6 +98,9 @@ const GymDashboard = lazy(() =>
 const CoachList = lazy(() =>
   import("./pages/CoachList.js").then((m) => ({ default: m.CoachList })),
 );
+const LandingPage = lazy(() =>
+  import("./pages/LandingPage.js").then((m) => ({ default: m.LandingPage })),
+);
 
 function RouteLoading() {
   return (
@@ -115,6 +118,14 @@ export function App() {
           {/* Public routes — accessible without Telegram auth */}
           <Route path="/gym-staff" element={<GymStaff />} />
           <Route path="/gym-dashboard" element={<GymDashboard />} />
+          <Route
+            path="/landing"
+            element={
+              <Suspense fallback={<RouteLoading />}>
+                <LandingPage />
+              </Suspense>
+            }
+          />
 
           {/* All other routes go through TelegramGate */}
           <Route
@@ -128,7 +139,8 @@ export function App() {
                       <Route
                         path="/"
                         element={
-                          isOnboarded() ? (
+                          isOnboarded() ||
+                          !window.Telegram?.WebApp?.initData ? (
                             <Home />
                           ) : (
                             <Navigate to="/onboarding" replace />

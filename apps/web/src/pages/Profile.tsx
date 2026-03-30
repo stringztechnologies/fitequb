@@ -24,13 +24,17 @@ interface PointEntry {
 }
 
 export function Profile() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isGuest } = useAuth();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [points, setPoints] = useState<PointEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (isGuest) {
+      setLoading(false);
+      return;
+    }
     Promise.all([
       api<ProfileData>("/api/gamification/profile"),
       api<PointEntry[]>("/api/gamification/points"),
@@ -40,7 +44,7 @@ export function Profile() {
         if (e.data) setPoints(e.data);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [isGuest]);
 
   if (authLoading || loading) return <Loading />;
 

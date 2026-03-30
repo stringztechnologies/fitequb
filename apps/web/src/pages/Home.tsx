@@ -21,12 +21,15 @@ interface ProfileSummary {
 }
 
 export function Home() {
-  const { user, loading } = useAuth();
+  const { user, loading, isGuest } = useAuth();
   const [profile, setProfile] = useState<ProfileSummary | null>(null);
   const [rooms, setRooms] = useState<EqubRoom[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Skip authenticated API calls for guest browsers
+    if (isGuest) return;
+
     api<ProfileSummary>("/api/gamification/profile").then((res) => {
       if (res.data) setProfile(res.data);
     });
@@ -51,7 +54,7 @@ export function Home() {
         }
       }
     });
-  }, [navigate]);
+  }, [navigate, isGuest]);
 
   if (loading) return <Loading />;
 
@@ -74,9 +77,6 @@ export function Home() {
   const daysTotal = profile?.days_total ?? 0;
 
   const circ = 2 * Math.PI * 80;
-
-  const isTelegramApp = Boolean(window.Telegram?.WebApp?.initData);
-  const isDemo = !user && !isTelegramApp;
 
   return (
     <div className="bg-background text-on-surface font-body pb-24">
@@ -109,11 +109,15 @@ export function Home() {
       {/* Spacer for fixed header */}
       <div className="h-16" />
 
-      {/* Demo banner */}
-      {isDemo && (
+      {/* Guest banner */}
+      {isGuest && (
         <div className="mx-5 mt-3 px-3 py-2 rounded-lg bg-secondary-container/12 border border-secondary-container/30">
           <p className="text-xs text-secondary-container font-medium">
-            Demo Mode — Sign in via Telegram to see your real data
+            Browsing as guest —{" "}
+            <a href="https://t.me/fitequb_bot" className="underline font-bold">
+              Open in Telegram
+            </a>{" "}
+            to join rooms and track workouts
           </p>
         </div>
       )}
@@ -123,9 +127,9 @@ export function Home() {
         <p className="text-on-surface-variant text-sm font-body">
           {user
             ? `Welcome, ${user.full_name}`
-            : isTelegramApp
-              ? `Welcome, ${(window.Telegram?.WebApp?.initDataUnsafe?.user as { first_name?: string } | undefined)?.first_name ?? "Champion"}`
-              : "Stake. Sweat. Split the pot."}
+            : isGuest
+              ? "Stake. Sweat. Split the pot."
+              : `Welcome, ${(window.Telegram?.WebApp?.initDataUnsafe?.user as { first_name?: string } | undefined)?.first_name ?? "Champion"}`}
         </p>
       </div>
 
@@ -183,19 +187,31 @@ export function Home() {
 
       {/* Verify Workout CTA */}
       <div className="px-5 pt-5">
-        <button
-          type="button"
-          onClick={() => navigate("/verify")}
-          className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-bold text-base active:scale-[0.98] transition-transform flex items-center justify-center gap-2 shadow-lg"
-        >
-          <span
-            className="material-symbols-outlined text-xl"
-            style={{ fontVariationSettings: "'FILL' 1" }}
+        {isGuest ? (
+          <a
+            href="https://t.me/fitequb_bot"
+            className="w-full py-4 rounded-2xl bg-[#0088cc] text-white font-headline font-bold text-base flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-transform"
           >
-            verified
-          </span>
-          Verify Today's Workout
-        </button>
+            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="#FFF">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z" />
+            </svg>
+            Open in Telegram to Join
+          </a>
+        ) : (
+          <button
+            type="button"
+            onClick={() => navigate("/verify")}
+            className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-bold text-base active:scale-[0.98] transition-transform flex items-center justify-center gap-2 shadow-lg"
+          >
+            <span
+              className="material-symbols-outlined text-xl"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              verified
+            </span>
+            Verify Today's Workout
+          </button>
+        )}
       </div>
 
       {/* AI Coach Quick Action */}
