@@ -98,7 +98,7 @@ fitequb/
 - Branch naming: `type/short-description`
 - Never commit to main directly
 - All API routes return `{ data, error }` shape
-- All Chapa amounts in cents (multiply by 100)
+- All amounts (stake_amount, payout_amount, total_pot) stored in ETB — Chapa API also accepts ETB
 - All dates in UTC, display in EAT (UTC+3)
 - Environment variables: `.env` per app, never committed
 

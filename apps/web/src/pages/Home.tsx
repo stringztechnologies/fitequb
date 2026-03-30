@@ -30,7 +30,7 @@ export function Home() {
     api<ProfileSummary>("/api/gamification/profile").then((res) => {
       if (res.data) setProfile(res.data);
     });
-    api<EqubRoom[]>("/api/equb-rooms").then((res) => {
+    api<EqubRoom[]>("/api/equb-rooms?mine=true").then((res) => {
       if (res.data) setRooms(res.data);
     });
     // Check for unseen settlement wins
@@ -219,9 +219,13 @@ export function Home() {
       <div className="grid grid-cols-1 gap-5 px-5 pt-5">
         <FeatureCard
           title="Equb Rooms"
-          subtitle={`${rooms.length} rooms available`}
+          subtitle={
+            rooms.length > 0
+              ? `You're in ${rooms.length} room${rooms.length > 1 ? "s" : ""}`
+              : "Join or create an Equb"
+          }
           badgeText={
-            rooms.length > 0 ? `${rooms.length} Active` : "No Active Rooms"
+            rooms.length > 0 ? `${rooms.length} Joined` : "Browse Rooms"
           }
           badgeGreen={rooms.length > 0}
           icon="groups"

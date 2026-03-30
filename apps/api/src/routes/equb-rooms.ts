@@ -98,9 +98,55 @@ equbRooms.post("/", async (c) => {
   );
 });
 
-// GET /equb-rooms — list rooms
+// GET /equb-rooms — list rooms (use ?mine=true to get only rooms user is a member of)
 equbRooms.get("/", async (c) => {
   const status = c.req.query("status");
+  const mine = c.req.query("mine") === "true";
+
+  if (mine) {
+    const telegramUser = c.get("telegramUser");
+    const { data: user } = await supabase
+      .from("users")
+      .select("id")
+      .eq("telegram_id", telegramUser.id)
+      .single();
+
+    if (!user) {
+      return c.json<ApiResponse<EqubRoom[]>>({ data: [], error: null });
+    }
+
+    const { data: memberships } = await supabase
+      .from("equb_members")
+      .select("room_id")
+      .eq("user_id", user.id);
+
+    if (!memberships || memberships.length === 0) {
+      return c.json<ApiResponse<EqubRoom[]>>({ data: [], error: null });
+    }
+
+    const roomIds = memberships.map((m) => m.room_id);
+    let query = supabase
+      .from("equb_rooms")
+      .select("*")
+      .in("id", roomIds)
+      .order("created_at", { ascending: false });
+
+    if (status) {
+      query = query.eq("status", status);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      return c.json<ApiResponse<null>>(
+        { data: null, error: error.message },
+        500,
+      );
+    }
+    return c.json<ApiResponse<EqubRoom[]>>({
+      data: (data ?? []) as EqubRoom[],
+      error: null,
+    });
+  }
 
   let query = supabase
     .from("equb_rooms")
