@@ -179,6 +179,7 @@ function SupabaseSignIn({ client }: { client: SupabaseClient }) {
 					FitEqub
 				</h1>
 				<p className="text-on-surface-variant text-sm mt-2">Stake. Sweat. Split the pot.</p>
+				<p className="text-on-surface-variant text-xs mt-1">Sign in or create a new account</p>
 			</div>
 
 			{step === "choose" && (

@@ -23,7 +23,7 @@ export function AiCoach() {
 		{
 			id: "welcome",
 			role: "coach",
-			text: "Hey! I'm your FitEqub Coach. Ask me about workouts, nutrition, walking routes in Addis, or Tsom-friendly exercises. What's on your mind?",
+			text: "Hey! I'm Coach Abebe, your FitEqub fitness advisor. Ask me about workouts, nutrition, walking routes in Addis, or Tsom-friendly exercises. What's on your mind?",
 		},
 	]);
 	const [input, setInput] = useState("");
@@ -110,7 +110,7 @@ export function AiCoach() {
 					</div>
 					<div>
 						<h1 className="font-headline font-bold text-base text-on-surface leading-tight">
-							AI Coach
+							Coach Abebe
 						</h1>
 						<p className="font-label text-2xs text-primary uppercase tracking-widest">Online</p>
 					</div>
