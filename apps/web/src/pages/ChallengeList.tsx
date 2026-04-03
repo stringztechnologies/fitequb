@@ -249,10 +249,12 @@ function ChallengeCard({
 
 					{/* Meta row */}
 					<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-3">
-						{ch.target_steps && (
+						{ch.target_steps != null && (
 							<span className="flex items-center gap-1 text-on-surface-variant font-label text-[10px]">
 								<span className="material-symbols-outlined text-xs">flag</span>
-								{ch.target_steps.toLocaleString()} steps
+								{ch.target_steps > 0
+									? `${ch.target_steps.toLocaleString()} steps`
+									: "Track your activity"}
 							</span>
 						)}
 						{(ch.reward_desc || ch.reward_description) && (

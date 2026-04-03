@@ -184,7 +184,9 @@ export function EqubDetail() {
 				<div className="grid grid-cols-2 gap-4">
 					<div className="bg-surface-container-low p-5 rounded-lg border border-outline-variant/10">
 						<div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-							<span className="material-symbols-rounded text-primary text-2xl">footprint</span>
+							<span className="material-symbols-outlined text-primary text-2xl">
+								directions_walk
+							</span>
 						</div>
 						<p className="font-headline text-sm font-bold text-on-surface mb-1">
 							{room.workout_target} Workouts
@@ -196,7 +198,9 @@ export function EqubDetail() {
 					</div>
 					<div className="bg-surface-container-low p-5 rounded-lg border border-outline-variant/10">
 						<div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-							<span className="material-symbols-rounded text-primary text-2xl">fitness_center</span>
+							<span className="material-symbols-outlined text-primary text-2xl">
+								fitness_center
+							</span>
 						</div>
 						<p className="font-headline text-sm font-bold text-on-surface mb-1">Gym Check-ins</p>
 						<p className="text-xs text-on-surface-variant">

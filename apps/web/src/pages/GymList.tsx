@@ -101,8 +101,8 @@ export function GymList() {
 				) : (
 					<EmptyState
 						icon="fitness_center"
-						title="No gyms available"
-						subtitle="Partner gyms will appear here soon"
+						title="Partner gyms coming soon"
+						subtitle="We're onboarding gyms in Addis Ababa — check back shortly"
 					/>
 				)}
 			</div>
