@@ -21,6 +21,7 @@ import { publicBrowse } from "./routes/public-browse.js";
 import { health } from "./routes/health.js";
 import { trainers } from "./routes/trainers.js";
 import { verify } from "./routes/verify.js";
+import { webAuth } from "./routes/web-auth.js";
 import { webhooks } from "./routes/webhooks.js";
 import { workouts } from "./routes/workouts.js";
 import type { AppVariables } from "./types/context.js";
@@ -51,6 +52,7 @@ app.route("/webhooks", webhooks);
 app.route("/cron", cron);
 app.route("/gym", gymPublic);
 app.route("/public", publicBrowse);
+app.route("/web-auth", webAuth);
 
 // Authenticated routes
 app.use("/api/*", telegramAuth);

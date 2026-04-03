@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { rateLimit } from "../middleware/rate-limit.js";
+import { resolveUserId } from "../lib/resolve-user.js";
 import { supabase } from "../lib/supabase.js";
 import type { AppVariables } from "../types/context.js";
 
@@ -24,15 +25,19 @@ ai.post("/coach", async (c) => {
     return c.json({ data: null, error: "Message is required" }, 400);
   }
 
-  // Get user context for personalization
-  const telegramUser = c.get("telegramUser");
+  // Get user context for personalization (optional — guests skip this)
+  const userId = await resolveUserId(c);
   let userContext = "";
   try {
-    const { data: user } = await supabase
-      .from("users")
-      .select("id, full_name, total_points, level")
-      .eq("telegram_id", telegramUser.id)
-      .single();
+    const user = userId
+      ? (
+          await supabase
+            .from("users")
+            .select("id, full_name, total_points, level")
+            .eq("id", userId)
+            .single()
+        ).data
+      : null;
 
     if (user) {
       userContext = `\n\nUser context: Name is ${user.full_name}, level ${user.level}, ${user.total_points} points.`;

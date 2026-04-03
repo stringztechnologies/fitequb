@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { createMiddleware } from "hono/factory";
+import { supabase } from "../lib/supabase.js";
 import type { AppVariables, TelegramUser } from "../types/context.js";
 
 const QA_TEST_USER: TelegramUser = {
@@ -10,45 +11,115 @@ const QA_TEST_USER: TelegramUser = {
 };
 
 /**
- * Validates Telegram Mini App initData using HMAC-SHA256.
- * In test mode (Authorization: tma test), bypasses validation and uses a fake user.
+ * Dual auth middleware — accepts both Telegram and Supabase auth.
+ *
+ * Authorization header formats:
+ *   - `tma {initData}` → Telegram Mini App auth
+ *   - `Bearer {supabase_jwt}` → Supabase Auth (web users)
  */
 export const telegramAuth = createMiddleware<{ Variables: AppVariables }>(async (c, next) => {
 	const authHeader = c.req.header("authorization");
-	if (!authHeader?.startsWith("tma ")) {
+
+	if (!authHeader) {
 		return c.json({ data: null, error: "Missing authorization header" }, 401);
 	}
 
-	const initData = authHeader.slice(4);
+	// --- Supabase Bearer token auth ---
+	if (authHeader.startsWith("Bearer ")) {
+		const token = authHeader.slice(7);
+		if (!token) {
+			return c.json({ data: null, error: "Empty bearer token" }, 401);
+		}
 
-	// QA test mode bypass — only in development
-	if (process.env.NODE_ENV === "development" && (initData === "" || initData === "test")) {
-		c.set("telegramUser", QA_TEST_USER);
+		// Verify the JWT and get the user
+		const {
+			data: { user: supabaseUser },
+			error,
+		} = await supabase.auth.getUser(token);
+
+		if (error || !supabaseUser) {
+			return c.json({ data: null, error: "Invalid or expired token" }, 401);
+		}
+
+		// Look up internal user by supabase_uid
+		const { data: dbUser } = await supabase
+			.from("users")
+			.select("id")
+			.eq("supabase_uid", supabaseUser.id)
+			.single();
+
+		if (!dbUser) {
+			return c.json({ data: null, error: "User not found — complete sign-up first" }, 401);
+		}
+
+		// Set a synthetic TelegramUser for backward compatibility with existing routes
+		const syntheticTgUser: TelegramUser = {
+			id: 0,
+			first_name: supabaseUser.user_metadata?.full_name ?? supabaseUser.email ?? "User",
+		};
+		c.set("telegramUser", syntheticTgUser);
+		c.set("authenticatedUser", {
+			userId: dbUser.id,
+			authMethod: "supabase",
+			supabaseUid: supabaseUser.id,
+		});
+
 		await next();
 		return;
 	}
 
-	const botToken = process.env.TELEGRAM_BOT_TOKEN;
+	// --- Telegram Mini App auth ---
+	if (authHeader.startsWith("tma ")) {
+		const initData = authHeader.slice(4);
 
-	if (!botToken) {
-		return c.json({ data: null, error: "Server misconfigured" }, 500);
+		// QA test mode bypass — only in development
+		if (process.env.NODE_ENV === "development" && (initData === "" || initData === "test")) {
+			c.set("telegramUser", QA_TEST_USER);
+			c.set("authenticatedUser", {
+				userId: "qa-test-user",
+				authMethod: "telegram",
+				telegramUser: QA_TEST_USER,
+			});
+			await next();
+			return;
+		}
+
+		const botToken = process.env.TELEGRAM_BOT_TOKEN;
+		if (!botToken) {
+			return c.json({ data: null, error: "Server misconfigured" }, 500);
+		}
+
+		if (!validateInitData(initData, botToken)) {
+			return c.json({ data: null, error: "Invalid initData" }, 401);
+		}
+
+		const params = new URLSearchParams(initData);
+		const userRaw = params.get("user");
+		if (!userRaw) {
+			return c.json({ data: null, error: "No user in initData" }, 401);
+		}
+
+		const telegramUser = JSON.parse(userRaw) as TelegramUser;
+		c.set("telegramUser", telegramUser);
+
+		// Look up internal user by telegram_id
+		const { data: dbUser } = await supabase
+			.from("users")
+			.select("id")
+			.eq("telegram_id", telegramUser.id)
+			.single();
+
+		c.set("authenticatedUser", {
+			userId: dbUser?.id ?? "",
+			authMethod: "telegram",
+			telegramUser,
+		});
+
+		await next();
+		return;
 	}
 
-	if (!validateInitData(initData, botToken)) {
-		return c.json({ data: null, error: "Invalid initData" }, 401);
-	}
-
-	const params = new URLSearchParams(initData);
-	const userRaw = params.get("user");
-
-	if (!userRaw) {
-		return c.json({ data: null, error: "No user in initData" }, 401);
-	}
-
-	const telegramUser = JSON.parse(userRaw) as TelegramUser;
-	c.set("telegramUser", telegramUser);
-
-	await next();
+	return c.json({ data: null, error: "Invalid authorization format" }, 401);
 });
 
 function validateInitData(initData: string, botToken: string): boolean {

@@ -66,7 +66,9 @@ export interface EqubLedgerEntry {
 
 export interface User {
   id: string;
-  telegram_id: number;
+  telegram_id: number | null;
+  supabase_uid: string | null;
+  email: string | null;
   full_name: string;
   username: string | null;
   phone: string | null;
@@ -115,7 +117,13 @@ export interface TrainerPayout {
 
 // ── Coach Day Pass ──
 
-export type CoachPassStatus = "pending" | "active" | "confirmed" | "completed" | "expired" | "cancelled";
+export type CoachPassStatus =
+  | "pending"
+  | "active"
+  | "confirmed"
+  | "completed"
+  | "expired"
+  | "cancelled";
 export type SessionType = "in_person" | "virtual";
 
 export interface CoachSession {

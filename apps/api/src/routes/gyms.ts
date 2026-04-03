@@ -4,6 +4,7 @@ import { DAY_PASS_EXPIRY_MINUTES } from "@fitequb/shared";
 import { Hono } from "hono";
 import { z } from "zod";
 import { initializePayment } from "../lib/chapa.js";
+import { resolveUserId } from "../lib/resolve-user.js";
 import { rateLimit } from "../middleware/rate-limit.js";
 import { generateDailyQR } from "../lib/qr.js";
 import { supabase } from "../lib/supabase.js";
@@ -52,13 +53,8 @@ gyms.post("/day-passes", async (c) => {
   }
   const { gym_id } = parsed.data;
 
-  const { data: user } = await supabase
-    .from("users")
-    .select("id")
-    .eq("telegram_id", telegramUser.id)
-    .single();
-
-  if (!user) {
+  const userId = await resolveUserId(c);
+  if (!userId) {
     return c.json<ApiResponse<null>>(
       { data: null, error: "User not found" },
       404,
@@ -88,7 +84,7 @@ gyms.post("/day-passes", async (c) => {
   const { data: pass, error } = await supabase
     .from("day_passes")
     .insert({
-      user_id: user.id,
+      user_id: userId,
       gym_id,
       qr_token: qrToken,
       status: "pending",
@@ -137,15 +133,9 @@ gyms.post("/day-passes", async (c) => {
 // GET /day-passes/:id — pass detail with QR
 gyms.get("/day-passes/:id", async (c) => {
   const passId = c.req.param("id");
-  const telegramUser = c.get("telegramUser");
 
-  const { data: user } = await supabase
-    .from("users")
-    .select("id")
-    .eq("telegram_id", telegramUser.id)
-    .single();
-
-  if (!user) {
+  const userId = await resolveUserId(c);
+  if (!userId) {
     return c.json<ApiResponse<null>>(
       { data: null, error: "User not found" },
       404,
@@ -156,7 +146,7 @@ gyms.get("/day-passes/:id", async (c) => {
     .from("day_passes")
     .select("*, partner_gyms(name, location)")
     .eq("id", passId)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .single();
 
   if (!pass) {
@@ -181,15 +171,9 @@ gyms.get("/day-passes/:id", async (c) => {
 // POST /day-passes/:id/redeem — mark as redeemed
 gyms.post("/day-passes/:id/redeem", async (c) => {
   const passId = c.req.param("id");
-  const telegramUser = c.get("telegramUser");
 
-  const { data: user } = await supabase
-    .from("users")
-    .select("id")
-    .eq("telegram_id", telegramUser.id)
-    .single();
-
-  if (!user) {
+  const userId = await resolveUserId(c);
+  if (!userId) {
     return c.json<ApiResponse<null>>(
       { data: null, error: "User not found" },
       404,
@@ -200,7 +184,7 @@ gyms.post("/day-passes/:id/redeem", async (c) => {
     .from("day_passes")
     .update({ status: "redeemed", redeemed_at: new Date().toISOString() })
     .eq("id", passId)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("status", "active")
     .select()
     .single();

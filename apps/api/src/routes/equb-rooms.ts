@@ -10,6 +10,7 @@ import {
 import { Hono } from "hono";
 import { z } from "zod";
 import { rateLimit } from "../middleware/rate-limit.js";
+import { resolveUserId } from "../lib/resolve-user.js";
 import { supabase } from "../lib/supabase.js";
 import type { AppVariables } from "../types/context.js";
 
@@ -46,7 +47,6 @@ const createRoomSchema = z.object({
 
 // POST /equb-rooms — create a new room
 equbRooms.post("/", async (c) => {
-  const telegramUser = c.get("telegramUser");
   const body = await c.req.json();
   const parsed = createRoomSchema.safeParse(body);
 
@@ -60,14 +60,8 @@ equbRooms.post("/", async (c) => {
     );
   }
 
-  // Look up internal user ID from telegram_id
-  const { data: user } = await supabase
-    .from("users")
-    .select("id")
-    .eq("telegram_id", telegramUser.id)
-    .single();
-
-  if (!user) {
+  const userId = await resolveUserId(c);
+  if (!userId) {
     return c.json<ApiResponse<null>>(
       { data: null, error: "User not found" },
       404,
@@ -78,7 +72,7 @@ equbRooms.post("/", async (c) => {
     .from("equb_rooms")
     .insert({
       ...parsed.data,
-      creator_id: user.id,
+      creator_id: userId,
       status: "pending",
       end_date: new Date(
         new Date(parsed.data.start_date).getTime() +
@@ -104,21 +98,15 @@ equbRooms.get("/", async (c) => {
   const mine = c.req.query("mine") === "true";
 
   if (mine) {
-    const telegramUser = c.get("telegramUser");
-    const { data: user } = await supabase
-      .from("users")
-      .select("id")
-      .eq("telegram_id", telegramUser.id)
-      .single();
-
-    if (!user) {
+    const userId = await resolveUserId(c);
+    if (!userId) {
       return c.json<ApiResponse<EqubRoom[]>>({ data: [], error: null });
     }
 
     const { data: memberships } = await supabase
       .from("equb_members")
       .select("room_id")
-      .eq("user_id", user.id);
+      .eq("user_id", userId);
 
     if (!memberships || memberships.length === 0) {
       return c.json<ApiResponse<EqubRoom[]>>({ data: [], error: null });
@@ -203,13 +191,8 @@ equbRooms.post("/:id/join", async (c) => {
   const roomId = c.req.param("id");
   const telegramUser = c.get("telegramUser");
 
-  const { data: user } = await supabase
-    .from("users")
-    .select("id")
-    .eq("telegram_id", telegramUser.id)
-    .single();
-
-  if (!user) {
+  const userId = await resolveUserId(c);
+  if (!userId) {
     return c.json<ApiResponse<null>>(
       { data: null, error: "User not found" },
       404,
@@ -255,7 +238,7 @@ equbRooms.post("/:id/join", async (c) => {
     .from("equb_members")
     .select("id")
     .eq("room_id", roomId)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .single();
 
   if (existing) {
@@ -269,7 +252,7 @@ equbRooms.post("/:id/join", async (c) => {
   if (room.stake_amount === 0) {
     const { data: member, error } = await supabase
       .from("equb_members")
-      .insert({ room_id: roomId, user_id: user.id, completed_days: 0 })
+      .insert({ room_id: roomId, user_id: userId, completed_days: 0 })
       .select()
       .single();
 
@@ -285,7 +268,7 @@ equbRooms.post("/:id/join", async (c) => {
 
   // For paid Equbs — initialize Chapa payment
   const { initializePayment } = await import("../lib/chapa.js");
-  const txRef = `equb-${roomId}-${user.id}-${Date.now()}`;
+  const txRef = `equb-${roomId}-${userId}-${Date.now()}`;
 
   const chapaRes = await initializePayment({
     amount: room.stake_amount,
@@ -374,15 +357,8 @@ equbRooms.post("/quick-join", async (c) => {
 
 // GET /equb-rooms/my-results — unseen settlement results for the user
 equbRooms.get("/my-results", async (c) => {
-  const telegramUser = c.get("telegramUser");
-
-  const { data: user } = await supabase
-    .from("users")
-    .select("id")
-    .eq("telegram_id", telegramUser.id)
-    .single();
-
-  if (!user) {
+  const userId = await resolveUserId(c);
+  if (!userId) {
     return c.json<ApiResponse<null>>(
       { data: null, error: "User not found" },
       404,
@@ -393,7 +369,7 @@ equbRooms.get("/my-results", async (c) => {
   const { data: members } = await supabase
     .from("equb_members")
     .select("room_id, qualified, payout_amount")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("result_seen", false);
 
   if (!members || members.length === 0) {
@@ -429,7 +405,6 @@ equbRooms.get("/my-results", async (c) => {
 
 // POST /equb-rooms/mark-result-seen — mark a settlement result as seen
 equbRooms.post("/mark-result-seen", async (c) => {
-  const telegramUser = c.get("telegramUser");
   const body = await c.req.json();
   const roomId = body?.room_id;
 
@@ -440,13 +415,8 @@ equbRooms.post("/mark-result-seen", async (c) => {
     );
   }
 
-  const { data: user } = await supabase
-    .from("users")
-    .select("id")
-    .eq("telegram_id", telegramUser.id)
-    .single();
-
-  if (!user) {
+  const userId = await resolveUserId(c);
+  if (!userId) {
     return c.json<ApiResponse<null>>(
       { data: null, error: "User not found" },
       404,
@@ -457,7 +427,7 @@ equbRooms.post("/mark-result-seen", async (c) => {
     .from("equb_members")
     .update({ result_seen: true })
     .eq("room_id", roomId)
-    .eq("user_id", user.id);
+    .eq("user_id", userId);
 
   return c.json({ data: { marked: true }, error: null });
 });

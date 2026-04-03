@@ -12,6 +12,7 @@
 	"dependencies": {
 		"@fitequb/shared": "workspace:*",
 		"@sentry/react": "^10.45.0",
+		"@supabase/supabase-js": "^2.99.3",
 		"@telegram-apps/sdk-react": "^2.0.0",
 		"react": "^18.3.0",
 		"react-dom": "^18.3.0",
