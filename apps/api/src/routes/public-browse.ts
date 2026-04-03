@@ -59,11 +59,19 @@ publicBrowse.get("/equb-rooms/:id", async (c) => {
 
 // GET /public/gyms — list active partner gyms (no auth)
 publicBrowse.get("/gyms", async (c) => {
-	const { data, error } = await supabase
+	// Try both column names — DB may use "active" or "is_active"
+	let { data, error } = await supabase
 		.from("partner_gyms")
 		.select("*")
-		.neq("active", false)
+		.eq("active", true)
 		.order("name");
+
+	// Fallback: if no results, try without filter (all gyms)
+	if (!error && (!data || data.length === 0)) {
+		const fallback = await supabase.from("partner_gyms").select("*").order("name");
+		data = fallback.data;
+		error = fallback.error;
+	}
 
 	if (error) {
 		return c.json<ApiResponse<null>>({ data: null, error: error.message }, 500);
