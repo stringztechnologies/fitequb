@@ -174,11 +174,17 @@ export function EqubList() {
 	);
 }
 
-function RealCard({ room, onClick }: { room: EqubRoom; onClick: () => void }) {
+function RealCard({
+	room,
+	onClick,
+}: {
+	room: EqubRoom & { member_count?: number };
+	onClick: () => void;
+}) {
 	const payout = room.stake_amount * room.max_members;
 	const countdown = useCd(room.end_date);
-	const fillPct =
-		room.max_members > 0 ? Math.round((room.min_members / room.max_members) * 100) : 0;
+	const memberCount = (room as EqubRoom & { member_count?: number }).member_count ?? 0;
+	const fillPct = room.max_members > 0 ? Math.round((memberCount / room.max_members) * 100) : 0;
 	const isSteps =
 		room.name.toLowerCase().includes("step") || room.name.toLowerCase().includes("run");
 
@@ -259,7 +265,7 @@ function RealCard({ room, onClick }: { room: EqubRoom; onClick: () => void }) {
 			<div>
 				<div className="flex justify-between items-center mb-1.5">
 					<span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">
-						{room.min_members}/{room.max_members} spots filled
+						{memberCount}/{room.max_members} spots filled
 					</span>
 					<span className="font-label text-[10px] text-on-surface-variant">{fillPct}%</span>
 				</div>

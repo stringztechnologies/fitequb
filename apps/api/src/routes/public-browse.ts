@@ -1,4 +1,4 @@
-import type { ApiResponse, Challenge, EqubRoom, PartnerGym } from "@fitequb/shared";
+import type { ApiResponse, Challenge, PartnerGym } from "@fitequb/shared";
 import { Hono } from "hono";
 import { supabase } from "../lib/supabase.js";
 import { rateLimit } from "../middleware/rate-limit.js";
@@ -7,13 +7,13 @@ const publicBrowse = new Hono();
 
 // --- Equb Rooms ---
 
-// GET /public/equb-rooms — list all active/pending rooms (no auth)
+// GET /public/equb-rooms — list all active/pending rooms with member counts (no auth)
 publicBrowse.get("/equb-rooms", async (c) => {
 	const status = c.req.query("status");
 
 	let query = supabase
 		.from("equb_rooms")
-		.select("*")
+		.select("*, equb_members(count)")
 		.order("created_at", { ascending: false })
 		.limit(50);
 
@@ -27,10 +27,16 @@ publicBrowse.get("/equb-rooms", async (c) => {
 		return c.json<ApiResponse<null>>({ data: null, error: error.message }, 500);
 	}
 
-	return c.json<ApiResponse<EqubRoom[]>>({
-		data: data as EqubRoom[],
-		error: null,
+	// Flatten member count into each room object
+	const rooms = (data ?? []).map((room) => {
+		const memberCount = Array.isArray(room.equb_members)
+			? room.equb_members.length
+			: ((room.equb_members as unknown as { count: number })?.count ?? 0);
+		const { equb_members: _, ...rest } = room;
+		return { ...rest, member_count: memberCount };
 	});
+
+	return c.json({ data: rooms, error: null });
 });
 
 // GET /public/equb-rooms/:id — room detail with members (no auth)
