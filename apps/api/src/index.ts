@@ -17,6 +17,7 @@ import { equbRooms } from "./routes/equb-rooms.js";
 import { gamification } from "./routes/gamification.js";
 import { gymPublic } from "./routes/gym-public.js";
 import { gyms } from "./routes/gyms.js";
+import { publicBrowse } from "./routes/public-browse.js";
 import { health } from "./routes/health.js";
 import { trainers } from "./routes/trainers.js";
 import { verify } from "./routes/verify.js";
@@ -34,17 +35,22 @@ app.use("*", logger());
 app.use(
   "*",
   cors({
-    origin: process.env.TELEGRAM_MINI_APP_URL ?? "https://fitequb.com",
+    origin: [
+      process.env.TELEGRAM_MINI_APP_URL ?? "https://fitequb.com",
+      "https://fitequb.com",
+      "https://www.fitequb.com",
+    ],
     allowMethods: ["GET", "POST", "PUT", "DELETE"],
     allowHeaders: ["Content-Type", "Authorization"],
   }),
 );
 
-// Public routes (protected by their own auth)
+// Public routes (no Telegram auth required)
 app.route("/health", health);
 app.route("/webhooks", webhooks);
 app.route("/cron", cron);
 app.route("/gym", gymPublic);
+app.route("/public", publicBrowse);
 
 // Authenticated routes
 app.use("/api/*", telegramAuth);

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../lib/api.js";
+import { useAuth } from "../hooks/useAuth.js";
+import { api, publicApi } from "../lib/api.js";
 
 interface Message {
 	id: string;
@@ -17,6 +18,7 @@ const SUGGESTIONS = [
 
 export function AiCoach() {
 	const navigate = useNavigate();
+	const { isGuest } = useAuth();
 	const [messages, setMessages] = useState<Message[]>([
 		{
 			id: "welcome",
@@ -30,7 +32,10 @@ export function AiCoach() {
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
-		scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+		scrollRef.current?.scrollTo({
+			top: scrollRef.current.scrollHeight,
+			behavior: "smooth",
+		});
 	}, [messages, loading]);
 
 	async function send(text?: string) {
@@ -44,9 +49,15 @@ export function AiCoach() {
 
 		const history = messages
 			.filter((m) => m.id !== "welcome")
-			.map((m) => ({ role: m.role === "user" ? "user" : "model", text: m.text }));
+			.map((m) => ({
+				role: m.role === "user" ? "user" : "model",
+				text: m.text,
+			}));
 
-		const res = await api<{ reply: string }>("/api/ai/coach", {
+		// Use public endpoint for guests, authenticated for logged-in users
+		const coachApi = isGuest ? publicApi : api;
+		const coachPath = isGuest ? "/public/ai/coach" : "/api/ai/coach";
+		const res = await coachApi<{ reply: string }>(coachPath, {
 			method: "POST",
 			body: JSON.stringify({ message: msg, history }),
 		});
@@ -69,7 +80,9 @@ export function AiCoach() {
 					className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container active:scale-95 transition-all"
 					aria-label="Go back"
 				>
-					<span className="material-symbols-outlined text-on-surface-variant text-xl">arrow_back</span>
+					<span className="material-symbols-outlined text-on-surface-variant text-xl">
+						arrow_back
+					</span>
 				</button>
 				<div className="flex items-center gap-2">
 					<div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
@@ -103,7 +116,9 @@ export function AiCoach() {
 								</span>
 							</div>
 							<div className="glass-card rounded-2xl rounded-bl-md px-4 py-3 neon-glow">
-								<p className="text-sm text-on-surface leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+								<p className="text-sm text-on-surface leading-relaxed whitespace-pre-wrap">
+									{msg.text}
+								</p>
 							</div>
 						</div>
 					) : (
@@ -128,9 +143,18 @@ export function AiCoach() {
 						</div>
 						<div className="glass-card rounded-2xl rounded-bl-md px-4 py-3">
 							<div className="flex items-center gap-1.5">
-								<span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-								<span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-								<span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+								<span
+									className="w-2 h-2 bg-primary rounded-full animate-bounce"
+									style={{ animationDelay: "0ms" }}
+								/>
+								<span
+									className="w-2 h-2 bg-primary rounded-full animate-bounce"
+									style={{ animationDelay: "150ms" }}
+								/>
+								<span
+									className="w-2 h-2 bg-primary rounded-full animate-bounce"
+									style={{ animationDelay: "300ms" }}
+								/>
 							</div>
 						</div>
 					</div>

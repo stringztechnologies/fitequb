@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Loading } from "../components/Loading.js";
-import { api } from "../lib/api.js";
+import { TelegramModal, useTelegramModal } from "../components/TelegramModal.js";
+import { useAuth } from "../hooks/useAuth.js";
+import { api, publicApi } from "../lib/api.js";
 
 interface LeaderboardEntry {
 	id: string;
@@ -17,10 +19,13 @@ export function Leaderboard() {
 	const [steps, setSteps] = useState("");
 	const [logging, setLogging] = useState(false);
 	const [joined, setJoined] = useState(false);
+	const { isGuest } = useAuth();
+	const { showModal, modalProps } = useTelegramModal();
 
 	useEffect(() => {
 		if (!id) return;
-		api<LeaderboardEntry[]>(`/api/challenges/${id}/leaderboard`)
+		// Always use public endpoint for leaderboard data
+		publicApi<LeaderboardEntry[]>(`/public/challenges/${id}/leaderboard`)
 			.then((res) => {
 				if (res.data) setEntries(res.data);
 			})
@@ -28,12 +33,20 @@ export function Leaderboard() {
 	}, [id]);
 
 	async function handleJoin() {
+		if (isGuest) {
+			showModal("join this challenge");
+			return;
+		}
 		if (!id) return;
 		await api(`/api/challenges/${id}/join`, { method: "POST" });
 		setJoined(true);
 	}
 
 	async function handleLogSteps() {
+		if (isGuest) {
+			showModal("log your steps");
+			return;
+		}
 		if (!id || !steps) return;
 		setLogging(true);
 		await api(`/api/challenges/${id}/log-steps`, {
@@ -42,7 +55,7 @@ export function Leaderboard() {
 		});
 		setLogging(false);
 		setSteps("");
-		const res = await api<LeaderboardEntry[]>(`/api/challenges/${id}/leaderboard`);
+		const res = await publicApi<LeaderboardEntry[]>(`/public/challenges/${id}/leaderboard`);
 		if (res.data) setEntries(res.data);
 	}
 
@@ -149,6 +162,8 @@ export function Leaderboard() {
 					No participants yet. Be the first!
 				</p>
 			)}
+
+			<TelegramModal {...modalProps} />
 		</div>
 	);
 }
