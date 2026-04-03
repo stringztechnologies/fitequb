@@ -28,6 +28,7 @@ export function AiCoach() {
 	]);
 	const [input, setInput] = useState("");
 	const [loading, setLoading] = useState(false);
+	const [lastFailedMsg, setLastFailedMsg] = useState<string | null>(null);
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 
@@ -62,8 +63,22 @@ export function AiCoach() {
 			body: JSON.stringify({ message: msg, history }),
 		});
 
-		const reply = res.data?.reply ?? res.error ?? "Sorry, I couldn't connect. Try again!";
-		setMessages((prev) => [...prev, { id: `c-${Date.now()}`, role: "coach", text: reply }]);
+		if (res.data?.reply) {
+			setMessages((prev) => [
+				...prev,
+				{ id: `c-${Date.now()}`, role: "coach", text: res.data!.reply },
+			]);
+		} else {
+			setMessages((prev) => [
+				...prev,
+				{
+					id: `err-${Date.now()}`,
+					role: "coach",
+					text: `Response failed — tap to retry\n\n_${res.error ?? "Connection timed out"}_`,
+				},
+			]);
+			setLastFailedMsg(msg);
+		}
 		setLoading(false);
 		inputRef.current?.focus();
 	}
@@ -106,7 +121,21 @@ export function AiCoach() {
 			<div ref={scrollRef} className="flex-1 overflow-y-auto pt-20 pb-36 px-4 space-y-3">
 				{messages.map((msg) =>
 					msg.role === "coach" ? (
-						<div key={msg.id} className="flex items-end gap-2 max-w-[85%]">
+						<div
+							key={msg.id}
+							className="flex items-end gap-2 max-w-[85%]"
+							onClick={() => {
+								if (msg.id.startsWith("err-") && lastFailedMsg) {
+									// Remove the error message and retry
+									setMessages((prev) => prev.filter((m) => m.id !== msg.id));
+									setLastFailedMsg(null);
+									send(lastFailedMsg);
+								}
+							}}
+							onKeyDown={() => {}}
+							role={msg.id.startsWith("err-") ? "button" : undefined}
+							tabIndex={msg.id.startsWith("err-") ? 0 : undefined}
+						>
 							<div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
 								<span
 									className="material-symbols-outlined text-primary text-sm"
@@ -115,7 +144,9 @@ export function AiCoach() {
 									auto_awesome
 								</span>
 							</div>
-							<div className="glass-card rounded-2xl rounded-bl-md px-4 py-3 neon-glow">
+							<div
+								className={`glass-card rounded-2xl rounded-bl-md px-4 py-3 ${msg.id.startsWith("err-") ? "border border-error/30" : "neon-glow"}`}
+							>
 								<p className="text-sm text-on-surface leading-relaxed whitespace-pre-wrap">
 									{msg.text}
 								</p>

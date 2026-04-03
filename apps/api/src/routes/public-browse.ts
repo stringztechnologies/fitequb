@@ -62,7 +62,7 @@ publicBrowse.get("/gyms", async (c) => {
 	const { data, error } = await supabase
 		.from("partner_gyms")
 		.select("*")
-		.eq("active", true)
+		.neq("active", false)
 		.order("name");
 
 	if (error) {
@@ -89,7 +89,10 @@ publicBrowse.get("/challenges", async (c) => {
 		return c.json<ApiResponse<null>>({ data: null, error: error.message }, 500);
 	}
 
-	return c.json<ApiResponse<Challenge[]>>({ data: data as Challenge[], error: null });
+	return c.json<ApiResponse<Challenge[]>>({
+		data: data as Challenge[],
+		error: null,
+	});
 });
 
 // GET /public/challenges/:id/leaderboard — ranked participants (no auth)
@@ -166,23 +169,28 @@ publicBrowse.post("/ai/coach", async (c) => {
 	});
 
 	try {
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), 15_000);
+
 		const res = await fetch(
 			`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
 			{
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
+				signal: controller.signal,
 				body: JSON.stringify({
 					contents,
 					systemInstruction: {
 						parts: [{ text: SYSTEM_PROMPT }],
 					},
 					generationConfig: {
-						maxOutputTokens: 256,
+						maxOutputTokens: 1024,
 						temperature: 0.8,
 					},
 				}),
 			},
 		);
+		clearTimeout(timeout);
 
 		if (!res.ok) {
 			const errText = await res.text();

@@ -83,9 +83,11 @@ export function EqubDetail() {
 	const target = room.is_tsom
 		? (room.tsom_workout_target ?? room.workout_target)
 		: room.workout_target;
-	const pct = room.is_tsom
+	const rawPct = room.is_tsom
 		? (room.tsom_completion_pct ?? room.completion_pct)
 		: room.completion_pct;
+	// Normalize: DB may store as 0.8 or 80 — ensure 0-1 range
+	const pct = rawPct > 1 ? rawPct / 100 : rawPct;
 	const payout = room.stake_amount * room.max_members;
 	const progressPct = Math.min(100, (daysElapsed / room.duration_days) * 100);
 

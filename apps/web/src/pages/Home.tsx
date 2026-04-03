@@ -63,7 +63,11 @@ export function Home() {
 
 	if (loading) return <Loading />;
 
-	const potentialPayout = rooms.reduce((sum, r) => sum + r.stake_amount * r.max_members, 0);
+	// Guests see room count; authenticated users see their payout
+	const potentialPayout = isGuest
+		? 0
+		: rooms.reduce((sum, r) => sum + r.stake_amount * r.max_members, 0);
+	const roomCount = rooms.length;
 
 	const progressPct = profile?.next_level
 		? Math.min(
@@ -137,7 +141,7 @@ export function Home() {
 			<div className="mx-5 mt-4 bg-surface-container-low rounded-lg p-6 text-center">
 				{/* Payout label */}
 				<p className="font-label text-2xs uppercase tracking-[0.2em] text-on-surface-variant mb-4">
-					Your Progress
+					{isGuest ? "Explore" : "Your Progress"}
 				</p>
 
 				{/* SVG Ring */}
@@ -160,22 +164,40 @@ export function Home() {
 								className="stroke-primary"
 								strokeWidth="8"
 								strokeLinecap="round"
-								strokeDasharray={`${(progressPct / 100) * circ} ${circ}`}
+								strokeDasharray={`${(isGuest ? 75 : progressPct / 100) * circ} ${circ}`}
 							/>
 						</svg>
 
 						{/* Center text */}
 						<div className="absolute inset-0 flex flex-col items-center justify-center">
-							<span className="font-headline text-4xl font-extrabold text-white">
-								{potentialPayout.toLocaleString()}
-								<span className="font-label text-sm text-primary font-bold ml-1">ETB</span>
-							</span>
-							<span className="font-label text-xs text-secondary-container mt-1">
-								Potential Payout
-							</span>
-							<span className="font-label text-2xs text-on-surface-variant mt-1.5">
-								{daysTotal > 0 ? `${daysCompleted}/${daysTotal} days completed` : "No active equbs"}
-							</span>
+							{isGuest ? (
+								<>
+									<span className="font-headline text-4xl font-extrabold text-white">
+										{roomCount}
+									</span>
+									<span className="font-label text-xs text-secondary-container mt-1">
+										Rooms Available
+									</span>
+									<span className="font-label text-2xs text-on-surface-variant mt-1.5">
+										Browse and join via sign-in
+									</span>
+								</>
+							) : (
+								<>
+									<span className="font-headline text-4xl font-extrabold text-white">
+										{potentialPayout.toLocaleString()}
+										<span className="font-label text-sm text-primary font-bold ml-1">ETB</span>
+									</span>
+									<span className="font-label text-xs text-secondary-container mt-1">
+										Potential Payout
+									</span>
+									<span className="font-label text-2xs text-on-surface-variant mt-1.5">
+										{daysTotal > 0
+											? `${daysCompleted}/${daysTotal} days completed`
+											: "No active equbs"}
+									</span>
+								</>
+							)}
 						</div>
 					</div>
 				</div>
@@ -232,14 +254,26 @@ export function Home() {
 				<FeatureCard
 					title="Equb Rooms"
 					subtitle={
-						rooms.length > 0
-							? `You're in ${rooms.length} room${rooms.length > 1 ? "s" : ""}`
-							: "Join or create an Equb"
+						isGuest
+							? roomCount > 0
+								? `${roomCount} room${roomCount > 1 ? "s" : ""} available`
+								: "Fitness accountability groups"
+							: rooms.length > 0
+								? `You're in ${rooms.length} room${rooms.length > 1 ? "s" : ""}`
+								: "Join or create an Equb"
 					}
-					badgeText={rooms.length > 0 ? `${rooms.length} Joined` : "Browse Rooms"}
-					badgeGreen={rooms.length > 0}
+					badgeText={
+						isGuest
+							? roomCount > 0
+								? `${roomCount} Available`
+								: "Browse Rooms"
+							: rooms.length > 0
+								? `${rooms.length} Joined`
+								: "Browse Rooms"
+					}
+					badgeGreen={isGuest ? roomCount > 0 : rooms.length > 0}
 					icon="groups"
-					progress={rooms.length > 0 ? Math.min(100, rooms.length * 10) : 0}
+					progress={isGuest ? 0 : rooms.length > 0 ? Math.min(100, rooms.length * 10) : 0}
 					onClick={() => navigate("/equbs")}
 				/>
 				<FeatureCard
