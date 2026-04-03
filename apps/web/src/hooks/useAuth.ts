@@ -67,7 +67,13 @@ export function useAuth() {
 			return;
 		}
 
-		// Priority 2: Existing Supabase session
+		// Priority 2: Existing Supabase session (only if client is available)
+		if (!supabase) {
+			// No Supabase client — go straight to guest mode
+			setLoading(false);
+			return;
+		}
+
 		supabase.auth.getSession().then(({ data: { session: s } }) => {
 			if (s) {
 				currentSession = s;
@@ -102,7 +108,7 @@ export function useAuth() {
 	}, []);
 
 	async function signOut() {
-		await supabase.auth.signOut();
+		await supabase?.auth.signOut();
 		currentSession = null;
 		setSession(null);
 		setUser(null);
