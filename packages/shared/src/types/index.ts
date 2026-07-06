@@ -40,15 +40,21 @@ export interface EqubMember {
 
 // ── Equb Ledger ──
 
-export type LedgerEntryType = "stake" | "payout" | "fee" | "refund" | "day_pass_purchase";
+export type LedgerEntryType =
+	| "stake"
+	| "payout"
+	| "fee"
+	| "refund"
+	| "day_pass_purchase"
+	| "sponsor";
 
 export interface EqubLedgerEntry {
 	id: string;
 	room_id: string | null;
-	user_id: string;
+	user_id: string | null;
 	type: LedgerEntryType;
 	amount: number;
-	tx_ref: string;
+	tx_ref: string | null;
 	created_at: string;
 }
 
@@ -90,7 +96,7 @@ export interface Trainer {
 export interface TrainerEarning {
 	id: string;
 	trainer_id: string;
-	equb_id: string;
+	room_id: string | null;
 	user_id: string;
 	amount: number;
 	created_at: string;

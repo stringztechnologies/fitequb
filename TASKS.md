@@ -119,7 +119,7 @@
 - [ ] 1. `count(*) = 0` guards on every rebuild-target table (abort if any row appeared since verification)
 - [ ] 2. Drop ghosts: `points_ledger` (after function rewrite), `gym_settlements`; drop 14 rebuild tables (no CASCADE)
 - [ ] 3. Create 14 tables in code shape + `payment_intents`, `payout_jobs`, `point_events`, `notifications`
-- [ ] 4. Alter populated tables: `equb_rooms` (status → TEXT+CHECK w/ `settled`, drop `funding_type` — rule: room_type=sponsored ⇒ fee 0), `users` (display_name→full_name, telegram_handle→username, + supabase_uid/email); align partner_gyms/challenges/badge_definitions if drifted
+- [ ] 4. Alter populated tables: `equb_rooms` (status → TEXT+CHECK w/ `settled`, drop `funding_type`, normalize completion pct to fraction, preserve full insert column set), `users` (display_name→full_name, telegram_handle→username, + supabase_uid/email); align partner_gyms/challenges/badge_definitions if drifted
 - [ ] 5. Rewrite all 6 live functions + 5 money RPCs to canonical vocabulary (`room_id`/`p_room_id`/`settled`/6 ledger types)
 - [ ] 6. RLS: enable everywhere, drop public-SELECT policies, revoke anon/authenticated table privileges + function EXECUTE (service_role only unless intentionally public)
 - [ ] 7. Drop 6 orphaned v1 enum types
@@ -130,6 +130,8 @@
 - [ ] gamification: single `points_ledger` reference → `point_events`
 - [ ] workouts.ts: call rewritten increment function with `p_room_id`
 - [ ] shared types: `LedgerEntryType` gains `"sponsor"`
+- [ ] public room creation: no client-created `sponsored` rooms or sponsor prizes; duels are free-only for launch and use `completion_pct=0.8`
+- [ ] cron: enqueue both `payout` and `refund`; settlement side effects only when RPC returns `status='settled'`
 - [ ] Follow-up: mount `/api/notifications` route
 
 ### Pre-prod checklist
@@ -137,3 +139,68 @@
 - [ ] Rehearse full migration on Supabase branch/clone; verify tables/RPCs/policies
 - [ ] Fable adversarial review of migration + runbook
 - [ ] Prod apply → verify → deploy API → one live 10 ETB stake (`created → paid → credited`)
+
+## S2 OPS Runbook (cutover) — draft 2026-07-06
+> Migration files: `supabase/migrations/20260705120000_s2_schema_reconciliation.sql` (runs first),
+> then `20260705210000_money_correctness_launch_hardening.sql`. Evidence: `supabase/snapshots/20260706_prod_v1_before.sql`.
+> Gate: this runbook + both migrations must pass Fable adversarial review AND a Supabase branch/clone rehearsal before any prod apply.
+
+### Phase 0 — Freeze
+- [ ] Pause n8n cron triggers (settle, payouts, reminders, daily-reset).
+- [ ] Disable Chapa checkout entry points (or announce a maintenance window). No new payments mid-cutover.
+
+### Phase 1 — Rehearse on a Supabase branch (never prod first)
+- [ ] Create a branch/clone of `ufkkisleoimltqbnexpf` (inherits current v1 state).
+- [ ] Baseline the old unsafe coach migration before applying pending migrations: `supabase migration repair --status applied 20260323 --db-url <branch-db-url>`. Decision: do not replay `20260323_coach_passes.sql`; S2 recreates coach tables and deny-by-default policies.
+- [ ] Apply S2 then the money migration in filename order.
+- [ ] Confirm `supabase migration list --db-url <branch-db-url>` shows `20260323`, `20260705120000`, and `20260705210000` applied.
+- [ ] Verify (see Phase 3 queries) on the branch. Fix, re-run, repeat until clean.
+- [ ] Re-confirm emptiness guard behaviour: seed one row into a rebuild target on the branch → S2 must ABORT.
+- [ ] Paid-duel guard: `POST /api/duels/create` with `stake_amount > 0` returns 400; `stake_amount = 0` creates a free duel, auto-joins the creator, and accept activates it.
+
+### Phase 2 — Pre-apply guards (run read-only against prod, immediately before apply)
+- [ ] `select count(*) from equb_members` … repeat for all 16 rebuild targets → every count MUST be 0.
+      (S2's own guard will abort otherwise, but check first to avoid a failed apply.)
+- [ ] Confirm the money migration is NOT recorded as applied in prod's migration history.
+- [ ] Confirm `20260323` is not recorded; if absent, it will be baselined in Phase 3 before applying S2.
+- [ ] Snapshot/backup prod (Supabase PITR checkpoint or manual dump).
+
+### Phase 3 — Apply + verify (prod)
+- [ ] Baseline `20260323` on prod migration history: `supabase migration repair --status applied 20260323 --linked` (or `--db-url <prod-db-url>`). This is a migration-history repair only; do not replay the old file.
+- [ ] Apply `20260705120000` then `20260705210000`.
+- [ ] Confirm `supabase migration list --linked` (or `--db-url <prod-db-url>`) shows `20260323`, `20260705120000`, and `20260705210000` applied.
+- [ ] Tables exist: `select to_regclass('public.payment_intents'), to_regclass('public.payout_jobs'), to_regclass('public.point_events'), to_regclass('public.notifications');` → all non-null.
+- [ ] v2 columns: `select column_name from information_schema.columns where table_name='equb_ledger';` → room_id/type/tx_ref present, equb_id/entry_type/external_ref ABSENT.
+- [ ] Room defaults: `equb_rooms.completion_pct` default is `0.8` and NOT NULL; `house_fee_pct` default is `5` and NOT NULL.
+- [ ] Functions: `select proname, pg_get_function_identity_arguments(oid) from pg_proc where pronamespace='public'::regnamespace and proname in ('settle_equb','process_trainer_commissions','increment_completed_days','award_points','grant_badge','increment_points','apply_stake_payment','activate_day_pass_payment','activate_coach_pass_payment','claim_trainer_payout','refund_trainer_payout');` → settle_equb/etc. show `p_room_id`; all 11 present.
+- [ ] Function privileges: every public function has `has_function_privilege('anon', oid, 'EXECUTE') = false` and `has_function_privilege('authenticated', oid, 'EXECUTE') = false`; service_role has EXECUTE where needed.
+- [ ] Indexes: the 5 named unique indexes exist exactly once (no duplicates).
+- [ ] RLS: `select tablename from pg_tables t where schemaname='public' and not rowsecurity;` → empty. `select count(*) from pg_policies where schemaname='public' and 'anon'=any(roles);` → 0.
+- [ ] RLS grants belt check: `select grantee, table_name, privilege_type from information_schema.role_table_grants where table_schema='public' and grantee in ('anon','authenticated');` → empty or explicitly accepted RLS-denied grants only.
+- [ ] Enums gone: `select typname from pg_type where typname in ('equb_status','equb_funding','ledger_type','member_status','verification_status','workout_source');` → empty.
+- [ ] Preserved data intact: `select count(*) from equb_rooms` → 5; partner_gyms 3; challenges 3; badge_definitions 18.
+
+### Phase 4 — Deploy code
+- [ ] Merge/deploy the branch (money hardening + S2 companion fixes) via Coolify.
+- [ ] Confirm prod env: NODE_ENV=production, CRON_SECRET, CHAPA_WEBHOOK_SECRET, CHAPA_SECRET_KEY, QR_SECRET, ADMIN_TELEGRAM_ID, ALLOW_QA_AUTH unset/false.
+
+### Phase 5 — Live-fire (10 ETB)
+- [ ] Real stake join → pay 10 ETB via Chapa. Watch: `select status from payment_intents order by created_at desc limit 1;` transitions created → paid → credited.
+- [ ] Exactly 1 equb_members row, 1 equb_ledger stake row for that tx_ref.
+- [ ] Repeat once for a day pass (activated, amount recorded, expiry from activation).
+- [ ] Trigger one `/cron/settle` on a mixed-result test room → payout + fee ledger rows once; `/cron/payouts` → job sent once, single Chapa transfer.
+- [ ] Trigger one zero-winner settlement rehearsal → every paid member gets a `refund` ledger row and `payout_jobs` row; no fee row.
+- [ ] Re-run `/cron/settle` for the same settled room → no new points, trainer earnings, notifications, payout/refund rows, or jobs.
+- [ ] Conservation invariant for every settled rehearsal room: `sum(payout)+sum(refund)+sum(fee)` equals paid stakes plus backed sponsor ledger money, allowing only documented rounding residue.
+
+### Phase 6 — Unfreeze + watch
+- [ ] Re-enable Chapa checkout + n8n crons.
+- [ ] First 48h: daily runbook queries — mismatch intents (`select * from payment_intents where status='mismatch'`), stuck jobs (`select * from payout_jobs where status='processing'`), failed jobs. Sentry watch.
+- [ ] Daily pending-paid-room audit:
+      `select r.id, r.name, r.start_date, count(l.id) as stake_rows, coalesce(sum(l.amount),0) as stake_total from equb_rooms r join equb_ledger l on l.room_id=r.id and l.type='stake' where r.status='pending' and r.start_date < now() group by r.id, r.name, r.start_date;`
+      Expected: 0 rows. If any appear, freeze that room and manually insert one deterministic `refund` ledger row per paid member (`tx_ref='manual-refund-' || room_id || '-' || user_id`), mark the room `cancelled`, then run `/cron/payouts` so the global payout-job mirror creates and sends the refund jobs exactly once.
+
+### Rollback strategy
+- Failure DURING migration: both migrations are wrapped/idempotent; S2 runs in a single transaction (aborts atomically). Re-run after fixing, or restore the Phase-2 snapshot.
+- Failure AFTER deploy, BEFORE live money: revert the code deploy (redeploy prior SHA). DB is empty of money data — restoring the Phase-2 snapshot returns to v1 cleanly. Because the money domain is virgin (0 rows), rollback loses nothing but the 5 seed rooms (covered by snapshot).
+- Failure AFTER real payments exist: do NOT auto-rollback the DB (would drop real ledger rows). Freeze, reconcile via Chapa verify, decide per-transaction. This is why live-fire is a single 10 ETB test before unfreeze.

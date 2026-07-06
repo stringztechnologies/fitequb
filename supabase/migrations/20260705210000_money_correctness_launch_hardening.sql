@@ -1,6 +1,16 @@
 -- Money-correctness launch hardening.
 -- Supabase CLI is not installed in this local environment, so this migration
 -- was created manually instead of via `supabase migration new`.
+--
+-- DEPENDENCY: this migration MUST run AFTER 20260705120000_s2_schema_reconciliation.sql,
+-- which reconciles the core schema to the v2 vocabulary (room_id / type / tx_ref /
+-- completed_days) that the RPCs below assume. S2 already creates equb_ledger,
+-- equb_members, day_passes, coach_passes, trainer_payouts in v2 shape and creates
+-- the same-named unique indexes used below, so every `CREATE ... IF NOT EXISTS` /
+-- `ADD COLUMN IF NOT EXISTS` here composes as a harmless no-op. This migration
+-- retains sole ownership of payment_intents, payout_jobs, and the five money RPCs
+-- (apply_stake_payment, activate_day_pass_payment, activate_coach_pass_payment,
+-- claim_trainer_payout, refund_trainer_payout). Never apply it standalone.
 
 CREATE TABLE IF NOT EXISTS public.payment_intents (
   tx_ref TEXT PRIMARY KEY,
@@ -73,6 +83,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_coach_passes_payment_tx_ref_unique
 CREATE OR REPLACE FUNCTION public.set_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
+SET search_path = public
 AS $$
 BEGIN
   NEW.updated_at = now();
@@ -96,6 +107,9 @@ ALTER TABLE public.payment_intents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payout_jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.coach_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.coach_passes ENABLE ROW LEVEL SECURITY;
+
+REVOKE ALL ON TABLE public.payment_intents FROM anon, authenticated;
+REVOKE ALL ON TABLE public.payout_jobs FROM anon, authenticated;
 
 DROP POLICY IF EXISTS "payment_intents service role full access" ON public.payment_intents;
 CREATE POLICY "payment_intents service role full access"
@@ -121,21 +135,16 @@ DROP POLICY IF EXISTS "Trainers manage own sessions" ON public.coach_sessions;
 DROP POLICY IF EXISTS "Users view own passes" ON public.coach_passes;
 DROP POLICY IF EXISTS "Service role full access sessions" ON public.coach_sessions;
 DROP POLICY IF EXISTS "Service role full access passes" ON public.coach_passes;
+DROP POLICY IF EXISTS "coach_sessions service role full access" ON public.coach_sessions;
+DROP POLICY IF EXISTS "coach_passes service role full access" ON public.coach_passes;
 
 REVOKE ALL ON TABLE public.coach_sessions FROM anon, authenticated;
 REVOKE ALL ON TABLE public.coach_passes FROM anon, authenticated;
-REVOKE ALL ON FUNCTION public.increment_trainer_balance(UUID, NUMERIC) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.increment_trainer_balance(UUID, NUMERIC) FROM PUBLIC, anon, authenticated;
 
-GRANT SELECT ON TABLE public.coach_sessions TO anon, authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.coach_sessions TO service_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.coach_passes TO service_role;
 GRANT EXECUTE ON FUNCTION public.increment_trainer_balance(UUID, NUMERIC) TO service_role;
-
-CREATE POLICY "coach_sessions public can read active"
-  ON public.coach_sessions
-  FOR SELECT
-  TO anon, authenticated
-  USING (active = true);
 
 CREATE POLICY "coach_sessions service role full access"
   ON public.coach_sessions
@@ -500,28 +509,34 @@ BEGIN
   ) THEN
     EXECUTE $sql$
       INSERT INTO public.payout_jobs (ledger_id, user_id, amount, reference, status)
-      SELECT id, user_id, amount, 'payout-' || id::text, 'pending'
-        FROM public.equb_ledger
-       WHERE type = 'payout'
-         AND paid_at IS NULL
-      ON CONFLICT (ledger_id) DO NOTHING
-    $sql$;
-  ELSE
-    INSERT INTO public.payout_jobs (ledger_id, user_id, amount, reference, status)
-    SELECT id, user_id, amount, 'payout-' || id::text, 'pending'
-      FROM public.equb_ledger
-     WHERE type = 'payout'
-    ON CONFLICT (ledger_id) DO NOTHING;
-  END IF;
+	      SELECT id, user_id, amount, 'payout-' || id::text, 'pending'
+	        FROM public.equb_ledger
+	       WHERE type IN ('payout', 'refund')
+	         AND user_id IS NOT NULL
+	         AND amount > 0
+	         AND paid_at IS NULL
+	      ON CONFLICT (ledger_id) DO NOTHING
+	    $sql$;
+	  ELSE
+	    INSERT INTO public.payout_jobs (ledger_id, user_id, amount, reference, status)
+	    SELECT id, user_id, amount, 'payout-' || id::text, 'pending'
+	      FROM public.equb_ledger
+	     WHERE type IN ('payout', 'refund')
+	       AND user_id IS NOT NULL
+	       AND amount > 0
+	    ON CONFLICT (ledger_id) DO NOTHING;
+	  END IF;
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.apply_stake_payment(TEXT, NUMERIC) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.activate_day_pass_payment(TEXT, NUMERIC) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.activate_coach_pass_payment(TEXT, NUMERIC) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.claim_trainer_payout(UUID) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.refund_trainer_payout(UUID, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.set_updated_at() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.apply_stake_payment(TEXT, NUMERIC) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.activate_day_pass_payment(TEXT, NUMERIC) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.activate_coach_pass_payment(TEXT, NUMERIC) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.claim_trainer_payout(UUID) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.refund_trainer_payout(UUID, TEXT) FROM PUBLIC, anon, authenticated;
 
+GRANT EXECUTE ON FUNCTION public.set_updated_at() TO service_role;
 GRANT EXECUTE ON FUNCTION public.apply_stake_payment(TEXT, NUMERIC) TO service_role;
 GRANT EXECUTE ON FUNCTION public.activate_day_pass_payment(TEXT, NUMERIC) TO service_role;
 GRANT EXECUTE ON FUNCTION public.activate_coach_pass_payment(TEXT, NUMERIC) TO service_role;

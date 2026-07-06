@@ -29,8 +29,7 @@ const createRoomSchema = z.object({
 	min_members: z.number().min(EQUB_MIN_MEMBERS).max(EQUB_MAX_MEMBERS).default(EQUB_MIN_MEMBERS),
 	max_members: z.number().min(EQUB_MIN_MEMBERS).max(EQUB_MAX_MEMBERS).default(EQUB_MAX_MEMBERS),
 	start_date: z.string().datetime(),
-	sponsor_prize: z.number().min(0).default(0),
-	room_type: z.enum(["public", "private", "sponsored"]).default("public"),
+	room_type: z.enum(["public", "private"]).default("public"),
 	is_tsom: z.boolean().default(false),
 });
 
@@ -60,6 +59,7 @@ equbRooms.post("/", async (c) => {
 			...parsed.data,
 			creator_id: userId,
 			status: "pending",
+			sponsor_prize: 0,
 			end_date: new Date(
 				new Date(parsed.data.start_date).getTime() +
 					parsed.data.duration_days * 24 * 60 * 60 * 1000,
@@ -346,7 +346,7 @@ equbRooms.get("/my-results", async (c) => {
 		.from("equb_rooms")
 		.select("id, name, status, total_pot, settled_at")
 		.in("id", roomIds)
-		.in("status", ["completed", "settling"]);
+		.in("status", ["settled", "settling"]);
 
 	if (!settledRooms || settledRooms.length === 0) {
 		return c.json({ data: [], error: null });

@@ -12,19 +12,22 @@ Traditional Ethiopian rotating savings group. Members contribute a fixed amount 
 4. **Running** (`active`) — daily workout logging for duration (default 30 days)
 5. **Settling** (`settling`) — end_date reached, `settle_equb()` runs
 6. **Settled** (`settled`) — payouts distributed, room archived
-7. **Cancelled** (`cancelled`) — min_members not reached by start_date, stakes refunded
+7. **Cancelled** (`cancelled`) — min_members not reached by start_date, stakes refunded. Launch note: automated cancellation is not built yet; ops must audit pending rooms with stake rows and manually refund via `refund` ledger rows before running payouts.
 
 ### Settlement Math
 ```
-total_pot = sum of all member stakes + sponsor_prize (if any)
-house_fee = total_pot * 0.05 (peer-funded only, 0 for sponsored)
+backed_sponsor_money = sum of sponsor ledger rows actually received
+total_pot = sum of all member stakes + backed_sponsor_money
+house_fee = house_fee_pct% * loser_stakes (peer-funded rooms only; 0 for sponsored)
 distributable = total_pot - house_fee
 qualified = members where completed_days >= workout_target * completion_pct
 payout_per_winner = distributable / count(qualified)
 ```
 
-If everyone qualifies: each gets `stake - (stake * 0.05)` back.
-If nobody qualifies: house takes all (edge case — unlikely).
+`completion_pct` is stored as a fraction: `0.8` means 80%.
+
+If everyone qualifies: no loser stakes exist, so house fee is 0; members receive their stake back plus any backed sponsor contribution split across winners.
+If nobody qualifies: all members are refunded their paid stake; no house fee is taken.
 
 ### Workout Verification Priority
 1. QR gym check-in (scans partner gym QR code)
@@ -62,7 +65,7 @@ Step Challenge (free) → User sees Equb rooms → Joins paid Equb → Buys gym 
 - Ledger is append-only — never modify or delete entries
 - Every money movement = ledger entry (stake, payout, fee, refund, day_pass_purchase)
 - Payouts via Chapa Transfer API to mobile wallets
-- 5% house fee on peer Equbs, 0% on sponsored
+- House fee on peer Equbs is charged only on loser stakes (`house_fee_pct`, default 5%); 0% on sponsored rooms
 
 ## Target Market
 - Young professionals 20-35 in Addis Ababa
@@ -94,7 +97,8 @@ Step Challenge (free) → User sees Equb rooms → Joins paid Equb → Buys gym 
 - **Mismatch** — a *verified, successful* payment that could not be applied (room full, amount below expected, target not pending). Money is held; a human must refund. Never silently dropped.
 - **Failed (intent)** — the provider says the charge itself did not succeed. No money moved; no refund owed.
 - **Payout** — an `equb_ledger` row of type `payout`: an obligation to pay a winner. Distinct from the *transfer* that fulfils it.
-- **Payout Job** — execution state machine for one payout obligation: `pending → processing → sent → confirmed`, or `failed` (retryable). Exactly one job per payout ledger row; its **reference** (`payout-<ledger_id>`) is deterministic so Chapa can deduplicate retries.
+- **Refund** — an `equb_ledger` row of type `refund`: an obligation to return paid stake, currently used when a room settles with no qualified winners.
+- **Payout Job** — execution state machine for one payout/refund obligation: `pending → processing → sent → confirmed`, or `failed` (retryable). Exactly one job per payable ledger row; its **reference** (`payout-<ledger_id>`) is deterministic so Chapa can deduplicate retries.
 - **Transfer** — a Chapa money movement to a wallet. Chapa "success" means *queued*, not delivered.
 - **Settlement** — one-time closing of an expired room: compute qualified members, house fee, write payout ledger rows. Settling a room twice is forbidden.
 - **Trainer payout claim** — atomically deduct the trainer's pending balance and record the obligation *before* the transfer. Definite failure refunds the claim; ambiguous outcome stays claimed for manual review.
@@ -102,6 +106,9 @@ Step Challenge (free) → User sees Equb rooms → Joins paid Equb → Buys gym 
 - **Room (FK naming rule)** — the canonical foreign-key column for "the equb room this row belongs to" is `room_id` in **all** tables and `p_room_id` in **all** SQL function parameters. No exceptions, no synonyms: `equb_id` and `equb_room_id` are retired v1 names and must not appear in new DDL, code, or functions (decided 2026-07-06 alongside ADR-0002).
 - **Room terminal status** — a room that finished settlement is `settled` (lifecycle: `pending → active → settling → settled`, or `cancelled`). `completed` is **member/session** vocabulary (completed days, completed coach sessions), never room vocabulary. The v1 enum value `completed` is retired.
 - **Ledger entry types** — exactly six: `stake`, `payout`, `fee`, `refund`, `day_pass_purchase`, `sponsor`. Retired v1 names: `stake_in → stake`, `house_fee → fee`, `sponsor_in → sponsor`.
+- **Completion percentage unit** — `completion_pct` and `tsom_completion_pct` are fractions, never percentages: `0.8` means 80%.
+- **Sponsor money** — `equb_rooms.sponsor_prize` is display/config only. Settlement only counts money backed by actual `equb_ledger.type='sponsor'` rows; public room creation cannot create sponsored rooms or sponsor money.
+- **Duels launch scope** — duels are free-only until there is a creator-stake checkout flow. Paid opponent-only duels strand funds because a room with one paid member never activates or settles.
 - **State/type fields are TEXT + CHECK** — schema vocabulary lives in `TEXT` columns with `CHECK` constraints, never Postgres `ENUM` types. The v1 enum types (`equb_status`, `equb_funding`, `ledger_type`, `member_status`, `workout_source`, `verification_status`) are retired and dropped once no column references them.
 
 ## ADR-0001 — Payment intents + DB-side crediting; payout jobs for money out (2026-07-06, accepted; prod migration pending)
@@ -113,7 +120,7 @@ Step Challenge (free) → User sees Equb rooms → Joins paid Equb → Buys gym 
 ## ADR-0002 — Rebuild empty v1 tables to v2 shape instead of renaming in place (2026-07-06, accepted)
 **Context.** Production project `ufkkisleoimltqbnexpf` was verified live (read-only, 2026-07-06) to hold the original v1 schema: `equb_ledger(equb_id, entry_type, external_ref, paid_at)`, `equb_members(equb_id, payment_ref, paid_at, workouts_done, progress_pct, payout_ref, payout_at, …)`, `workout_buddies(equb_id, user_a, user_b)`. All committed code (including `origin/main`, which Coolify deploys) speaks the v2 vocabulary (`room_id`, `type`, `tx_ref`, `completed_days`) — a half-finished in-code rename that never produced a DDL migration. Consequence: the deployed app has never successfully executed an equb operation against this database. Live data confirms it: `equb_members`, `equb_ledger`, `workout_buddies`, `workouts`, `day_passes`, and `public.users` all hold **0 rows**; only `equb_rooms` has data (5 rows). No public table holds an inbound FK into the three drifted tables; their only FKs point outward to `equb_rooms` and `users`.
 **Decision.** The v2 code shape is canonical. Reconciliation (S2) proceeds as **rebuild-empty / alter-populated** across the full public schema (a 2026-07-06 full snapshot — functions, policies, enums, columns, row counts — expanded the scope beyond the original three tables):
-- **Preserve + alter (hold data):** `equb_rooms` (5 rows — status enum→TEXT+CHECK, keep `room_type`, drop `funding_type` with the rule *`room_type='sponsored'` ⇒ sponsor-funded, house fee 0; `public`/`private` ⇒ peer-funded, normal fee*), `partner_gyms` (3), `challenges` (3), `badge_definitions` (18).
+- **Preserve + alter (hold data):** `equb_rooms` (5 rows — status enum→TEXT+CHECK, keep `room_type`, drop `funding_type`; public/private rooms are peer-funded, sponsored rooms require explicit backed sponsor ledger rows and charge no house fee), `partner_gyms` (3), `challenges` (3), `badge_definitions` (18).
 - **Alter to code shape, never drop (auth-coupled, 0 rows):** `users` — live `display_name`/`telegram_handle` → code `full_name`/`username`, add `supabase_uid`/`email`.
 - **Rebuild-empty to code shape (verified 0 rows, no inbound FKs, no `DROP CASCADE`):** `equb_members`, `equb_ledger`, `workout_buddies`, `workouts`, `workout_verifications`, `daily_verification_summary`, `day_passes`, `trainers` (DDL derived from code/shared types, not live — live `pending_payout` drift is wider than one column), `trainer_earnings`, `trainer_payouts`, `coach_sessions`, `coach_passes`, `challenge_participants`, `referrals`.
 - **Create new:** `payment_intents`, `payout_jobs` (ADR-0001), `point_events`, `notifications` (live table absent; product UI and bot logging expect it — `/api/notifications` mounting is a follow-up code task).
@@ -124,4 +131,4 @@ Step Challenge (free) → User sees Equb rooms → Joins paid Equb → Buys gym 
 
 v1-only execution-state columns (`payment_ref`, `payout_ref`, `payout_at`, `paid_at`, `progress_pct`, `status` on members) die with the rebuild — their successors are `payment_intents` and `payout_jobs` (ADR-0001).
 **Alternatives rejected.** *Rename in place*: preserves nothing (tables are empty) while inheriting unknown v1 constraints/defaults and requiring the same function rewrites — all cost, no benefit. *Adapt code back to v1*: would rewrite the entire money-hardening layer, shared types, and most routes to resurrect a shape the codebase already abandoned. *Re-creating live's public-SELECT policies*: serves a client-side PostgREST pattern the app doesn't use and leaks data shapes (e.g. anon-readable trainer phone numbers).
-**Consequences.** S2 produces the version-controlled v2 baseline (S3) as a by-product. A future reader will find `DROP TABLE` statements in a money migration — safe precisely because the emptiness was verified live and is re-asserted with `count(*)` guards at apply time. The 5 `equb_rooms` rows are the only production data in the money domain and must survive the cutover. Companion code fixes ride with S2's deploy: `verify.ts`/`buddies.ts` `equb_room_id`→`room_id`, `equb-rooms.ts` my-results `"completed"`→`"settled"`, the single `points_ledger` reference→`point_events`, `workouts.ts` call updated to `p_room_id`, shared `LedgerEntryType` gains `sponsor`.
+**Consequences.** S2 produces the version-controlled v2 baseline (S3) as a by-product. A future reader will find `DROP TABLE` statements in a money migration — safe precisely because the emptiness was verified live and is re-asserted with `count(*)` guards at apply time. The 5 `equb_rooms` rows are the only production data in the money domain and must survive the cutover. Companion code fixes ride with S2's deploy: `verify.ts`/`buddies.ts` `equb_room_id`→`room_id`, `equb-rooms.ts` my-results `"completed"`→`"settled"`, the single `points_ledger` reference→`point_events`, `workouts.ts` call updated to `p_room_id`, shared `LedgerEntryType` gains `sponsor`, and paid duels are disabled until both creator and opponent stake flows exist.

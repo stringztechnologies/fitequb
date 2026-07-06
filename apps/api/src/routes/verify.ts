@@ -27,7 +27,7 @@ const photoSchema = z.object({
 
 const buddySchema = z.object({
 	buddy_user_id: z.string().uuid(),
-	equb_id: z.string().uuid(),
+	room_id: z.string().uuid(),
 });
 
 const gpsSchema = z.object({
@@ -61,7 +61,11 @@ async function updateDailySummary(
 	userId: string,
 	method: string,
 	points: number,
-): Promise<{ total_points: number; methods_used: string[]; is_day_complete: boolean }> {
+): Promise<{
+	total_points: number;
+	methods_used: string[];
+	is_day_complete: boolean;
+}> {
 	const today = todayStr();
 
 	const { data: existing } = await supabase
@@ -79,10 +83,18 @@ async function updateDailySummary(
 
 		await supabase
 			.from("daily_verification_summary")
-			.update({ total_points: totalPoints, methods_used: methods, is_day_complete: isComplete })
+			.update({
+				total_points: totalPoints,
+				methods_used: methods,
+				is_day_complete: isComplete,
+			})
 			.eq("id", existing.id);
 
-		return { total_points: totalPoints, methods_used: methods, is_day_complete: isComplete };
+		return {
+			total_points: totalPoints,
+			methods_used: methods,
+			is_day_complete: isComplete,
+		};
 	}
 
 	const methods = [method];
@@ -96,12 +108,19 @@ async function updateDailySummary(
 		is_day_complete: isComplete,
 	});
 
-	return { total_points: points, methods_used: methods, is_day_complete: isComplete };
+	return {
+		total_points: points,
+		methods_used: methods,
+		is_day_complete: isComplete,
+	};
 }
 
 async function awardPoints(userId: string, points: number, reason: string) {
 	await supabase.from("point_events").insert({ user_id: userId, points, reason });
-	const { error } = await supabase.rpc("increment_points", { uid: userId, pts: points });
+	const { error } = await supabase.rpc("increment_points", {
+		uid: userId,
+		pts: points,
+	});
 	if (error) {
 		const { data: u } = await supabase
 			.from("users")
@@ -139,7 +158,10 @@ verify.post("/steps", async (c) => {
 	const parsed = stepsSchema.safeParse(await c.req.json());
 	if (!parsed.success)
 		return c.json(
-			{ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" },
+			{
+				data: null,
+				error: parsed.error.issues[0]?.message ?? "Validation error",
+			},
 			400,
 		);
 
@@ -162,7 +184,11 @@ verify.post("/steps", async (c) => {
 	const summary = await updateDailySummary(userId, "steps", points);
 
 	return c.json({
-		data: { points, total_today: summary.total_points, day_complete: summary.is_day_complete },
+		data: {
+			points,
+			total_today: summary.total_points,
+			day_complete: summary.is_day_complete,
+		},
 		error: null,
 	});
 });
@@ -176,7 +202,10 @@ verify.post("/qr", async (c) => {
 	const parsed = qrSchema.safeParse(await c.req.json());
 	if (!parsed.success)
 		return c.json(
-			{ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" },
+			{
+				data: null,
+				error: parsed.error.issues[0]?.message ?? "Validation error",
+			},
 			400,
 		);
 
@@ -212,7 +241,11 @@ verify.post("/qr", async (c) => {
 	const summary = await updateDailySummary(userId, "qr_scan", points);
 
 	return c.json({
-		data: { points, gym_name: matchedGym.name, total_today: summary.total_points },
+		data: {
+			points,
+			gym_name: matchedGym.name,
+			total_today: summary.total_points,
+		},
 		error: null,
 	});
 });
@@ -229,7 +262,10 @@ verify.post("/photo", async (c) => {
 	const parsed = photoSchema.safeParse(await c.req.json());
 	if (!parsed.success)
 		return c.json(
-			{ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" },
+			{
+				data: null,
+				error: parsed.error.issues[0]?.message ?? "Validation error",
+			},
 			400,
 		);
 
@@ -299,7 +335,13 @@ verify.post("/photo", async (c) => {
 			: { total_points: 0, methods_used: [], is_day_complete: false };
 
 		return c.json({
-			data: { points, confidence, reasoning, verified, total_today: summary.total_points },
+			data: {
+				points,
+				confidence,
+				reasoning,
+				verified,
+				total_today: summary.total_points,
+			},
 			error: null,
 		});
 	} catch (err) {
@@ -317,7 +359,10 @@ verify.post("/buddy", async (c) => {
 	const parsed = buddySchema.safeParse(await c.req.json());
 	if (!parsed.success)
 		return c.json(
-			{ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" },
+			{
+				data: null,
+				error: parsed.error.issues[0]?.message ?? "Validation error",
+			},
 			400,
 		);
 
@@ -325,12 +370,12 @@ verify.post("/buddy", async (c) => {
 		return c.json({ data: null, error: "Daily verification limit reached (max 10)" }, 429);
 	}
 
-	const { buddy_user_id, equb_id } = parsed.data;
+	const { buddy_user_id, room_id } = parsed.data;
 
 	const { data: members } = await supabase
 		.from("equb_members")
 		.select("user_id")
-		.eq("equb_room_id", equb_id)
+		.eq("room_id", room_id)
 		.in("user_id", [userId, buddy_user_id]);
 
 	if (!members || members.length < 2) {
@@ -340,7 +385,7 @@ verify.post("/buddy", async (c) => {
 	const { data: existingBuddy } = await supabase
 		.from("workout_buddies")
 		.select("id")
-		.eq("equb_room_id", equb_id)
+		.eq("room_id", room_id)
 		.or(
 			`and(user_id.eq.${userId},buddy_id.eq.${buddy_user_id}),and(user_id.eq.${buddy_user_id},buddy_id.eq.${userId})`,
 		)
@@ -349,7 +394,7 @@ verify.post("/buddy", async (c) => {
 	if (!existingBuddy) {
 		await supabase
 			.from("workout_buddies")
-			.insert({ equb_room_id: equb_id, user_id: userId, buddy_id: buddy_user_id });
+			.insert({ room_id, user_id: userId, buddy_id: buddy_user_id });
 	}
 
 	const points = 25;
@@ -357,7 +402,7 @@ verify.post("/buddy", async (c) => {
 		user_id: buddy_user_id,
 		type: "buddy",
 		points,
-		metadata: { confirmed_by: userId, equb_id },
+		metadata: { confirmed_by: userId, room_id },
 		verified_at: new Date().toISOString(),
 	});
 
@@ -389,7 +434,10 @@ verify.post("/gps", async (c) => {
 	const parsed = gpsSchema.safeParse(await c.req.json());
 	if (!parsed.success)
 		return c.json(
-			{ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" },
+			{
+				data: null,
+				error: parsed.error.issues[0]?.message ?? "Validation error",
+			},
 			400,
 		);
 
@@ -400,7 +448,7 @@ verify.post("/gps", async (c) => {
 	const { lat, lng } = parsed.data;
 	const { data: gyms } = await supabase
 		.from("partner_gyms")
-		.select("id, name, latitude, longitude")
+		.select("id, name, lat, lng")
 		.eq("active", true);
 	if (!gyms?.length) return c.json({ data: null, error: "No partner gyms available" }, 404);
 
@@ -408,8 +456,8 @@ verify.post("/gps", async (c) => {
 	let closestDistance = Number.POSITIVE_INFINITY;
 
 	for (const gym of gyms) {
-		if (gym.latitude == null || gym.longitude == null) continue;
-		const dist = haversineDistance(lat, lng, gym.latitude, gym.longitude);
+		if (gym.lat == null || gym.lng == null) continue;
+		const dist = haversineDistance(lat, lng, gym.lat, gym.lng);
 		if (dist < closestDistance) {
 			closestDistance = dist;
 			closestGym = { id: gym.id, name: gym.name };

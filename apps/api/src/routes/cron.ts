@@ -24,6 +24,11 @@ interface PayoutUser {
 	phone: string | null;
 }
 
+interface SettlementResult {
+	status?: string;
+	[key: string]: unknown;
+}
+
 let equbLedgerHasPaidAtColumn: Promise<boolean> | null = null;
 
 // Verify cron secret to prevent unauthorized access (timing-safe)
@@ -44,11 +49,18 @@ function getPayoutUser(users: unknown): PayoutUser | null {
 	return users as PayoutUser;
 }
 
+function getSettlementStatus(data: unknown): string | null {
+	if (!data || typeof data !== "object") return null;
+	return (data as SettlementResult).status ?? null;
+}
+
 async function enqueuePayoutJobs(roomId?: string) {
 	let query = supabase
 		.from("equb_ledger")
 		.select("id, room_id, user_id, amount")
-		.eq("type", "payout");
+		.in("type", ["payout", "refund"])
+		.not("user_id", "is", null)
+		.gt("amount", 0);
 
 	const hasPaidAtColumn = await hasLegacyPaidAtColumn();
 	if (hasPaidAtColumn) {
@@ -76,7 +88,10 @@ async function enqueuePayoutJobs(roomId?: string) {
 		.from("payout_jobs")
 		.upsert(jobs, { onConflict: "ledger_id", ignoreDuplicates: true });
 
-	return { enqueued: upsertError ? 0 : jobs.length, error: upsertError?.message ?? null };
+	return {
+		enqueued: upsertError ? 0 : jobs.length,
+		error: upsertError?.message ?? null,
+	};
 }
 
 async function hasLegacyPaidAtColumn() {
@@ -127,10 +142,11 @@ cron.post("/settle", async (c) => {
 
 	for (const room of expiredRooms) {
 		const { data, error } = await supabase.rpc("settle_equb", {
-			room_id_input: room.id,
+			p_room_id: room.id,
 		});
+		const settlementStatus = getSettlementStatus(data);
 
-		if (!error) {
+		if (!error && settlementStatus === "settled") {
 			// Award points to qualified members
 			const { data: members } = await supabase
 				.from("equb_members")
@@ -168,7 +184,7 @@ cron.post("/settle", async (c) => {
 
 			// Process trainer commissions from house fee
 			await supabase.rpc("process_trainer_commissions", {
-				p_equb_id: room.id,
+				p_room_id: room.id,
 			});
 
 			// Send Telegram notifications to all members about settlement results
@@ -191,7 +207,7 @@ cron.post("/settle", async (c) => {
 		results.push({
 			room_id: room.id,
 			name: room.name,
-			success: !error,
+			success: !error && settlementStatus === "settled",
 			result: error ? error.message : data,
 		});
 	}

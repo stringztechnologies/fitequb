@@ -2,7 +2,6 @@ import { randomBytes } from "node:crypto";
 import type { ApiResponse } from "@fitequb/shared";
 import { Hono } from "hono";
 import { z } from "zod";
-import { createPaymentIntent, markPaymentIntentFailed } from "../lib/payment-intents.js";
 import { resolveUserId } from "../lib/resolve-user.js";
 import { supabase } from "../lib/supabase.js";
 import { rateLimit } from "../middleware/rate-limit.js";
@@ -14,7 +13,7 @@ duels.use("/create", rateLimit(5, 60 * 1000));
 
 const createDuelSchema = z.object({
 	opponent_username: z.string().min(1).max(50),
-	stake_amount: z.number().min(0).max(5000),
+	stake_amount: z.literal(0).default(0),
 	duration_days: z.number().min(3).max(30).default(7),
 	daily_target: z.number().min(1000).max(50000).default(10000),
 });
@@ -52,16 +51,16 @@ duels.post("/create", async (c) => {
 			description: `1v1 duel — ${daily_target.toLocaleString()} steps/day for ${duration_days} days`,
 			stake_amount,
 			room_type: "private",
-			tier: stake_amount <= 500 ? "starter" : stake_amount <= 2000 ? "regular" : "elite",
+			tier: "starter",
 			max_members: 2,
 			min_members: 2,
 			workout_target: duration_days,
 			daily_verification_threshold: daily_target,
-			completion_pct: 80,
+			completion_pct: 0.8,
 			start_date: startDate.toISOString(),
 			end_date: endDate.toISOString(),
 			status: "pending",
-			created_by: userId,
+			creator_id: userId,
 			invite_code: inviteCode,
 		})
 		.select()
@@ -71,14 +70,11 @@ duels.post("/create", async (c) => {
 		return c.json<ApiResponse<null>>({ data: null, error: error.message }, 500);
 	}
 
-	// Auto-join the creator (free or triggers payment later on accept)
-	if (stake_amount === 0) {
-		await supabase.from("equb_members").insert({
-			room_id: room.id,
-			user_id: userId,
-			completed_days: 0,
-		});
-	}
+	await supabase.from("equb_members").insert({
+		room_id: room.id,
+		user_id: userId,
+		completed_days: 0,
+	});
 
 	const miniAppUrl = process.env.TELEGRAM_MINI_APP_URL ?? "";
 	const inviteLink = `${miniAppUrl}/equbs/${room.id}?invite=${inviteCode}`;
@@ -100,7 +96,6 @@ duels.post("/create", async (c) => {
 // POST /duels/:id/accept — opponent accepts the duel
 duels.post("/:id/accept", async (c) => {
 	const duelId = c.req.param("id");
-	const telegramUser = c.get("telegramUser");
 
 	const userId = await resolveUserId(c);
 	if (!userId) {
@@ -127,7 +122,7 @@ duels.post("/:id/accept", async (c) => {
 	}
 
 	// Check not the creator
-	if (room.created_by === userId) {
+	if (room.creator_id === userId) {
 		return c.json<ApiResponse<null>>({ data: null, error: "Cannot accept your own duel" }, 400);
 	}
 
@@ -143,66 +138,22 @@ duels.post("/:id/accept", async (c) => {
 		return c.json<ApiResponse<null>>({ data: null, error: "Already joined this duel" }, 400);
 	}
 
-	// For free duels, join directly
-	if (room.stake_amount === 0) {
-		await supabase.from("equb_members").insert({
-			room_id: duelId,
-			user_id: userId,
-			completed_days: 0,
-		});
-
-		// Activate the duel (both members in)
-		await supabase.from("equb_rooms").update({ status: "active" }).eq("id", duelId);
-
-		return c.json({
-			data: { duel_id: duelId, status: "active", checkout_url: null },
-			error: null,
-		});
-	}
-
-	// For paid duels, initialize Chapa payment
-	const { initializePayment } = await import("../lib/chapa.js");
-	let txRef: string;
-	try {
-		txRef = await createPaymentIntent({
-			kind: "duel",
-			targetId: duelId,
-			userId,
-			expectedAmount: room.stake_amount,
-			metadata: { duel: true },
-		});
-	} catch (error) {
+	if (room.stake_amount !== 0) {
 		return c.json<ApiResponse<null>>(
-			{
-				data: null,
-				error: error instanceof Error ? error.message : "Payment intent creation failed",
-			},
-			500,
+			{ data: null, error: "Paid duels are disabled for launch" },
+			400,
 		);
 	}
 
-	const chapaRes = await initializePayment({
-		amount: room.stake_amount,
-		currency: "ETB",
-		tx_ref: txRef,
-		callback_url: `${process.env.API_URL}/webhooks/chapa`,
-		return_url: `${process.env.TELEGRAM_MINI_APP_URL}/equbs/${duelId}`,
-		first_name: telegramUser.first_name,
-		last_name: telegramUser.last_name,
-		phone_number: undefined,
+	await supabase.from("equb_members").insert({
+		room_id: duelId,
+		user_id: userId,
+		completed_days: 0,
 	});
 
-	if (chapaRes.status !== "success") {
-		await markPaymentIntentFailed(txRef, "chapa_initialize_failed");
-		return c.json<ApiResponse<null>>({ data: null, error: "Payment initialization failed" }, 500);
-	}
-
+	await supabase.from("equb_rooms").update({ status: "active" }).eq("id", duelId);
 	return c.json({
-		data: {
-			duel_id: duelId,
-			checkout_url: chapaRes.data.checkout_url,
-			tx_ref: txRef,
-		},
+		data: { duel_id: duelId, status: "active", checkout_url: null },
 		error: null,
 	});
 });
@@ -238,7 +189,7 @@ duels.get("/mine", async (c) => {
 	const { data: createdDuels } = await supabase
 		.from("equb_rooms")
 		.select("*")
-		.eq("created_by", userId)
+		.eq("creator_id", userId)
 		.eq("room_type", "private")
 		.eq("max_members", 2)
 		.eq("status", "pending")
