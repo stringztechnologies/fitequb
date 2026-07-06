@@ -110,3 +110,30 @@
 
 ### UX Audit Fixes
 - [x] Critical UX fixes across all pages from UX audit
+
+## S2: Schema Reconciliation Cutover (agreed 2026-07-06 — see ADR-0001/0002 in KNOWLEDGE.md)
+> Status: spec approved via grilling session; migration NOT yet authored. Prod `ufkkisleoimltqbnexpf` verified v1 + virgin (only seed data: 5 rooms, 3 gyms, 3 challenges, 18 badge defs).
+> Gates: draft migration + runbook → Fable adversarial review → test on Supabase branch/clone → only then prod apply → deploy code → live-fire stake.
+
+### S2 migration (one file, ordered; authored by Opus, reviewed by Fable)
+- [ ] 1. `count(*) = 0` guards on every rebuild-target table (abort if any row appeared since verification)
+- [ ] 2. Drop ghosts: `points_ledger` (after function rewrite), `gym_settlements`; drop 14 rebuild tables (no CASCADE)
+- [ ] 3. Create 14 tables in code shape + `payment_intents`, `payout_jobs`, `point_events`, `notifications`
+- [ ] 4. Alter populated tables: `equb_rooms` (status → TEXT+CHECK w/ `settled`, drop `funding_type` — rule: room_type=sponsored ⇒ fee 0), `users` (display_name→full_name, telegram_handle→username, + supabase_uid/email); align partner_gyms/challenges/badge_definitions if drifted
+- [ ] 5. Rewrite all 6 live functions + 5 money RPCs to canonical vocabulary (`room_id`/`p_room_id`/`settled`/6 ledger types)
+- [ ] 6. RLS: enable everywhere, drop public-SELECT policies, revoke anon/authenticated table privileges + function EXECUTE (service_role only unless intentionally public)
+- [ ] 7. Drop 6 orphaned v1 enum types
+
+### S2 companion code commit (same deploy)
+- [ ] verify.ts + buddies.ts: `equb_room_id` → `room_id`
+- [ ] equb-rooms.ts my-results: `"completed"` → `"settled"`
+- [ ] gamification: single `points_ledger` reference → `point_events`
+- [ ] workouts.ts: call rewritten increment function with `p_room_id`
+- [ ] shared types: `LedgerEntryType` gains `"sponsor"`
+- [ ] Follow-up: mount `/api/notifications` route
+
+### Pre-prod checklist
+- [ ] Commit live schema snapshot ("before" artifact) alongside S2
+- [ ] Rehearse full migration on Supabase branch/clone; verify tables/RPCs/policies
+- [ ] Fable adversarial review of migration + runbook
+- [ ] Prod apply → verify → deploy API → one live 10 ETB stake (`created → paid → credited`)
