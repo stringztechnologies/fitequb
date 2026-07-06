@@ -37,7 +37,7 @@ export function SyncFitness() {
             className="relative w-24 h-24 bg-primary-container rounded-full flex items-center justify-center"
             style={{ filter: "drop-shadow(0 0 15px rgba(63,229,108,0.4))" }}
           >
-            <span className="material-symbols-rounded text-5xl text-surface">
+            <span className="material-symbols-outlined text-5xl text-surface">
               sync
             </span>
           </div>
@@ -57,7 +57,7 @@ export function SyncFitness() {
         {/* Last synced card */}
         <div className="w-full bg-surface-container-low rounded-lg p-4 flex items-center justify-between border border-outline-variant/10 mb-6">
           <div className="flex items-center gap-3">
-            <span className="material-symbols-rounded text-on-surface-variant text-xl">
+            <span className="material-symbols-outlined text-on-surface-variant text-xl">
               schedule
             </span>
             <div>
@@ -72,7 +72,7 @@ export function SyncFitness() {
             className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container transition-colors"
             aria-label="Refresh sync"
           >
-            <span className="material-symbols-rounded text-on-surface-variant text-xl">
+            <span className="material-symbols-outlined text-on-surface-variant text-xl">
               refresh
             </span>
           </button>
@@ -132,7 +132,7 @@ function ProviderCard({
       <div className="flex items-center gap-4">
         <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center">
           <span
-            className={`material-symbols-rounded text-2xl ${iconColor}`}
+            className={`material-symbols-outlined text-2xl ${iconColor}`}
             style={
               iconFilled ? { fontVariationSettings: "'FILL' 1" } : undefined
             }
