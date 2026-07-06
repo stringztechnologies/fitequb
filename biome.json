@@ -34,6 +34,18 @@
 		}
 	},
 	"files": {
-		"ignore": ["node_modules", "dist", ".env*"]
+		"ignore": [
+			"node_modules",
+			"dist",
+			"apps/web/dist",
+			".env*",
+			".claude",
+			".codex",
+			".mcp.json",
+			".stitch",
+			"stitch_fitequb_home_dashboard",
+			"fitequb-design-spec.md",
+			"test-results"
+		]
 	}
 }
