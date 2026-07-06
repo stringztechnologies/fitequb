@@ -1,10 +1,9 @@
-import { createHash } from "node:crypto";
 import { Hono } from "hono";
 import { z } from "zod";
+import { validateQR } from "../lib/qr.js";
 import { supabase } from "../lib/supabase.js";
 import type { AppVariables } from "../types/context.js";
 
-const QR_SECRET = process.env.QR_SECRET ?? "fitequb-qr-secret-v1";
 const MAX_DAILY_ATTEMPTS = 10;
 
 const verify = new Hono<{ Variables: AppVariables }>();
@@ -12,7 +11,10 @@ const verify = new Hono<{ Variables: AppVariables }>();
 // --- Zod Schemas ---
 const stepsSchema = z.object({
 	steps: z.number().int().min(0).max(100000),
-	date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+	date: z
+		.string()
+		.regex(/^\d{4}-\d{2}-\d{2}$/)
+		.optional(),
 });
 
 const qrSchema = z.object({
@@ -36,11 +38,7 @@ const gpsSchema = z.object({
 // --- Helpers ---
 
 async function getUserId(telegramId: number): Promise<string | null> {
-	const { data } = await supabase
-		.from("users")
-		.select("id")
-		.eq("telegram_id", telegramId)
-		.single();
+	const { data } = await supabase.from("users").select("id").eq("telegram_id", telegramId).single();
 	return data?.id ?? null;
 }
 
@@ -105,9 +103,16 @@ async function awardPoints(userId: string, points: number, reason: string) {
 	await supabase.from("point_events").insert({ user_id: userId, points, reason });
 	const { error } = await supabase.rpc("increment_points", { uid: userId, pts: points });
 	if (error) {
-		const { data: u } = await supabase.from("users").select("total_points").eq("id", userId).single();
+		const { data: u } = await supabase
+			.from("users")
+			.select("total_points")
+			.eq("id", userId)
+			.single();
 		if (u) {
-			await supabase.from("users").update({ total_points: (u.total_points ?? 0) + points }).eq("id", userId);
+			await supabase
+				.from("users")
+				.update({ total_points: (u.total_points ?? 0) + points })
+				.eq("id", userId);
 		}
 	}
 }
@@ -117,7 +122,9 @@ function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
 	const toRad = (d: number) => (d * Math.PI) / 180;
 	const dLat = toRad(lat2 - lat1);
 	const dLng = toRad(lng2 - lng1);
-	const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+	const a =
+		Math.sin(dLat / 2) ** 2 +
+		Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
 	return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
@@ -130,7 +137,11 @@ verify.post("/steps", async (c) => {
 	if (!userId) return c.json({ data: null, error: "User not found" }, 404);
 
 	const parsed = stepsSchema.safeParse(await c.req.json());
-	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" }, 400);
+	if (!parsed.success)
+		return c.json(
+			{ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" },
+			400,
+		);
 
 	if (!(await checkRateLimit(userId))) {
 		return c.json({ data: null, error: "Daily verification limit reached (max 10)" }, 429);
@@ -140,7 +151,9 @@ verify.post("/steps", async (c) => {
 	const points = 20;
 
 	await supabase.from("workout_verifications").insert({
-		user_id: userId, type: "steps", points,
+		user_id: userId,
+		type: "steps",
+		points,
 		metadata: { steps, date: date ?? todayStr() },
 		verified_at: new Date().toISOString(),
 	});
@@ -148,7 +161,10 @@ verify.post("/steps", async (c) => {
 	await awardPoints(userId, points, `Logged ${steps} steps`);
 	const summary = await updateDailySummary(userId, "steps", points);
 
-	return c.json({ data: { points, total_today: summary.total_points, day_complete: summary.is_day_complete }, error: null });
+	return c.json({
+		data: { points, total_today: summary.total_points, day_complete: summary.is_day_complete },
+		error: null,
+	});
 });
 
 // 2. POST /verify/qr
@@ -158,7 +174,11 @@ verify.post("/qr", async (c) => {
 	if (!userId) return c.json({ data: null, error: "User not found" }, 404);
 
 	const parsed = qrSchema.safeParse(await c.req.json());
-	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" }, 400);
+	if (!parsed.success)
+		return c.json(
+			{ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" },
+			400,
+		);
 
 	if (!(await checkRateLimit(userId))) {
 		return c.json({ data: null, error: "Daily verification limit reached (max 10)" }, 429);
@@ -171,15 +191,19 @@ verify.post("/qr", async (c) => {
 	let matchedGym: { id: string; name: string } | null = null;
 
 	for (const gym of gyms) {
-		const expectedHash = createHash("sha256").update(`${gym.id}${today}${QR_SECRET}`).digest("hex").slice(0, 12);
-		if (parsed.data.qr_code === expectedHash) { matchedGym = gym; break; }
+		if (validateQR(parsed.data.qr_code, gym.id)) {
+			matchedGym = gym;
+			break;
+		}
 	}
 
 	if (!matchedGym) return c.json({ data: null, error: "Invalid or expired QR code" }, 400);
 
 	const points = 40;
 	await supabase.from("workout_verifications").insert({
-		user_id: userId, type: "qr_scan", points,
+		user_id: userId,
+		type: "qr_scan",
+		points,
 		metadata: { gym_id: matchedGym.id, gym_name: matchedGym.name, date: today },
 		verified_at: new Date().toISOString(),
 	});
@@ -187,7 +211,10 @@ verify.post("/qr", async (c) => {
 	await awardPoints(userId, points, `QR check-in at ${matchedGym.name}`);
 	const summary = await updateDailySummary(userId, "qr_scan", points);
 
-	return c.json({ data: { points, gym_name: matchedGym.name, total_today: summary.total_points }, error: null });
+	return c.json({
+		data: { points, gym_name: matchedGym.name, total_today: summary.total_points },
+		error: null,
+	});
 });
 
 // 3. POST /verify/photo
@@ -200,7 +227,11 @@ verify.post("/photo", async (c) => {
 	if (!userId) return c.json({ data: null, error: "User not found" }, 404);
 
 	const parsed = photoSchema.safeParse(await c.req.json());
-	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" }, 400);
+	if (!parsed.success)
+		return c.json(
+			{ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" },
+			400,
+		);
 
 	if (!(await checkRateLimit(userId))) {
 		return c.json({ data: null, error: "Daily verification limit reached (max 10)" }, 429);
@@ -215,12 +246,16 @@ verify.post("/photo", async (c) => {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
-					contents: [{
-						parts: [
-							{ inlineData: { mimeType: "image/jpeg", data: base64Data } },
-							{ text: 'Analyze this image. Is the person at a gym or exercising? Look for gym equipment, workout clothes, outdoor exercise. Return JSON only: {"confidence": 0-100, "reasoning": "string"}' },
-						],
-					}],
+					contents: [
+						{
+							parts: [
+								{ inlineData: { mimeType: "image/jpeg", data: base64Data } },
+								{
+									text: 'Analyze this image. Is the person at a gym or exercising? Look for gym equipment, workout clothes, outdoor exercise. Return JSON only: {"confidence": 0-100, "reasoning": "string"}',
+								},
+							],
+						},
+					],
 					generationConfig: { maxOutputTokens: 256, temperature: 0.3 },
 				}),
 			},
@@ -242,22 +277,31 @@ verify.post("/photo", async (c) => {
 				const p = JSON.parse(jsonMatch[0]);
 				confidence = Number(p.confidence) || 0;
 				reasoning = p.reasoning || "No reasoning provided";
-			} catch { reasoning = rawText.slice(0, 200); }
+			} catch {
+				reasoning = rawText.slice(0, 200);
+			}
 		}
 
 		const verified = confidence >= 70;
 		const points = verified ? 35 : 0;
 
 		await supabase.from("workout_verifications").insert({
-			user_id: userId, type: "photo", points,
+			user_id: userId,
+			type: "photo",
+			points,
 			metadata: { confidence, reasoning, verified },
 			verified_at: new Date().toISOString(),
 		});
 
 		if (verified) await awardPoints(userId, points, `Photo workout verified (${confidence}%)`);
-		const summary = verified ? await updateDailySummary(userId, "photo", points) : { total_points: 0, methods_used: [], is_day_complete: false };
+		const summary = verified
+			? await updateDailySummary(userId, "photo", points)
+			: { total_points: 0, methods_used: [], is_day_complete: false };
 
-		return c.json({ data: { points, confidence, reasoning, verified, total_today: summary.total_points }, error: null });
+		return c.json({
+			data: { points, confidence, reasoning, verified, total_today: summary.total_points },
+			error: null,
+		});
 	} catch (err) {
 		console.error("Photo verification error:", err);
 		return c.json({ data: null, error: "Photo analysis failed" }, 502);
@@ -271,7 +315,11 @@ verify.post("/buddy", async (c) => {
 	if (!userId) return c.json({ data: null, error: "User not found" }, 404);
 
 	const parsed = buddySchema.safeParse(await c.req.json());
-	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" }, 400);
+	if (!parsed.success)
+		return c.json(
+			{ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" },
+			400,
+		);
 
 	if (!(await checkRateLimit(userId))) {
 		return c.json({ data: null, error: "Daily verification limit reached (max 10)" }, 429);
@@ -293,16 +341,22 @@ verify.post("/buddy", async (c) => {
 		.from("workout_buddies")
 		.select("id")
 		.eq("equb_room_id", equb_id)
-		.or(`and(user_id.eq.${userId},buddy_id.eq.${buddy_user_id}),and(user_id.eq.${buddy_user_id},buddy_id.eq.${userId})`)
+		.or(
+			`and(user_id.eq.${userId},buddy_id.eq.${buddy_user_id}),and(user_id.eq.${buddy_user_id},buddy_id.eq.${userId})`,
+		)
 		.single();
 
 	if (!existingBuddy) {
-		await supabase.from("workout_buddies").insert({ equb_room_id: equb_id, user_id: userId, buddy_id: buddy_user_id });
+		await supabase
+			.from("workout_buddies")
+			.insert({ equb_room_id: equb_id, user_id: userId, buddy_id: buddy_user_id });
 	}
 
 	const points = 25;
 	await supabase.from("workout_verifications").insert({
-		user_id: buddy_user_id, type: "buddy", points,
+		user_id: buddy_user_id,
+		type: "buddy",
+		points,
 		metadata: { confirmed_by: userId, equb_id },
 		verified_at: new Date().toISOString(),
 	});
@@ -310,9 +364,20 @@ verify.post("/buddy", async (c) => {
 	await awardPoints(buddy_user_id, points, "Buddy workout confirmation");
 	const summary = await updateDailySummary(buddy_user_id, "buddy", points);
 
-	const { data: confirmer } = await supabase.from("users").select("full_name").eq("id", userId).single();
+	const { data: confirmer } = await supabase
+		.from("users")
+		.select("full_name")
+		.eq("id", userId)
+		.single();
 
-	return c.json({ data: { points, confirmed_by: confirmer?.full_name ?? "Your buddy", total_today: summary.total_points }, error: null });
+	return c.json({
+		data: {
+			points,
+			confirmed_by: confirmer?.full_name ?? "Your buddy",
+			total_today: summary.total_points,
+		},
+		error: null,
+	});
 });
 
 // 5. POST /verify/gps
@@ -322,14 +387,21 @@ verify.post("/gps", async (c) => {
 	if (!userId) return c.json({ data: null, error: "User not found" }, 404);
 
 	const parsed = gpsSchema.safeParse(await c.req.json());
-	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" }, 400);
+	if (!parsed.success)
+		return c.json(
+			{ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" },
+			400,
+		);
 
 	if (!(await checkRateLimit(userId))) {
 		return c.json({ data: null, error: "Daily verification limit reached (max 10)" }, 429);
 	}
 
 	const { lat, lng } = parsed.data;
-	const { data: gyms } = await supabase.from("partner_gyms").select("id, name, latitude, longitude").eq("active", true);
+	const { data: gyms } = await supabase
+		.from("partner_gyms")
+		.select("id, name, latitude, longitude")
+		.eq("active", true);
 	if (!gyms?.length) return c.json({ data: null, error: "No partner gyms available" }, 404);
 
 	let closestGym: { id: string; name: string } | null = null;
@@ -338,24 +410,49 @@ verify.post("/gps", async (c) => {
 	for (const gym of gyms) {
 		if (gym.latitude == null || gym.longitude == null) continue;
 		const dist = haversineDistance(lat, lng, gym.latitude, gym.longitude);
-		if (dist < closestDistance) { closestDistance = dist; closestGym = { id: gym.id, name: gym.name }; }
+		if (dist < closestDistance) {
+			closestDistance = dist;
+			closestGym = { id: gym.id, name: gym.name };
+		}
 	}
 
 	if (!closestGym || closestDistance > 50) {
-		return c.json({ data: null, error: `Not close enough to any partner gym${closestDistance < Number.POSITIVE_INFINITY ? `. Nearest: ${Math.round(closestDistance)}m away` : ""}` }, 400);
+		return c.json(
+			{
+				data: null,
+				error: `Not close enough to any partner gym${closestDistance < Number.POSITIVE_INFINITY ? `. Nearest: ${Math.round(closestDistance)}m away` : ""}`,
+			},
+			400,
+		);
 	}
 
 	const points = 30;
 	await supabase.from("workout_verifications").insert({
-		user_id: userId, type: "gps", points,
-		metadata: { lat, lng, gym_id: closestGym.id, gym_name: closestGym.name, distance_m: Math.round(closestDistance) },
+		user_id: userId,
+		type: "gps",
+		points,
+		metadata: {
+			lat,
+			lng,
+			gym_id: closestGym.id,
+			gym_name: closestGym.name,
+			distance_m: Math.round(closestDistance),
+		},
 		verified_at: new Date().toISOString(),
 	});
 
 	await awardPoints(userId, points, `GPS check-in near ${closestGym.name}`);
 	const summary = await updateDailySummary(userId, "gps", points);
 
-	return c.json({ data: { points, gym_name: closestGym.name, distance_m: Math.round(closestDistance), total_today: summary.total_points }, error: null });
+	return c.json({
+		data: {
+			points,
+			gym_name: closestGym.name,
+			distance_m: Math.round(closestDistance),
+			total_today: summary.total_points,
+		},
+		error: null,
+	});
 });
 
 // 6. GET /verify/daily-summary

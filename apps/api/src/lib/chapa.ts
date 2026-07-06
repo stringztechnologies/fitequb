@@ -29,10 +29,11 @@ export interface ChapaInitResponse {
 
 export interface ChapaVerifyResponse {
 	status: string;
-	data: {
+	message?: string;
+	data?: {
 		tx_ref: string;
 		status: string;
-		amount: number;
+		amount: number | string;
 		currency: string;
 	};
 }
@@ -46,6 +47,13 @@ export interface ChapaTransferPayload {
 	bank_code: string;
 }
 
+export interface ChapaTransferResponse {
+	status: string;
+	message?: string;
+	data?: unknown;
+	http_status?: number;
+}
+
 export async function initializePayment(payload: ChapaInitPayload): Promise<ChapaInitResponse> {
 	const res = await fetch(`${CHAPA_BASE_URL}/transaction/initialize`, {
 		method: "POST",
@@ -56,7 +64,16 @@ export async function initializePayment(payload: ChapaInitPayload): Promise<Chap
 		body: JSON.stringify(payload),
 	});
 
-	return res.json() as Promise<ChapaInitResponse>;
+	const body = (await readJson<Partial<ChapaInitResponse>>(res)) ?? {};
+	if (!res.ok) {
+		return {
+			status: "failed",
+			message: body.message ?? `Chapa initialize failed with HTTP ${res.status}`,
+			data: { checkout_url: "" },
+		};
+	}
+
+	return body as ChapaInitResponse;
 }
 
 export async function verifyPayment(txRef: string): Promise<ChapaVerifyResponse> {
@@ -66,10 +83,21 @@ export async function verifyPayment(txRef: string): Promise<ChapaVerifyResponse>
 		},
 	});
 
-	return res.json() as Promise<ChapaVerifyResponse>;
+	const body = (await readJson<ChapaVerifyResponse>(res)) ?? {
+		status: "error",
+		message: "Unable to parse Chapa verify response",
+	};
+
+	if (!res.ok) {
+		throw new Error(body.message ?? `Chapa verify failed with HTTP ${res.status}`);
+	}
+
+	return body;
 }
 
-export async function initiateTransfer(payload: ChapaTransferPayload) {
+export async function initiateTransfer(
+	payload: ChapaTransferPayload,
+): Promise<ChapaTransferResponse> {
 	const res = await fetch(`${CHAPA_BASE_URL}/transfers`, {
 		method: "POST",
 		headers: {
@@ -79,7 +107,27 @@ export async function initiateTransfer(payload: ChapaTransferPayload) {
 		body: JSON.stringify(payload),
 	});
 
-	return res.json();
+	let body: Partial<ChapaTransferResponse>;
+	try {
+		body = (await res.json()) as Partial<ChapaTransferResponse>;
+	} catch {
+		body = {};
+	}
+
+	return {
+		status: body.status ?? (res.ok ? "success" : "failed"),
+		message: body.message,
+		data: body.data,
+		http_status: res.status,
+	};
+}
+
+async function readJson<T>(res: Response): Promise<T | null> {
+	try {
+		return (await res.json()) as T;
+	} catch {
+		return null;
+	}
 }
 
 export function verifyChapaWebhook(body: string, signature: string): boolean {

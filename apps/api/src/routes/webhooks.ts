@@ -1,17 +1,27 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { verifyChapaWebhook } from "../lib/chapa.js";
+import { verifyChapaWebhook, verifyPayment } from "../lib/chapa.js";
+import type { ChapaVerifyResponse } from "../lib/chapa.js";
 import { supabase } from "../lib/supabase.js";
 
-const chapaWebhookSchema = z.object({
-	tx_ref: z.string().min(1),
-	status: z.string(),
-	amount: z.number(),
-});
+const chapaWebhookSchema = z
+	.object({
+		tx_ref: z.string().min(1),
+		status: z.string().optional(),
+		amount: z.coerce.number().optional(),
+	})
+	.passthrough();
+
+type PaymentIntentKind = "stake" | "daypass" | "duel" | "coach";
+
+interface PaymentIntentRow {
+	kind: PaymentIntentKind;
+	status: string;
+}
 
 const webhooks = new Hono();
 
-// POST /webhooks/chapa — Chapa payment webhook
+// POST /webhooks/chapa - Chapa payment webhook
 webhooks.post("/chapa", async (c) => {
 	const rawBody = await c.req.text();
 	const signature = c.req.header("x-chapa-signature") ?? "";
@@ -20,116 +30,136 @@ webhooks.post("/chapa", async (c) => {
 		return c.json({ error: "Invalid signature" }, 401);
 	}
 
-	const parsed = chapaWebhookSchema.safeParse(JSON.parse(rawBody));
+	let payloadJson: unknown;
+	try {
+		payloadJson = JSON.parse(rawBody);
+	} catch {
+		return c.json({ error: "Invalid JSON payload" }, 400);
+	}
+
+	const parsed = chapaWebhookSchema.safeParse(payloadJson);
 	if (!parsed.success) {
 		return c.json({ error: "Invalid payload" }, 400);
 	}
+
 	const payload = parsed.data;
-
-	if (payload.status !== "success") {
-		return c.json({ status: "ignored" });
-	}
-
 	const txRef = payload.tx_ref;
 
-	// Parse tx_ref: equb-{roomId}-{userId}-{timestamp}
-	const parts = txRef.split("-");
-	if (parts[0] !== "equb" || parts.length < 4) {
-		// Could be a day pass payment — handle below
-		if (txRef.startsWith("daypass-")) {
-			return handleDayPassWebhook(txRef, payload.amount);
-		}
-		return c.json({ error: "Unknown tx_ref format" }, 400);
-	}
-
-	const roomId = parts[1];
-	const userId = parts[2];
-
-	if (!roomId || !userId) {
-		return c.json({ error: "Invalid tx_ref" }, 400);
-	}
-
-	// Check idempotency — don't double-credit
-	const { data: existingEntry } = await supabase
-		.from("equb_ledger")
-		.select("id")
+	const { data: intent } = await supabase
+		.from("payment_intents")
+		.select("kind, status")
 		.eq("tx_ref", txRef)
-		.single();
+		.single<PaymentIntentRow>();
 
-	if (existingEntry) {
+	if (!intent) {
+		// Unknown references should not create endless provider retries.
+		return c.json({ status: "ignored", reason: "unknown_tx_ref" });
+	}
+
+	if (intent.status === "credited") {
 		return c.json({ status: "already_processed" });
 	}
 
-	// Verify payment amount matches room stake
-	const { data: room } = await supabase
-		.from("equb_rooms")
-		.select("stake_amount, min_members, status")
-		.eq("id", roomId)
-		.single();
-
-	if (!room) {
-		return c.json({ error: "Room not found" }, 404);
+	if (payload.status && payload.status !== "success") {
+		await supabase
+			.from("payment_intents")
+			.update({
+				status: "failed",
+				provider_status: payload.status,
+				provider_amount: payload.amount ?? null,
+			})
+			.eq("tx_ref", txRef);
+		return c.json({ status: "ignored", reason: "provider_status_not_success" });
 	}
 
-	if (payload.amount < room.stake_amount) {
-		return c.json({ error: "Payment amount below required stake" }, 400);
+	let verified: ChapaVerifyResponse;
+	try {
+		verified = await verifyPayment(txRef);
+	} catch (error) {
+		return c.json(
+			{
+				error: error instanceof Error ? error.message : "Unable to verify payment with Chapa",
+			},
+			503,
+		);
 	}
 
-	// Create member + ledger entry in parallel
-	const [memberResult, ledgerResult] = await Promise.all([
-		supabase
-			.from("equb_members")
-			.insert({ room_id: roomId, user_id: userId, completed_days: 0 })
-			.select()
-			.single(),
-		supabase.from("equb_ledger").insert({
-			room_id: roomId,
-			user_id: userId,
-			type: "stake",
-			amount: room.stake_amount,
-			tx_ref: txRef,
-		}),
-	]);
-
-	if (memberResult.error) {
-		return c.json({ error: memberResult.error.message }, 500);
+	const verifiedData = verified.data;
+	const verifiedStatus = verifiedData?.status ?? verified.status;
+	if (isFinalPaymentFailure(verifiedStatus)) {
+		await supabase
+			.from("payment_intents")
+			.update({
+				status: "failed",
+				provider_status: verifiedStatus,
+				mismatch_reason: verified.message ?? "payment_not_successful",
+			})
+			.eq("tx_ref", txRef);
+		return c.json({ status: "ignored", reason: "verified_payment_not_successful" });
 	}
 
-	// Check if room should activate (min_members reached)
-	const { count } = await supabase
-		.from("equb_members")
-		.select("*", { count: "exact", head: true })
-		.eq("room_id", roomId);
-
-	if (room.status === "pending" && count !== null && count >= room.min_members) {
-		await supabase.from("equb_rooms").update({ status: "active" }).eq("id", roomId);
+	if (verified.status !== "success" || verifiedStatus !== "success" || !verifiedData) {
+		return c.json(
+			{
+				error: verified.message ?? "Unable to verify payment status with Chapa",
+			},
+			503,
+		);
 	}
 
-	return c.json({
-		status: "ok",
-		ledger: ledgerResult.error ? "failed" : "created",
+	if (verifiedData.tx_ref !== txRef) {
+		await supabase
+			.from("payment_intents")
+			.update({
+				status: "mismatch",
+				provider_status: verifiedStatus,
+				mismatch_reason: "verified_tx_ref_mismatch",
+			})
+			.eq("tx_ref", txRef);
+		return c.json({ status: "mismatch", reason: "verified_tx_ref_mismatch" });
+	}
+
+	const paidAmount = Number(verifiedData.amount);
+	if (!Number.isFinite(paidAmount)) {
+		return c.json({ error: "Verified amount is invalid" }, 502);
+	}
+
+	await supabase
+		.from("payment_intents")
+		.update({
+			status: "paid",
+			provider_status: verifiedStatus,
+			provider_amount: paidAmount,
+		})
+		.eq("tx_ref", txRef);
+
+	const rpcName = getCreditRpc(intent.kind);
+	const { data, error } = await supabase.rpc(rpcName, {
+		p_tx_ref: txRef,
+		p_paid_amount: paidAmount,
 	});
+
+	if (error) {
+		return c.json({ error: error.message }, 500);
+	}
+
+	return c.json({ status: "ok", result: data });
 });
 
-async function handleDayPassWebhook(txRef: string, _amount: number) {
-	// Parse: daypass-{passId}-{timestamp}
-	const parts = txRef.split("-");
-	const passId = parts[1];
-
-	if (!passId) {
-		return new Response(JSON.stringify({ error: "Invalid daypass tx_ref" }), {
-			status: 400,
-		});
+function getCreditRpc(kind: PaymentIntentKind) {
+	switch (kind) {
+		case "stake":
+		case "duel":
+			return "apply_stake_payment";
+		case "daypass":
+			return "activate_day_pass_payment";
+		case "coach":
+			return "activate_coach_pass_payment";
 	}
+}
 
-	// Mark pass as active (payment confirmed)
-	await supabase
-		.from("day_passes")
-		.update({ status: "active" })
-		.eq("id", passId)
-		.eq("status", "pending" as string);
-
-	return new Response(JSON.stringify({ status: "ok" }));
+function isFinalPaymentFailure(status: string | undefined) {
+	return status === "failed" || status === "cancelled" || status === "canceled";
 }
 
 export { webhooks };
