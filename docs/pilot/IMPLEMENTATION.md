@@ -8,7 +8,7 @@ Test seams authorized in the implementation plan: real database money/attendance
 
 2026-09-06 read-only production check: original v1 `equb_members.equb_id` / `equb_ledger.entry_type` remain. No `payment_intents` columns; latest applied migration is `20260403091652 add_web_auth_columns`. July S2 and money migrations are NOT applied. No production mutations performed. Do not infer row counts from the old snapshot.
 
-Temporary local PostgreSQL cluster: `/tmp/fitequb-pilot.9QJdD2`, port 55439, database `fitequb_pilot_test`. Remove after validation. Free disk at start: 60 GiB.
+Isolated PostgreSQL cluster used `/tmp/fitequb-pilot.9QJdD2`, port 55439, database `fitequb_pilot_test`. PostgreSQL/PostgREST were stopped and this 148 MiB scratch directory, downloaded tools and pilot browser output were removed after validation. Pre-existing build directories and review documents were preserved. Free disk: 60 GiB at start; 59 GiB before cleanup.
 
 Milestones:
 - [x] Forward migration, pilot configuration and staff access
@@ -18,7 +18,7 @@ Milestones:
 - [x] GTM records, operating docs, integration/browser tests
 - [x] Standards/spec review and implementation checks
 - [x] Feature commits
-- [ ] Scratch cleanup (after final checks)
+- [x] Scratch cleanup
 
 Production checkout stays disabled. Actual partner, merchant acceptance, customer pricing acceptance, funding, and live launch are operational gates, not implied by passing code tests.
 
