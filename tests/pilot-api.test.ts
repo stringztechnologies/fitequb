@@ -21,6 +21,8 @@ let transferState = "pending";
 let transferCalls = 0;
 let ambiguousTransfer = false;
 let ambiguousCheckout = false;
+let renewalRoom = "";
+let verifyHook: ((reference: string) => Promise<Response | null>) | null = null;
 let app: typeof import("../apps/api/src/index.js").default;
 const admin = randomUUID();
 const member = randomUUID();
@@ -107,7 +109,9 @@ describe.skipIf(!database || !rest)("Pilot API with real PostgreSQL and PostgRES
 				if (ambiguousTransfer) throw new Error("timeout");
 				return Response.json({ status: "success" });
 			}
-			if (url.pathname.includes("/transfers/verify/"))
+			if (url.pathname.includes("/transfers/verify/")) {
+				const intercepted = await verifyHook?.(url.pathname.split("/").at(-1) ?? "");
+				if (intercepted) return intercepted;
 				return Response.json(
 					transferState === "unparseable"
 						? { status: "success" }
@@ -116,6 +120,7 @@ describe.skipIf(!database || !rest)("Pilot API with real PostgreSQL and PostgRES
 								data: { status: transferState, reference: url.pathname.split("/").at(-1) },
 							},
 				);
+			}
 			throw new Error(`Unexpected provider path ${url.pathname}`);
 		});
 		app = (await import("../apps/api/src/index.js")).default;
@@ -148,6 +153,7 @@ describe.skipIf(!database || !rest)("Pilot API with real PostgreSQL and PostgRES
 			account_number: "0911223344",
 			account_name: "Member",
 			program_fee: 1,
+			source: "\t=1+1",
 		};
 		const first = await request(`/api/pilots/${room}/enroll`, input);
 		expect(first.status).toBe(200);
@@ -205,11 +211,12 @@ describe.skipIf(!database || !rest)("Pilot API with real PostgreSQL and PostgRES
 		expect(body.data.metrics.stakes).toBe(500);
 		const csv = await request(`/api/pilot-admin/${room}/report?format=csv`, undefined, tma(100));
 		expect(csv.headers.get("content-type")).toContain("text/csv");
-		expect(await csv.text()).toContain(member);
+		const csvText = await csv.text();
+		expect(csvText).toContain(member);
+		expect(csvText).toContain("'\t=1+1");
 	});
 	it("counts native-auth renewal only after a separate comparable fee is credited", async () => {
-		const start =
-			new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10) + "T00:00:00+03:00";
+		const start = `${new Date(Date.now() + 35 * 86400000).toISOString().slice(0, 10)}T00:00:00+03:00`;
 		const created = await request(
 			"/api/pilot-admin",
 			{ config: { name: "Paid renewal", gym_id: gym, coach_id: staff, start_date: start } },
@@ -217,6 +224,7 @@ describe.skipIf(!database || !rest)("Pilot API with real PostgreSQL and PostgRES
 		);
 		expect(created.status).toBe(200);
 		const next = (await created.json()).data.room_id;
+		renewalRoom = next;
 		expect(
 			(await request(`/api/pilot-admin/${next}/staff`, { user_id: staff }, tma(100))).status,
 		).toBe(200);
@@ -319,5 +327,93 @@ describe.skipIf(!database || !rest)("Pilot API with real PostgreSQL and PostgRES
 		);
 		expect(again.status).toBe(200);
 		expect((await again.json()).data.checkout_status).toBe("unknown");
+	});
+	it("revoking operator configuration removes historical attendance privileges for assigned staff", async () => {
+		const before = JSON.parse(
+			sql(`select row_to_json(r) from equb_rooms r where id='${renewalRoom}'`),
+		);
+		sql(
+			`insert into pilot_staff values('${renewalRoom}','${admin}');alter table equb_rooms disable trigger freeze_pilot_room; update equb_rooms set status='active',start_date=now()-interval '5 days',end_date=now()+interval '25 days' where id='${renewalRoom}';alter table equb_rooms enable trigger freeze_pilot_room;`,
+		);
+		process.env.ADMIN_TELEGRAM_ID = "999";
+		try {
+			expect((await request(`/api/pilots/${renewalRoom}/staff`, undefined, tma(100))).status).toBe(
+				200,
+			);
+			expect(sql(`select pilot_is_admin('${admin}')`)).toBe("f");
+			const response = await request(
+				`/api/pilots/${renewalRoom}/attendance`,
+				{
+					user_id: member,
+					date: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
+					approved: false,
+					reason: "Former operator correction",
+				},
+				tma(100),
+			);
+			expect(response.status).not.toBe(200);
+		} finally {
+			process.env.ADMIN_TELEGRAM_ID = "100";
+			sql(
+				`alter table equb_rooms disable trigger freeze_pilot_room;update equb_rooms set start_date='${before.start_date}',end_date='${before.end_date}',status='pending' where id='${renewalRoom}';alter table equb_rooms enable trigger freeze_pilot_room;`,
+			);
+		}
+	});
+	it("a delayed failure for attempt one cannot make attempt two retryable", async () => {
+		expect(
+			(await request(`/api/pilots/${renewalRoom}/withdraw`, {}, "Bearer web-test-token")).status,
+		).toBe(200);
+		const { processPilotPayouts, reconcilePayouts } = await import(
+			"../apps/api/src/lib/pilot-payouts.js"
+		);
+		transferState = "pending";
+		ambiguousTransfer = false;
+		await processPilotPayouts();
+		const job = JSON.parse(
+			sql(
+				`select row_to_json(j) from payout_jobs j join equb_ledger l on l.id=j.ledger_id where l.room_id='${renewalRoom}' order by j.id limit 1`,
+			),
+		);
+		let release: () => void = () => {};
+		let entered: () => void = () => {};
+		const gate = new Promise<void>((resolve) => {
+			release = resolve;
+		});
+		const reached = new Promise<void>((resolve) => {
+			entered = resolve;
+		});
+		let first = true;
+		verifyHook = async (reference) => {
+			if (reference !== job.provider_reference) return null;
+			if (first) {
+				first = false;
+				entered();
+				await gate;
+			}
+			return Response.json({ status: "success", data: { reference, status: "failed" } });
+		};
+		const stale = reconcilePayouts();
+		try {
+			await reached;
+			await processPilotPayouts();
+			expect(sql(`select attempts||':'||status from payout_jobs where id='${job.id}'`)).toBe(
+				"2:sent",
+			);
+			release();
+			await stale;
+			expect(sql(`select attempts||':'||status from payout_jobs where id='${job.id}'`)).toBe(
+				"2:sent",
+			);
+			expect(sql(`select provider_reference from payout_jobs where id='${job.id}'`)).toBe(
+				`${job.reference}-a2`,
+			);
+			const calls = transferCalls;
+			await processPilotPayouts();
+			expect(transferCalls).toBe(calls);
+		} finally {
+			release();
+			verifyHook = null;
+			await stale;
+		}
 	});
 });

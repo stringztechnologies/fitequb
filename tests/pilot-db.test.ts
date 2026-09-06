@@ -97,6 +97,7 @@ describe.skipIf(!database)("Paid pilot database behavior", () => {
 		const c = cohort();
 		const e = prepare(c.room);
 		sql(`select pilot_withdraw('${c.room}','${e.user}')`);
+		expect(prepare(c.room, e.user).ref).toBe(e.ref);
 		expect(credit(e.ref).status).toBe("mismatch");
 		expect(sql(`select count(*) from equb_members where room_id='${c.room}'`)).toBe("0");
 		sql(`select pilot_refund_mismatch('${c.admin}','${e.ref}')`);
@@ -176,6 +177,15 @@ describe.skipIf(!database)("Paid pilot database behavior", () => {
 			expect(credit(e.ref, amount, currency).status).toBe("mismatch");
 			expect(sql(`select count(*) from equb_members where room_id='${c.room}'`)).toBe("0");
 		}
+	});
+	it("missing provider status and currency cannot allocate an enrollment", () => {
+		const c = cohort();
+		const e = prepare(c.room);
+		expect(query(`select pilot_credit_payment('${e.ref}',800,'ETB',null)`).status).toBe("pending");
+		expect(query(`select pilot_credit_payment('${e.ref}',800,null,'success')`).status).toBe(
+			"mismatch",
+		);
+		expect(sql(`select count(*) from equb_members where room_id='${c.room}'`)).toBe("0");
 	});
 	it("a stale provider failure cannot undo a successful allocation", () => {
 		const c = cohort();

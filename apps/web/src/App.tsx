@@ -107,6 +107,10 @@ function RouteLoading() {
 }
 
 export function App() {
+	const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+	const pilotStart = /^pilot_([a-f0-9-]{36})$/.exec(
+		typeof startParam === "string" ? startParam : "",
+	)?.[1];
 	return (
 		<ErrorBoundary>
 			<BrowserRouter>
@@ -146,7 +150,9 @@ export function App() {
 											<Route
 												path="/"
 												element={
-													isOnboarded() || !window.Telegram?.WebApp?.initData ? (
+													pilotStart ? (
+														<Navigate to={`/pilot/${pilotStart}?source=telegram`} replace />
+													) : isOnboarded() || !window.Telegram?.WebApp?.initData ? (
 														<Home />
 													) : (
 														<Navigate to="/onboarding" replace />

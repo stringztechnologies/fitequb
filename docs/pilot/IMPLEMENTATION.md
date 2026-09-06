@@ -16,7 +16,9 @@ Milestones:
 - [x] Authoritative attendance and settlement
 - [x] Participant and operator UI, auth returns
 - [x] GTM records, operating docs, integration/browser tests
-- [ ] Standards/spec review, checks, commit, scratch cleanup
+- [x] Standards/spec review and implementation checks
+- [x] Feature commits
+- [ ] Scratch cleanup (after final checks)
 
 Production checkout stays disabled. Actual partner, merchant acceptance, customer pricing acceptance, funding, and live launch are operational gates, not implied by passing code tests.
 
@@ -35,3 +37,15 @@ This file records the approved user plan; RUNBOOK.md carries the operational ter
 9. Track source/offers, backend fee payment/first attendance/day counts/refunds, renewal offers/new fee payments, manual prospect register, costs/operator time and admin CSV. Renewal denominator is original non-refunded fee-paying cohort, never stake-only participants. Partner briefing/participant offer/staff/daily operations/launch-stop criteria included. Compensation remains manual and recorded. No paid ads, automated outreach or new AI/duel/marketplace features.
 10. Real PostgreSQL contracts with mocked Chapa network boundary: concurrency, duplicate webhooks, clicks, stale failure, wrong amount/currency, late payment; atomic splits; withdrawal/underfill/operator refund/idempotency; staff/cross-room/EAT/corrections/disputes/bypass; early settlement/all outcomes/conservation/repeat; transfer timeout/ambiguity/failure/approval/delivery; Telegram/native auth/payment recovery/renewal. Route tests must not start listener. Test actual settlement SQL, add DB CI and run lint/typecheck/build/unit/DB/API/browser checks.
 11. Feature branch preserves prior review documents; checkout stays disabled. Rehearsal on isolated database precedes production. Financial/access/concurrency review required. Actual partner, staff, terms/price acceptance, merchant approval and refund funding are launch gates. Migrations precede app rollout; controlled live payment and verified refund/payout precede open enrollment. After money exists disable enrollment and reconcile; never restore a snapshot over financial history. Continue commercially only with 20 fee payers, 10 paid renewals, willing repeat partner and positive direct contribution (experiment thresholds).
+
+## Validation result — 2026-09-06
+
+- `pnpm lint`: pass (116 files; existing formatting/accessibility failures corrected).
+- `pnpm typecheck`: pass across shared, web, API and bot.
+- `pnpm build`: pass across all workspaces.
+- `pnpm run test --run`: 17 unit tests pass. The 37 database/API tests intentionally skip without their disposable-database environment variables.
+- `pnpm test:db` with isolated PostgreSQL 16 and PostgREST 16.2: all 37 tests pass, including actual migration/settlement/refund SQL, EAT dates, capacity races, delayed webhook/withdrawal, provider ambiguity, retry-generation concurrency and revoked-operator access.
+- `pnpm test:pilot-browser`: six browser journeys pass, including native staff session reload and direct Telegram start parameter. These use explicit HTTP fixtures; the separate API suite exercises real SQL.
+- Both independent reviewers rechecked their findings against the fixes and found no remaining issue in those findings; they reviewed tests but did not independently rerun them. See REVIEW.md.
+- CI job added; remote GitHub Actions was not run here.
+- No production migration, deployment, checkout enablement, provider payment or external outreach performed. The disposable schema rehearsal is not a full production clone rehearsal; production S2/data-preservation and merchant/live-payment gates remain in RUNBOOK.md.

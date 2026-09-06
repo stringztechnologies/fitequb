@@ -10,6 +10,7 @@ const offer = {
 	room_id: room,
 	program_fee: 300,
 	terms_version: "pilot-v1",
+	enrollment_deadline: "2030-09-10T21:00:00Z",
 	checkout_enabled: true,
 	next_room_id: next,
 	coach_name: "Coach Abebe",
@@ -23,26 +24,28 @@ const offer = {
 		workout_target: 12,
 		completion_pct: 0.8,
 		house_fee_pct: 5,
+		min_members: 20,
+		max_members: 20,
 	},
 };
-async function setup(page: Page, telegram = false) {
+async function setup(page: Page, telegram = false, startParam = "") {
 	let enrolled = false;
 	let pending = false;
 	let attendance = false;
 	if (telegram)
-		await page.addInitScript(() => {
+		await page.addInitScript((startParam) => {
 			Object.defineProperty(window, "Telegram", {
 				configurable: true,
 				value: {
 					WebApp: {
 						initData: "test-signed-in",
-						initDataUnsafe: { user: { id: 101 } },
+						initDataUnsafe: { user: { id: 101 }, start_param: startParam },
 						ready() {},
 						expand() {},
 					},
 				},
 			});
-		});
+		}, startParam);
 	await page.route("**/telegram-web-app.js", (r) => r.fulfill({ body: "" }));
 	await page.route("http://127.0.0.1:55888/**", async (route) => {
 		const req = route.request();
@@ -109,6 +112,16 @@ test("guest sees the full price and terms, with a preserved sign-in destination"
 		`/signin?next=${encodeURIComponent(`/pilot/${room}?source=partner`)}`,
 	);
 	await expect(page.getByText("Payment expires in")).toHaveCount(0);
+	await expect(page.getByRole("link", { name: "open in Telegram" })).toHaveAttribute(
+		"href",
+		`https://t.me/fitequb_bot?start=pilot_${room}`,
+	);
+});
+test("Telegram start parameter opens the invited cohort directly", async ({ page }) => {
+	await setup(page, true, `pilot_${room}`);
+	await page.goto("/");
+	await expect(page).toHaveURL(new RegExp(`/pilot/${room}\\?source=telegram`));
+	await expect(page.getByText("Total upfront:")).toContainText("800 ETB");
 });
 test("Telegram participant does not see success until the backend credits payment", async ({
 	page,
@@ -128,8 +141,7 @@ test("Telegram participant does not see success until the backend credits paymen
 	await page.getByRole("link", { name: "View the next cohort", exact: false }).click();
 	await expect(page).toHaveURL(new RegExp(`/pilot/${next}`));
 });
-test("native email OTP returns to the same cohort after verification", async ({ page }) => {
-	await setup(page);
+async function signInNative(page: Page, destination: string) {
 	const token = [
 		btoa(JSON.stringify({ alg: "HS256" })),
 		btoa(JSON.stringify({ sub: user.id, exp: Math.floor(Date.now() / 1000) + 3600 })),
@@ -152,14 +164,27 @@ test("native email OTP returns to the same cohort after verification", async ({ 
 			});
 		return route.fulfill({ json: {} });
 	});
-	await page.goto(`/signin?next=${encodeURIComponent(`/pilot/${room}?source=partner`)}`);
+	await page.goto(`/signin?next=${encodeURIComponent(destination)}`);
 	await page.getByRole("button", { name: "Sign in with Email" }).click();
 	await page.getByLabel("Email Address").fill("member@example.test");
 	await page.getByRole("button", { name: "Send Code" }).click();
 	await page.getByPlaceholder("000000").fill("123456");
 	await page.getByRole("button", { name: "Verify", exact: true }).click();
+}
+test("native email OTP returns to the same cohort after verification", async ({ page }) => {
+	await setup(page);
+	await signInNative(page, `/pilot/${room}?source=partner`);
 	await expect(page).toHaveURL(new RegExp(`/pilot/${room}\\?source=partner`));
 	await expect(page.getByLabel("Account name", { exact: true })).toBeVisible();
+});
+test("native staff session survives a reload before attendance confirmation", async ({ page }) => {
+	await setup(page);
+	await signInNative(page, `/pilot/${room}/staff`);
+	await expect(page.getByText("Pilot Member · 0 approved days")).toBeVisible();
+	await page.reload();
+	await expect(page.getByText("Pilot Member · 0 approved days")).toBeVisible();
+	await page.getByRole("button", { name: "Confirm attendance today" }).click();
+	await expect(page.getByText("Attendance recorded", { exact: true })).toBeVisible();
 });
 test("assigned staff can confirm current-day attendance", async ({ page }) => {
 	await setup(page, true);

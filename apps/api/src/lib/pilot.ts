@@ -36,22 +36,44 @@ export async function pilotActor(c: Context<{ Variables: AppVariables }>) {
 	if (!actor) throw new HTTPException(401, { message: "Sign in required" });
 	return actor;
 }
-export async function isPilotAdmin(c: Context<{ Variables: AppVariables }>, actor: string) {
-	const auth = c.get("authenticatedUser");
+export async function isPilotAdmin(actor: string) {
 	const configuredTelegram = Number(process.env.ADMIN_TELEGRAM_ID);
+	const { data: user, error: userError } = await supabase
+		.from("users")
+		.select("telegram_id")
+		.eq("id", actor)
+		.single();
+	if (userError) throw new Error(userError.message);
 	const trusted =
-		(auth?.authMethod === "telegram" &&
-			configuredTelegram > 0 &&
-			c.get("telegramUser")?.id === configuredTelegram) ||
+		(configuredTelegram > 0 && Number(user.telegram_id) === configuredTelegram) ||
 		(Boolean(process.env.ADMIN_USER_ID) && actor === process.env.ADMIN_USER_ID);
-	if (!trusted) return false;
+	if (!trusted) {
+		const { error } = await supabase.from("pilot_admins").delete().eq("user_id", actor);
+		if (error) throw new Error(error.message);
+		return false;
+	}
 	const { error } = await supabase.from("pilot_admins").upsert({ user_id: actor });
 	if (error) throw new Error(error.message);
 	return true;
 }
+// PostgREST represents a UNIQUE child FK as object/null, unlike ordinary child arrays.
+export function normalizePayoutJobs(value: unknown) {
+	const job = z.object({ status: z.string() }).passthrough();
+	return z
+		.array(z.object({ payout_jobs: z.union([job, z.array(job), z.null()]) }).passthrough())
+		.parse(value)
+		.map((row) => ({
+			...row,
+			payout_jobs: Array.isArray(row.payout_jobs)
+				? row.payout_jobs
+				: row.payout_jobs
+					? [row.payout_jobs]
+					: [],
+		}));
+}
 export async function requirePilotStaff(c: Context<{ Variables: AppVariables }>, room: string) {
 	const actor = await pilotActor(c);
-	const admin = await isPilotAdmin(c, actor);
+	const admin = await isPilotAdmin(actor);
 	if (!admin) {
 		const { data, error } = await supabase
 			.from("pilot_staff")

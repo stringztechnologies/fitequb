@@ -2,14 +2,22 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { reconcilePayouts } from "../lib/pilot-payouts.js";
 import { reconcilePilotReceipt } from "../lib/pilot-receipts.js";
-import { isPilotAdmin, pilotActor, pilotConfigSchema, pilotRpc, uuid } from "../lib/pilot.js";
+import {
+	getPilot,
+	isPilotAdmin,
+	normalizePayoutJobs,
+	pilotActor,
+	pilotConfigSchema,
+	pilotRpc,
+	uuid,
+} from "../lib/pilot.js";
 import { supabase } from "../lib/supabase.js";
 import type { AppVariables } from "../types/context.js";
 
 export const pilotAdmin = new Hono<{ Variables: AppVariables }>();
 pilotAdmin.use("*", async (c, next) => {
 	const actor = await pilotActor(c);
-	if (!(await isPilotAdmin(c, actor))) return c.json({ data: null, error: "Admin required" }, 403);
+	if (!(await isPilotAdmin(actor))) return c.json({ data: null, error: "Admin required" }, 403);
 	await next();
 });
 pilotAdmin.get("/", async (c) => {
@@ -46,6 +54,21 @@ pilotAdmin.post("/:id/settings", async (c) => {
 		.strict()
 		.parse(await c.req.json());
 	if (body.next_room_id === room) throw new Error("Renewal cohort must be different");
+	if (body.next_room_id) {
+		const [current, next] = await Promise.all([getPilot(room), getPilot(body.next_room_id)]);
+		const boundaries = z.object({ start_date: z.string(), end_date: z.string() });
+		const currentDates = boundaries.safeParse(current?.equb_rooms);
+		const nextDates = boundaries.safeParse(next?.equb_rooms);
+		if (
+			!currentDates.success ||
+			!nextDates.success ||
+			Date.parse(nextDates.data.start_date) < Date.parse(currentDates.data.end_date)
+		)
+			return c.json(
+				{ data: null, error: "Renewal must be a configured pilot starting after this cohort ends" },
+				400,
+			);
+	}
 	if (body.checkout_ready) {
 		const { data, error } = await supabase
 			.from("pilot_staff")
@@ -176,7 +199,7 @@ pilotAdmin.get("/:id/report", async (c) => {
 	]);
 	for (const r of results) if (r.error) throw new Error(r.error.message);
 	const enrollments = z.array(receipt).parse(results[0]?.data);
-	const ledger = z.array(entry).parse(results[1]?.data);
+	const ledger = z.array(entry).parse(normalizePayoutJobs(results[1]?.data));
 	const costs = z
 		.array(z.object({ amount: z.coerce.number(), minutes: z.number(), estimated: z.boolean() }))
 		.parse(results[4]?.data);
@@ -199,20 +222,27 @@ pilotAdmin.get("/:id/report", async (c) => {
 	if (next.next_room_id) {
 		const { data, error } = await supabase
 			.from("pilot_enrollments")
-			.select("user_id,program_fee,tx_ref")
+			.select("user_id,program_fee,tx_ref,enrolled_at")
 			.eq("room_id", next.next_room_id)
-			.eq("state", "enrolled")
-			.lte(
-				"enrolled_at",
-				new Date(Date.parse(next.equb_rooms.end_date) + 8 * 86400000).toISOString(),
-			);
+			.eq("state", "enrolled");
 		if (error) throw new Error(error.message);
 		renewalUsers = new Set(
 			z
-				.array(z.object({ user_id: z.string(), program_fee: z.coerce.number() }))
+				.array(
+					z.object({
+						user_id: z.string(),
+						program_fee: z.coerce.number(),
+						enrolled_at: z.string(),
+					}),
+				)
 				.parse(data)
 				.filter((e) =>
-					original.some((o) => o.user_id === e.user_id && e.program_fee >= o.program_fee),
+					original.some(
+						(o) =>
+							o.user_id === e.user_id &&
+							e.program_fee > 0 &&
+							Date.parse(e.enrolled_at) >= Date.parse(o.enrolled_at ?? ""),
+					),
 				)
 				.map((e) => e.user_id),
 		);
@@ -256,7 +286,7 @@ pilotAdmin.get("/:id/report", async (c) => {
 	};
 	const cell = (v: unknown) =>
 		`"${String(v ?? "")
-			.replace(/^[=+@-]/, "'$&")
+			.replace(/^\s*[=+@-]/, "'$&")
 			.replaceAll('"', '""')}"`;
 	const rows = [
 		[

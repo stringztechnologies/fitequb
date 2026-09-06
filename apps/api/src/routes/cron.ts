@@ -15,6 +15,7 @@ interface PayoutJobRow {
 	user_id: string;
 	amount: number;
 	reference: string;
+	provider_reference: string | null;
 	attempts: number;
 	status: string;
 	users?: unknown;
@@ -318,7 +319,9 @@ cron.post("/payouts", async (c) => {
 
 	const { data: pendingJobs, error: fetchError } = await supabase
 		.from("payout_jobs")
-		.select("id, ledger_id, user_id, amount, reference, attempts, status, users(full_name, phone)")
+		.select(
+			"id, ledger_id, user_id, amount, reference, provider_reference, attempts, status, users(full_name, phone)",
+		)
 		.in("status", ["pending", "failed"])
 		.is("bank_code", null)
 		.order("created_at", { ascending: true })
@@ -343,13 +346,15 @@ cron.post("/payouts", async (c) => {
 			.update({
 				status: "processing",
 				attempts: (job.attempts ?? 0) + 1,
+				provider_reference: `${job.reference}-a${(job.attempts ?? 0) + 1}`,
 				claimed_at: new Date().toISOString(),
 				last_error: null,
 			})
 			.eq("id", job.id)
+			.eq("attempts", job.attempts)
 			.in("status", ["pending", "failed"])
 			.select(
-				"id, ledger_id, user_id, amount, reference, attempts, status, users(full_name, phone)",
+				"id, ledger_id, user_id, amount, reference, provider_reference, attempts, status, users(full_name, phone)",
 			)
 			.single<PayoutJobRow>();
 
@@ -364,6 +369,7 @@ cron.post("/payouts", async (c) => {
 				.from("payout_jobs")
 				.update({ status: "failed", last_error: "No phone number for payout" })
 				.eq("id", claimed.id)
+				.eq("attempts", claimed.attempts)
 				.eq("status", "processing");
 			results.push({
 				payout_job_id: claimed.id,
@@ -380,7 +386,7 @@ cron.post("/payouts", async (c) => {
 				account_number: user.phone,
 				amount: claimed.amount,
 				currency: "ETB",
-				reference: claimed.reference,
+				reference: claimed.provider_reference ?? claimed.reference,
 				bank_code:
 					(await getBanks()).find((bank) => bank.name.toLowerCase().includes("telebirr"))?.id ??
 					(() => {
@@ -393,6 +399,7 @@ cron.post("/payouts", async (c) => {
 				.from("payout_jobs")
 				.update({ status: "processing", last_error: message })
 				.eq("id", claimed.id)
+				.eq("attempts", claimed.attempts)
 				.eq("status", "processing");
 			results.push({
 				payout_job_id: claimed.id,
@@ -415,6 +422,7 @@ cron.post("/payouts", async (c) => {
 					provider_response: transferResult,
 				})
 				.eq("id", claimed.id)
+				.eq("attempts", claimed.attempts)
 				.eq("status", "processing");
 		} else {
 			await supabase
@@ -425,6 +433,7 @@ cron.post("/payouts", async (c) => {
 					provider_response: transferResult ?? null,
 				})
 				.eq("id", claimed.id)
+				.eq("attempts", claimed.attempts)
 				.eq("status", "processing");
 		}
 

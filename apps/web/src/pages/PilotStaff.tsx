@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth.js";
 import { api } from "../lib/api.js";
 import { eatDate } from "./Pilot.js";
 interface Member {
@@ -8,15 +9,19 @@ interface Member {
 	users: { full_name: string };
 }
 export function PilotStaff() {
+	const { loading: authLoading, isGuest } = useAuth();
 	const { roomId } = useParams();
 	const [members, setMembers] = useState<Member[]>([]);
 	const [message, setMessage] = useState("");
-	useEffect(() => {
-		api<Member[]>(`/api/pilots/${roomId}/staff`).then((r) => {
+	const refresh = useCallback(async () => {
+		await api<Member[]>(`/api/pilots/${roomId}/staff`).then((r) => {
 			if (r.data) setMembers(r.data);
 			else setMessage(r.error ?? "Unavailable");
 		});
 	}, [roomId]);
+	useEffect(() => {
+		if (!authLoading && !isGuest) void refresh();
+	}, [authLoading, isGuest, refresh]);
 	async function confirm(id: string) {
 		const r = await api(`/api/pilots/${roomId}/attendance`, {
 			method: "POST",
@@ -28,6 +33,7 @@ export function PilotStaff() {
 			}),
 		});
 		setMessage(r.error ?? "Attendance recorded");
+		if (!r.error) await refresh();
 	}
 	return (
 		<main className="p-5 pb-24 space-y-4">

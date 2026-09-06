@@ -2,7 +2,14 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { getBanks, initializePayment } from "../lib/chapa.js";
 import { reconcilePilotReceipt } from "../lib/pilot-receipts.js";
-import { getPilot, pilotActor, pilotRpc, requirePilotStaff, uuid } from "../lib/pilot.js";
+import {
+	getPilot,
+	normalizePayoutJobs,
+	pilotActor,
+	pilotRpc,
+	requirePilotStaff,
+	uuid,
+} from "../lib/pilot.js";
 import { supabase } from "../lib/supabase.js";
 import { rateLimit } from "../middleware/rate-limit.js";
 import type { AppVariables } from "../types/context.js";
@@ -76,6 +83,12 @@ pilots.get("/:id", async (c) => {
 			.select("id,type,amount,payout_jobs(status,last_error,confirmed_at)")
 			.eq("room_id", room)
 			.eq("user_id", user),
+		supabase
+			.from("equb_members")
+			.select("qualified,payout_amount")
+			.eq("room_id", room)
+			.eq("user_id", user)
+			.maybeSingle(),
 	]);
 	for (const result of responses) if (result.error) throw new Error(result.error.message);
 	return c.json({
@@ -83,7 +96,8 @@ pilots.get("/:id", async (c) => {
 			enrollments: responses[0]?.data,
 			attendance: responses[1]?.data,
 			disputes: responses[2]?.data,
-			money: responses[3]?.data,
+			money: normalizePayoutJobs(responses[3]?.data),
+			member: responses[4]?.data,
 		},
 		error: null,
 	});

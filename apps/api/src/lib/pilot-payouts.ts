@@ -14,7 +14,7 @@ const payout = z.object({
 export async function reconcilePayouts() {
 	const { data, error } = await supabase
 		.from("payout_jobs")
-		.select("id,reference")
+		.select("id,reference,provider_reference,attempts")
 		.in("status", ["processing", "sent"])
 		.order("updated_at")
 		.limit(50);
@@ -22,8 +22,8 @@ export async function reconcilePayouts() {
 	let confirmed = 0;
 	for (const job of data ?? []) {
 		try {
-			const result = await verifyTransfer(job.reference);
-			const { error: updateError } = await supabase
+			const result = await verifyTransfer(job.provider_reference ?? job.reference);
+			const { data: updated, error: updateError } = await supabase
 				.from("payout_jobs")
 				.update({
 					...(result.status === "pending" ? {} : { status: result.status }),
@@ -37,14 +37,17 @@ export async function reconcilePayouts() {
 								: null,
 				})
 				.eq("id", job.id)
-				.in("status", ["processing", "sent"]);
+				.eq("attempts", job.attempts)
+				.in("status", ["processing", "sent"])
+				.select("id");
 			if (updateError) throw new Error(updateError.message);
-			if (result.status === "confirmed") confirmed++;
+			if (result.status === "confirmed" && updated?.length) confirmed++;
 		} catch {
 			await supabase
 				.from("payout_jobs")
 				.update({ last_error: "Provider verification unavailable; do not resend" })
 				.eq("id", job.id)
+				.eq("attempts", job.attempts)
 				.in("status", ["processing", "sent"]);
 		}
 	}
@@ -65,14 +68,18 @@ export async function processPilotPayouts() {
 	let submitted = 0;
 	for (const job of z.array(payout).parse(data)) {
 		if (!job.account_name || !job.account_number || !job.bank_code) continue;
+		const attempt = job.attempts + 1;
+		const providerReference = `${job.reference}-a${attempt}`;
 		const { data: claim, error: claimError } = await supabase
 			.from("payout_jobs")
 			.update({
 				status: "processing",
 				claimed_at: new Date().toISOString(),
-				attempts: job.attempts + 1,
+				attempts: attempt,
+				provider_reference: providerReference,
 			})
 			.eq("id", job.id)
+			.eq("attempts", job.attempts)
 			.in("status", ["pending", "failed"])
 			.select("id")
 			.maybeSingle();
@@ -85,7 +92,7 @@ export async function processPilotPayouts() {
 				bank_code: job.bank_code,
 				amount: job.amount,
 				currency: "ETB",
-				reference: job.reference,
+				reference: providerReference,
 			});
 			// Even a failed submission response is reconciled before retrying.
 			const { error: updateError } = await supabase
@@ -97,6 +104,7 @@ export async function processPilotPayouts() {
 					last_error: result.status === "success" ? null : "Transfer outcome requires verification",
 				})
 				.eq("id", job.id)
+				.eq("attempts", attempt)
 				.eq("status", "processing");
 			if (updateError) throw new Error(updateError.message);
 			submitted++;
@@ -105,6 +113,7 @@ export async function processPilotPayouts() {
 				.from("payout_jobs")
 				.update({ last_error: "Ambiguous transfer; verify before retry" })
 				.eq("id", job.id)
+				.eq("attempts", attempt)
 				.eq("status", "processing");
 		}
 	}

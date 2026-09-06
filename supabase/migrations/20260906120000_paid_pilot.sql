@@ -14,6 +14,12 @@ DO $$ DECLARE col text; BEGIN
  END IF;
  END LOOP;
 END $$;
+DO $$ BEGIN
+ IF EXISTS(SELECT 1 FROM equb_rooms WHERE stake_amount<>round(stake_amount::numeric,2) OR total_pot<>round(total_pot::numeric,2)
+   OR abs(stake_amount)>9999999999.99 OR abs(total_pot)>9999999999.99) THEN
+   RAISE EXCEPTION 'Existing room amounts cannot be converted to cents without data loss; reconcile before migration';
+ END IF;
+END $$;
 ALTER TABLE equb_rooms ALTER COLUMN stake_amount TYPE numeric(12,2), ALTER COLUMN total_pot TYPE numeric(12,2);
 CREATE TABLE pilot_admins (user_id uuid PRIMARY KEY REFERENCES users(id));
 CREATE TABLE pilot_configs (
@@ -49,6 +55,7 @@ CREATE UNIQUE INDEX pilot_receipt_components ON equb_ledger(payment_intent_ref,t
 ALTER TABLE payout_jobs ADD COLUMN account_name text;
 ALTER TABLE payout_jobs ADD COLUMN account_number text;
 ALTER TABLE payout_jobs ADD COLUMN bank_code text;
+ALTER TABLE payout_jobs ADD COLUMN provider_reference text UNIQUE;
 CREATE TABLE pilot_attendance (
   room_id uuid NOT NULL REFERENCES pilot_configs(room_id), user_id uuid NOT NULL REFERENCES users(id),
   attendance_date date NOT NULL, approved boolean NOT NULL DEFAULT true, actor_id uuid NOT NULL REFERENCES users(id),
@@ -131,6 +138,10 @@ BEGIN
  IF length(trim(p_bank))=0 OR length(trim(p_account))<5 OR length(trim(p_name))<2 THEN RAISE EXCEPTION 'Valid payout details required'; END IF;
  SELECT pi.* INTO i FROM payment_intents pi JOIN pilot_enrollments e USING(tx_ref) WHERE e.room_id=p_room AND e.user_id=p_user AND e.state IN ('pending','enrolled');
  IF FOUND THEN RETURN to_jsonb(i)||jsonb_build_object('created',false); END IF;
+ -- A pending verification remains unresolved even after withdrawal. Never replace it.
+ SELECT pi.* INTO i FROM payment_intents pi JOIN pilot_enrollments e USING(tx_ref)
+ WHERE e.room_id=p_room AND e.user_id=p_user AND pi.status IN ('created','paid') ORDER BY pi.created_at DESC LIMIT 1;
+ IF FOUND THEN RETURN to_jsonb(i)||jsonb_build_object('created',false,'checkout_url',null); END IF;
  IF (SELECT count(*) FROM pilot_enrollments WHERE room_id=p_room AND state='enrolled')>=r.max_members THEN RAISE EXCEPTION 'Room full'; END IF;
  ref:='pi_pilot_enrollment_'||gen_random_uuid();
  INSERT INTO payment_intents(tx_ref,kind,target_id,user_id,expected_amount) VALUES(ref,'pilot_enrollment',p_room,p_user,c.program_fee+r.stake_amount) RETURNING * INTO i;
@@ -155,9 +166,9 @@ BEGIN
    IF i.provider_amount IS NULL THEN UPDATE payment_intents SET status='failed' WHERE tx_ref=p_tx_ref; UPDATE pilot_enrollments SET state='rejected' WHERE tx_ref=p_tx_ref; END IF;
    RETURN jsonb_build_object('status','failed');
  END IF;
- IF p_status<>'success' THEN RETURN jsonb_build_object('status','pending'); END IF;
+ IF p_status IS DISTINCT FROM 'success' THEN RETURN jsonb_build_object('status','pending'); END IF;
  IF p_amount IS NULL OR p_amount<=0 THEN RAISE EXCEPTION 'Invalid amount'; END IF;
- IF p_currency<>'ETB' THEN why:='wrong_currency';
+ IF p_currency IS DISTINCT FROM 'ETB' THEN why:='wrong_currency';
  ELSIF p_amount<>i.expected_amount THEN why:='wrong_amount';
  ELSIF e.state<>'pending' THEN why:='duplicate_or_withdrawn';
  ELSIF r.status<>'pending' OR now()>=least(c.enrollment_deadline,r.start_date) THEN why:='late_payment';

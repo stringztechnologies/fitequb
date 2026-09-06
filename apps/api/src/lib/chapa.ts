@@ -173,14 +173,14 @@ export async function verifyTransfer(
 	const parsed = z
 		.object({
 			status: z.string(),
-			data: z.object({ status: z.string(), reference: z.string().optional() }),
+			data: z.object({ status: z.string(), reference: z.string() }),
 		})
 		.safeParse(raw);
 	if (
 		!response.ok ||
 		!parsed.success ||
 		parsed.data.status !== "success" ||
-		(parsed.data.data.reference && parsed.data.data.reference !== reference)
+		parsed.data.data.reference !== reference
 	)
 		return { status: "pending", raw };
 	const status = parsed.data.data.status.toLowerCase();

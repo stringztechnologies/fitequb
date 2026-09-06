@@ -1,4 +1,5 @@
 import { type ReactNode, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 const BANNER_DISMISSED_KEY = "fitequb_tg_banner_dismissed";
 
@@ -15,6 +16,11 @@ function isQaTestMode(): boolean {
 }
 
 export function TelegramGate({ children }: { children: ReactNode }) {
+	const location = useLocation();
+	const room = /^\/pilot\/([a-f0-9-]{36})(?:\/|$)/.exec(location.pathname)?.[1];
+	const telegramUrl = room
+		? `https://t.me/fitequb_bot?start=pilot_${room}`
+		: "https://t.me/fitequb_bot";
 	const showBanner = !isTelegramWebApp() && !isPwaStandalone() && !isQaTestMode();
 	const [dismissed, setDismissed] = useState(
 		() => localStorage.getItem(BANNER_DISMISSED_KEY) === "true",
@@ -70,7 +76,7 @@ export function TelegramGate({ children }: { children: ReactNode }) {
 						</svg>
 						<span className="text-xs text-on-surface-variant truncate">
 							For the best experience,{" "}
-							<a href="https://t.me/fitequb_bot" className="text-primary font-bold hover:underline">
+							<a href={telegramUrl} className="text-primary font-bold hover:underline">
 								open in Telegram
 							</a>
 						</span>

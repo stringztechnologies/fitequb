@@ -7,6 +7,7 @@ interface Offer {
 	room_id: string;
 	program_fee: number;
 	terms_version: string;
+	enrollment_deadline: string;
 	checkout_enabled: boolean;
 	next_room_id: string | null;
 	coach_name: string;
@@ -20,6 +21,8 @@ interface Offer {
 		workout_target: number;
 		completion_pct: number;
 		house_fee_pct: number;
+		min_members: number;
+		max_members: number;
 	};
 }
 interface Enrollment {
@@ -33,6 +36,7 @@ interface Enrollment {
 	};
 }
 interface Status {
+	member: { qualified: boolean; payout_amount: number } | null;
 	enrollments: Enrollment[];
 	attendance: Array<{ attendance_date: string; approved: boolean; reason: string }>;
 	disputes: Array<{ id: string; reason: string; resolution: string | null }>;
@@ -54,6 +58,12 @@ const dateLabel = (s: string) =>
 	new Intl.DateTimeFormat("en", { timeZone: "Africa/Addis_Ababa", dateStyle: "medium" }).format(
 		new Date(s),
 	);
+const cutoffLabel = (s: string) =>
+	new Intl.DateTimeFormat("en", {
+		timeZone: "Africa/Addis_Ababa",
+		dateStyle: "medium",
+		timeStyle: "short",
+	}).format(new Date(s));
 export function Pilot() {
 	const { roomId } = useParams();
 	const { isGuest, loading: authLoading } = useAuth();
@@ -144,6 +154,10 @@ export function Pilot() {
 	const room = offer.equb_rooms;
 	const total = Number(offer.program_fee) + Number(room.stake_amount);
 	const enrolled = status?.enrollments.some((e) => e.state === "enrolled");
+	const canEnroll =
+		offer.checkout_enabled &&
+		room.status === "pending" &&
+		Date.now() < Date.parse(offer.enrollment_deadline);
 	return (
 		<main className="p-5 pb-28 space-y-5 text-on-surface">
 			<Link to="/">FitEqub</Link>
@@ -153,6 +167,15 @@ export function Pilot() {
 			</p>
 			<p>
 				{dateLabel(room.start_date)} – {dateLabel(room.end_date)} · Addis Ababa time
+			</p>
+			<p>
+				Starts at {cutoffLabel(room.start_date)} EAT. Attendance closes at{" "}
+				{cutoffLabel(room.end_date)} EAT (exclusive).
+			</p>
+			<p>
+				Enrollment closes at {cutoffLabel(offer.enrollment_deadline)} EAT. Minimum{" "}
+				{room.min_members}, maximum {room.max_members} participants. If the minimum is not reached
+				at the deadline, the cohort is cancelled and both the program fee and stake are refunded.
 			</p>
 			<p>
 				Coach follow-up, a small group, and staff-recorded attendance. Gym membership and personal
@@ -184,7 +207,7 @@ export function Pilot() {
 					Withdraw before the scheduled start for a full program-fee and stake refund. After
 					starting, voluntary withdrawal, including illness, does not refund the program fee; stakes
 					follow attendance rules. Operator cancellation returns stakes and refunds undelivered
-					service.
+					service proportionally to unused scheduled time, rounded to ETB cents.
 				</p>
 				<p>
 					Report attendance disputes by 24 hours after the program ends. Settlement waits for
@@ -196,9 +219,7 @@ export function Pilot() {
 					{error}
 				</p>
 			)}
-			{!offer.checkout_enabled && (
-				<output>Enrollment is not enabled. No payment will be collected.</output>
-			)}
+			{!canEnroll && <output>New enrollment is not enabled.</output>}
 			{isGuest && !authLoading ? (
 				<Link
 					className="block underline"
@@ -207,7 +228,7 @@ export function Pilot() {
 					Sign in to join this cohort
 				</Link>
 			) : null}
-			{!isGuest && !enrolled && offer.checkout_enabled && (
+			{!isGuest && !enrolled && canEnroll && (
 				<form
 					className="space-y-3"
 					onSubmit={(e) => {
@@ -346,6 +367,17 @@ export function Pilot() {
 						</p>
 					))}
 					<h3>Money and delivery</h3>
+					{room.status === "settled" && status.member && (
+						<p>
+							Stake outcome:{" "}
+							{status.member.qualified
+								? `qualified; ${status.member.payout_amount} ETB payout`
+								: Number(status.member.payout_amount) > 0
+									? `${status.member.payout_amount} ETB stake return (no qualifiers)`
+									: "stake forfeited under attendance rules"}
+							. Delivery is shown separately below.
+						</p>
+					)}
 					{status.money.map((m) => (
 						<p key={m.id}>
 							{m.type.replaceAll("_", " ")}: {m.amount} ETB{" "}

@@ -39,7 +39,7 @@ Read-only connector checks on 2026-09-06 confirmed v1 `equb_id` / `entry_type` c
 
 Staff: sign in, open `/pilot/<room-id>/staff`, confirm only people actually seen at the gym today. Do not approve your own attendance. Send corrections to the operator with the member/date; no shared admin key or public day-pass page grants pilot approval rights.
 
-Operator daily: check receipt mismatches, unknown initialization, `processing`/`sent` transfers, customer refunds, disputes, and cohort status. Run reconciliation before considering a retry. Record Chapa charges, coach/gym costs, other actual costs, estimates separately, and operator minutes.
+Operator daily: check receipt mismatches, unknown initialization, `processing`/`sent` transfers, customer refunds, disputes, and cohort status. Run reconciliation before considering a retry. Each confirmed-failure retry has a new deterministic provider reference tied to its attempt number; old verification results cannot change a later attempt. Record Chapa charges, coach/gym costs, other actual costs, estimates separately, and operator minutes.
 
 An unknown checkout must not trigger another charge. Verify the existing reference through the provider and the member status page. If the provider cannot establish its outcome, leave it unresolved and work with provider support; do not delete the reference to force a retry. Wrong-currency receipts require provider resolution and must not be returned as if they were ETB. Preserve the evidence until resolved.
 
@@ -49,12 +49,16 @@ Schedule `/cron/settle` and `/cron/payouts` frequently enough for operations; bo
 
 ## Measurement and decision
 
-Track introduction source, offer, fee payment, first attendance, approved days, withdrawals, refunds, money delivered, renewal offers and fee payments. The admin report/export uses backend payment/attendance facts. Stake-only participation is not a paid service renewal. A refunded program enrollment is excluded; a next-cohort fee below the original is not counted as an unsubsidized renewal.
+Track introduction source, offer, fee payment, first attendance, approved days, withdrawals, refunds, money delivered, renewal offers and fee payments. The admin report/export uses backend payment/attendance facts. Stake-only participation is not a paid service renewal. A refunded program enrollment is excluded; paid renewal means a new positive program-fee payment after the original enrollment. Compare actual renewal prices separately; discounted renewals do not prove acceptance at the original price.
 
-Record all costs before interpreting contribution; unentered fees and unpaid founder time are not profit. Targets: 20 fee payers, 10 paid renewals at comparable terms within eight days after the cohort, partner willingness to repeat, positive direct contribution, no unreconciled customer losses. These are proposed continuation thresholds, not product-market-fit proof.
+Record all costs before interpreting contribution; unentered fees and unpaid founder time are not profit. Targets: 20 fee payers, 10 paid renewals, partner willingness to repeat, positive direct contribution, no unreconciled customer losses. These are proposed continuation thresholds, not product-market-fit proof.
 
 Preparation checkpoint after two weeks; once ready, seven days enrollment + 30 days delivery + eight days renewal. Diagnose channel/offer/checkout/delivery/renewal failures separately, make one targeted adjustment, then pause if repeat payment and viable delivery do not appear. No paid ads or unsolicited outreach is automated.
 
 ## Rollback
 
 Before any money, revert application rollout if needed while keeping checkout disabled. After money exists, disable new enrollment, retain financial records, reconcile provider outcomes and apply forward fixes. Never restore an old snapshot that erases transactions. Refund obligations and stakes cannot fund operating expenses.
+
+## Provider contract references
+
+Transfer delivery reconciliation uses [Chapa transfer verification](https://developer.chapa.co/transfer/verify-transfers). A response without the matching provider reference or a recognized outcome stays unresolved. Confirm the merchant's actual response format and approval process during the controlled provider rehearsal.

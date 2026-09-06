@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth.js";
 import { api } from "../lib/api.js";
 import { eatDate } from "./Pilot.js";
 interface Cohort {
@@ -58,6 +59,7 @@ function fields(form: HTMLFormElement) {
 	return Object.fromEntries(new FormData(form).entries());
 }
 export function PilotAdmin() {
+	const { loading: authLoading, isGuest } = useAuth();
 	const [cohorts, setCohorts] = useState<Cohort[]>([]);
 	const [room, setRoom] = useState("");
 	const [report, setReport] = useState<Report | null>(null);
@@ -71,8 +73,8 @@ export function PilotAdmin() {
 		else setMessage(r.error ?? "Unavailable");
 	}, []);
 	useEffect(() => {
-		void load();
-	}, [load]);
+		if (!authLoading && !isGuest) void load();
+	}, [load, authLoading, isGuest]);
 	async function refresh(id = room) {
 		if (!id) return;
 		const r = await api<Report>(`/api/pilot-admin/${id}/report`);

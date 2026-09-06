@@ -11,6 +11,6 @@ Start PostgREST against that database with schema `public`, anon role `anon`, an
 
 `pnpm test:db` runs database and API scenarios serially. The fixture models preserved v1 DATE/integer columns, then executes actual S2, money, and pilot migrations. It is a local rehearsal of those contracts, not a replacement for staging against the full current production schema.
 
-`pnpm test:pilot-browser` starts Vite with test-only API/auth URLs and runs Chromium in CI or installed Chrome locally. Browser tests cover offer display, Telegram enrollment/payment recovery, native email OTP return, renewal navigation and staff confirmation. Browser API responses are contract fixtures; the independent API suite tests actual database behavior.
+`pnpm test:pilot-browser` starts Vite with test-only API/auth URLs and runs Chromium in CI or installed Chrome locally. Browser tests cover offer display, Telegram enrollment/payment recovery, native email OTP return, direct Telegram invitation, renewal navigation, staff confirmation and native staff-session recovery after reload. Browser API responses are contract fixtures; the independent API suite tests actual database behavior.
 
-Run `pnpm lint`, `pnpm typecheck`, `pnpm build`, `pnpm test --run`, then the database and browser suites. CI provisions an isolated PostgreSQL service and PostgREST process. Do not pass a live API URL into these tests.
+Run `pnpm lint`, `pnpm typecheck`, `pnpm build`, `pnpm run test --run`, then the database and browser suites. CI provisions an isolated PostgreSQL service and PostgREST process. Do not pass a live API URL into these tests.
