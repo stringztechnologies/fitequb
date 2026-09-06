@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { verifyChapaWebhook, verifyPayment } from "../lib/chapa.js";
 import type { ChapaVerifyResponse } from "../lib/chapa.js";
+import { reconcilePilotReceipt } from "../lib/pilot-receipts.js";
 import { supabase } from "../lib/supabase.js";
 
 const chapaWebhookSchema = z
@@ -12,7 +13,7 @@ const chapaWebhookSchema = z
 	})
 	.passthrough();
 
-type PaymentIntentKind = "stake" | "daypass" | "duel" | "coach";
+type PaymentIntentKind = "stake" | "daypass" | "duel" | "coach" | "pilot_enrollment";
 
 interface PaymentIntentRow {
 	kind: PaymentIntentKind;
@@ -56,6 +57,15 @@ webhooks.post("/chapa", async (c) => {
 		return c.json({ status: "ignored", reason: "unknown_tx_ref" });
 	}
 
+	if (intent.kind === "pilot_enrollment") {
+		if (["credited", "mismatch", "refund_requested", "refunded"].includes(intent.status))
+			return c.json({ data: { status: intent.status }, error: null });
+		try {
+			return c.json({ data: await reconcilePilotReceipt(txRef), error: null });
+		} catch {
+			return c.json({ data: null, error: "Provider verification is unresolved" }, 503);
+		}
+	}
 	if (intent.status === "credited") {
 		return c.json({ status: "already_processed" });
 	}
@@ -119,6 +129,8 @@ webhooks.post("/chapa", async (c) => {
 		return c.json({ status: "mismatch", reason: "verified_tx_ref_mismatch" });
 	}
 
+	if (verifiedData.currency !== "ETB")
+		return c.json({ data: null, error: "Unexpected payment currency" }, 400);
 	const paidAmount = Number(verifiedData.amount);
 	if (!Number.isFinite(paidAmount)) {
 		return c.json({ error: "Verified amount is invalid" }, 502);
@@ -155,6 +167,8 @@ function getCreditRpc(kind: PaymentIntentKind) {
 			return "activate_day_pass_payment";
 		case "coach":
 			return "activate_coach_pass_payment";
+		case "pilot_enrollment":
+			throw new Error("Pilot uses verified allocation");
 	}
 }
 

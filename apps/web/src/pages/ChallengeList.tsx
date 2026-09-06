@@ -217,14 +217,10 @@ function ChallengeCard({
 		: 0;
 
 	return (
-		<div
+		<button
+			type="button"
 			className="bg-surface-container-low rounded-lg p-5 border border-outline-variant/10 cursor-pointer active:scale-[0.98] transition-transform"
 			onClick={onJoin}
-			onKeyDown={(e) => {
-				if (e.key === "Enter") onJoin();
-			}}
-			role="button"
-			tabIndex={0}
 		>
 			<div className="flex items-start gap-3.5">
 				{/* Icon */}
@@ -298,7 +294,7 @@ function ChallengeCard({
 					</div>
 				</div>
 			</div>
-		</div>
+		</button>
 	);
 }
 

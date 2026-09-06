@@ -46,10 +46,8 @@ gymPublic.post("/redeem-pass", async (c) => {
 		.single();
 
 	if (!pass) return c.json({ data: null, error: "Invalid pass code" }, 404);
-	if (pass.status === "redeemed")
-		return c.json({ data: null, error: "Already redeemed" }, 400);
-	if (pass.status === "expired")
-		return c.json({ data: null, error: "Pass expired" }, 400);
+	if (pass.status === "redeemed") return c.json({ data: null, error: "Already redeemed" }, 400);
+	if (pass.status === "expired") return c.json({ data: null, error: "Pass expired" }, 400);
 
 	const { error } = await supabase
 		.from("day_passes")
@@ -85,9 +83,7 @@ gymPublic.get("/dashboard", async (c) => {
 
 	const allPasses = passes ?? [];
 	const totalSold = allPasses.length;
-	const totalRedeemed = allPasses.filter(
-		(p) => p.status === "redeemed",
-	).length;
+	const totalRedeemed = allPasses.filter((p) => p.status === "redeemed").length;
 	const revenue = totalSold * gym.app_day_pass;
 	const gymPayout = Math.round(revenue * 0.7); // gym gets 70%
 
@@ -98,7 +94,7 @@ gymPublic.get("/dashboard", async (c) => {
 			recentPasses: allPasses.slice(0, 20).map((p) => ({
 				id: p.id,
 				status: p.status,
-				userName: (p.users as any)?.full_name ?? "Unknown",
+				userName: (p.users as unknown as { full_name?: string } | null)?.full_name ?? "Unknown",
 				purchasedAt: p.purchased_at,
 				redeemedAt: p.redeemed_at,
 			})),

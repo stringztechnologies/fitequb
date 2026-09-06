@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loading } from "../components/Loading.js";
 import { TelegramModal, useTelegramModal } from "../components/TelegramModal.js";
@@ -28,7 +28,7 @@ export function VerifyWorkout() {
 	// GPS loading
 	const [gpsLoading, setGpsLoading] = useState(false);
 
-	const fetchSummary = () => {
+	const fetchSummary = useCallback(() => {
 		api<DailySummary>("/api/verify/daily-summary")
 			.then((res) =>
 				setSummary(
@@ -49,12 +49,12 @@ export function VerifyWorkout() {
 				}),
 			)
 			.finally(() => setLoading(false));
-	};
+	}, []);
 
 	useEffect(() => {
 		if (!isGuest) fetchSummary();
 		else setLoading(false);
-	}, [isGuest]);
+	}, [isGuest, fetchSummary]);
 
 	const showResult = (msg: string) => {
 		setResult(msg);

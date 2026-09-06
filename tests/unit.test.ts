@@ -1,55 +1,7 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
-// ── Settlement Math ──
-
-describe("Settlement math", () => {
-	const HOUSE_FEE_PCT = 0.05;
-
-	function calculateSettlement(stakeAmount: number, memberCount: number, qualifiedCount: number) {
-		const totalPot = stakeAmount * memberCount;
-		const houseFee = Math.round(totalPot * HOUSE_FEE_PCT);
-		const distributablePot = totalPot - houseFee;
-		const payoutPerWinner = qualifiedCount > 0 ? Math.floor(distributablePot / qualifiedCount) : 0;
-		const remainder = distributablePot - payoutPerWinner * qualifiedCount;
-		return { totalPot, houseFee, distributablePot, payoutPerWinner, remainder };
-	}
-
-	it("calculates correct payout for 20 members, 15 qualified", () => {
-		const result = calculateSettlement(500, 20, 15);
-		expect(result.totalPot).toBe(10000);
-		expect(result.houseFee).toBe(500);
-		expect(result.distributablePot).toBe(9500);
-		expect(result.payoutPerWinner).toBe(633);
-		expect(result.houseFee + result.payoutPerWinner * 15 + result.remainder).toBe(result.totalPot);
-	});
-
-	it("handles zero qualified members", () => {
-		const result = calculateSettlement(1000, 10, 0);
-		expect(result.totalPot).toBe(10000);
-		expect(result.payoutPerWinner).toBe(0);
-	});
-
-	it("handles free equb (stake = 0)", () => {
-		const result = calculateSettlement(0, 20, 18);
-		expect(result.totalPot).toBe(0);
-		expect(result.houseFee).toBe(0);
-		expect(result.payoutPerWinner).toBe(0);
-	});
-
-	it("preserves total: house_fee + payouts = total_pot", () => {
-		const stakes = [100, 250, 500, 1000];
-		const members = [3, 5, 10, 15, 20];
-		for (const stake of stakes) {
-			for (const count of members) {
-				for (let q = 1; q <= count; q++) {
-					const r = calculateSettlement(stake, count, q);
-					expect(r.houseFee + r.payoutPerWinner * q + r.remainder).toBe(r.totalPot);
-				}
-			}
-		}
-	});
-});
+// Settlement is verified against the actual SQL in pilot-db.test.ts.
 
 // ── Chapa Webhook HMAC ──
 

@@ -28,48 +28,44 @@ export const POINTS_REFERRAL = 100;
 
 // Gamification — Levels
 export const LEVEL_THRESHOLDS = [
-  { level: 1, name: "Beginner", min_points: 0, perk: null },
-  { level: 2, name: "Active", min_points: 200, perk: null },
-  { level: 3, name: "Committed", min_points: 500, perk: "Create Equb rooms" },
-  { level: 4, name: "Dedicated", min_points: 1000, perk: null },
-  {
-    level: 5,
-    name: "Strong",
-    min_points: 2000,
-    perk: "10% gym day pass discount",
-  },
-  { level: 6, name: "Warrior", min_points: 4000, perk: null },
-  {
-    level: 7,
-    name: "Champion",
-    min_points: 7000,
-    perk: "Priority sponsored Equbs",
-  },
-  { level: 8, name: "Elite", min_points: 11000, perk: null },
-  { level: 9, name: "Master", min_points: 16000, perk: null },
-  {
-    level: 10,
-    name: "Legend",
-    min_points: 22000,
-    perk: "Free sponsored Equb entry",
-  },
+	{ level: 1, name: "Beginner", min_points: 0, perk: null },
+	{ level: 2, name: "Active", min_points: 200, perk: null },
+	{ level: 3, name: "Committed", min_points: 500, perk: "Create Equb rooms" },
+	{ level: 4, name: "Dedicated", min_points: 1000, perk: null },
+	{
+		level: 5,
+		name: "Strong",
+		min_points: 2000,
+		perk: "10% gym day pass discount",
+	},
+	{ level: 6, name: "Warrior", min_points: 4000, perk: null },
+	{
+		level: 7,
+		name: "Champion",
+		min_points: 7000,
+		perk: "Priority sponsored Equbs",
+	},
+	{ level: 8, name: "Elite", min_points: 11000, perk: null },
+	{ level: 9, name: "Master", min_points: 16000, perk: null },
+	{
+		level: 10,
+		name: "Legend",
+		min_points: 22000,
+		perk: "Free sponsored Equb entry",
+	},
 ] as const;
 
-export function getLevelForPoints(
-  points: number,
-): (typeof LEVEL_THRESHOLDS)[number] {
-  for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
-    const level = LEVEL_THRESHOLDS[i];
-    if (level && points >= level.min_points) {
-      return level;
-    }
-  }
-  return LEVEL_THRESHOLDS[0] as (typeof LEVEL_THRESHOLDS)[number];
+export function getLevelForPoints(points: number): (typeof LEVEL_THRESHOLDS)[number] {
+	for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
+		const level = LEVEL_THRESHOLDS[i];
+		if (level && points >= level.min_points) {
+			return level;
+		}
+	}
+	return LEVEL_THRESHOLDS[0] as (typeof LEVEL_THRESHOLDS)[number];
 }
 
-export function getNextLevel(
-  currentLevel: number,
-): (typeof LEVEL_THRESHOLDS)[number] | null {
-  const next = LEVEL_THRESHOLDS.find((l) => l.level === currentLevel + 1);
-  return next ?? null;
+export function getNextLevel(currentLevel: number): (typeof LEVEL_THRESHOLDS)[number] | null {
+	const next = LEVEL_THRESHOLDS.find((l) => l.level === currentLevel + 1);
+	return next ?? null;
 }

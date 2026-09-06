@@ -46,7 +46,10 @@ export type LedgerEntryType =
 	| "fee"
 	| "refund"
 	| "day_pass_purchase"
-	| "sponsor";
+	| "sponsor"
+	| "program_fee"
+	| "program_refund"
+	| "payment_refund";
 
 export interface EqubLedgerEntry {
 	id: string;

@@ -52,12 +52,21 @@ export function CoachList() {
 		<div className="bg-background text-on-surface font-body min-h-screen pb-32">
 			{/* Header */}
 			<header className="fixed top-0 w-full max-w-[430px] z-50 bg-[#131313]/70 backdrop-blur-xl flex items-center gap-3 px-5 h-16">
-				<button type="button" onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container active:scale-95 transition-all" aria-label="Go back">
-					<span className="material-symbols-outlined text-on-surface-variant text-xl">arrow_back</span>
+				<button
+					type="button"
+					onClick={() => navigate(-1)}
+					className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container active:scale-95 transition-all"
+					aria-label="Go back"
+				>
+					<span className="material-symbols-outlined text-on-surface-variant text-xl">
+						arrow_back
+					</span>
 				</button>
 				<div>
 					<h1 className="font-headline font-bold text-lg text-on-surface">Coach Day Pass</h1>
-					<p className="font-label text-2xs text-on-surface-variant">Book a session with a trainer</p>
+					<p className="font-label text-2xs text-on-surface-variant">
+						Book a session with a trainer
+					</p>
 				</div>
 			</header>
 			<div className="h-16" />
@@ -95,29 +104,38 @@ export function CoachList() {
 								<div className="flex items-start justify-between">
 									<div className="flex items-center gap-3">
 										<div className="w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center">
-											<span className="material-symbols-outlined text-primary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+											<span
+												className="material-symbols-outlined text-primary text-2xl"
+												style={{ fontVariationSettings: "'FILL' 1" }}
+											>
 												{session.session_type === "virtual" ? "videocam" : "sports_martial_arts"}
 											</span>
 										</div>
 										<div>
-											<p className="font-headline text-base font-bold text-on-surface">{session.title}</p>
+											<p className="font-headline text-base font-bold text-on-surface">
+												{session.title}
+											</p>
 											<p className="font-label text-xs text-on-surface-variant">
 												{session.trainer_name}
 												{session.gym_name ? ` · ${session.gym_name}` : ""}
 											</p>
 										</div>
 									</div>
-									<span className={`px-2.5 py-1 rounded-full font-label text-2xs font-bold uppercase tracking-wider ${
-										session.session_type === "virtual"
-											? "bg-secondary-container/15 text-secondary-container"
-											: "bg-primary/15 text-primary"
-									}`}>
+									<span
+										className={`px-2.5 py-1 rounded-full font-label text-2xs font-bold uppercase tracking-wider ${
+											session.session_type === "virtual"
+												? "bg-secondary-container/15 text-secondary-container"
+												: "bg-primary/15 text-primary"
+										}`}
+									>
 										{session.session_type === "virtual" ? "Virtual" : "In-Person"}
 									</span>
 								</div>
 
 								{session.description && (
-									<p className="text-sm text-on-surface-variant leading-relaxed">{session.description}</p>
+									<p className="text-sm text-on-surface-variant leading-relaxed">
+										{session.description}
+									</p>
 								)}
 
 								<div className="flex items-center gap-4 text-on-surface-variant">
@@ -129,7 +147,9 @@ export function CoachList() {
 
 								<div className="flex items-center justify-between pt-2 border-t border-outline-variant/10">
 									<div>
-										<span className="font-headline text-xl font-bold text-primary">{session.price.toLocaleString()}</span>
+										<span className="font-headline text-xl font-bold text-primary">
+											{session.price.toLocaleString()}
+										</span>
 										<span className="font-label text-xs text-on-surface-variant ml-1">ETB</span>
 									</div>
 									<button

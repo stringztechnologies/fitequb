@@ -2,8 +2,9 @@ import { timingSafeEqual } from "node:crypto";
 import { POINTS_EQUB_COMPLETE, POINTS_EQUB_WIN } from "@fitequb/shared";
 import { Hono } from "hono";
 import { notifySettlementResult } from "../lib/bot-notify.js";
-import { initiateTransfer } from "../lib/chapa.js";
+import { getBanks, initiateTransfer } from "../lib/chapa.js";
 import type { ChapaTransferResponse } from "../lib/chapa.js";
+import { processPilotPayouts } from "../lib/pilot-payouts.js";
 import { supabase } from "../lib/supabase.js";
 
 const cron = new Hono();
@@ -123,6 +124,8 @@ cron.post("/settle", async (c) => {
 		return c.json({ error: "Unauthorized" }, 401);
 	}
 
+	const { error: lifecycleError } = await supabase.rpc("pilot_lifecycle");
+	if (lifecycleError) return c.json({ data: null, error: lifecycleError.message }, 500);
 	// Find active rooms past their end_date
 	const { data: expiredRooms, error: fetchError } = await supabase
 		.from("equb_rooms")
@@ -308,12 +311,16 @@ cron.post("/payouts", async (c) => {
 		return c.json({ error: "Unauthorized" }, 401);
 	}
 
+	const { error: lifecycleError } = await supabase.rpc("pilot_lifecycle");
+	if (lifecycleError) return c.json({ data: null, error: lifecycleError.message }, 500);
+	const pilotResult = await processPilotPayouts();
 	const enqueueResult = await enqueuePayoutJobs();
 
 	const { data: pendingJobs, error: fetchError } = await supabase
 		.from("payout_jobs")
 		.select("id, ledger_id, user_id, amount, reference, attempts, status, users(full_name, phone)")
 		.in("status", ["pending", "failed"])
+		.is("bank_code", null)
 		.order("created_at", { ascending: true })
 		.limit(50);
 
@@ -356,7 +363,8 @@ cron.post("/payouts", async (c) => {
 			await supabase
 				.from("payout_jobs")
 				.update({ status: "failed", last_error: "No phone number for payout" })
-				.eq("id", claimed.id);
+				.eq("id", claimed.id)
+				.eq("status", "processing");
 			results.push({
 				payout_job_id: claimed.id,
 				success: false,
@@ -373,14 +381,19 @@ cron.post("/payouts", async (c) => {
 				amount: claimed.amount,
 				currency: "ETB",
 				reference: claimed.reference,
-				bank_code: "telebirr",
+				bank_code:
+					(await getBanks()).find((bank) => bank.name.toLowerCase().includes("telebirr"))?.id ??
+					(() => {
+						throw new Error("Telebirr payout bank unavailable");
+					})(),
 			});
 		} catch (error) {
 			const message = error instanceof Error ? error.message : "Transfer request failed";
 			await supabase
 				.from("payout_jobs")
-				.update({ status: "failed", last_error: message })
-				.eq("id", claimed.id);
+				.update({ status: "processing", last_error: message })
+				.eq("id", claimed.id)
+				.eq("status", "processing");
 			results.push({
 				payout_job_id: claimed.id,
 				amount: claimed.amount,
@@ -401,16 +414,18 @@ cron.post("/payouts", async (c) => {
 					sent_at: new Date().toISOString(),
 					provider_response: transferResult,
 				})
-				.eq("id", claimed.id);
+				.eq("id", claimed.id)
+				.eq("status", "processing");
 		} else {
 			await supabase
 				.from("payout_jobs")
 				.update({
-					status: "failed",
+					status: "processing",
 					last_error: transferResult?.message ?? "Transfer failed",
 					provider_response: transferResult ?? null,
 				})
-				.eq("id", claimed.id);
+				.eq("id", claimed.id)
+				.eq("status", "processing");
 		}
 
 		results.push({
@@ -424,6 +439,7 @@ cron.post("/payouts", async (c) => {
 	return c.json({
 		data: {
 			processed: results.filter((r) => r.success).length,
+			pilot: pilotResult,
 			enqueued: enqueueResult.enqueued,
 			payouts: results,
 		},
@@ -443,6 +459,11 @@ cron.post("/daily-reset", async (c) => {
 	let completedDays = 0;
 	let missedDays = 0;
 
+	const { data: pilotRooms, error: pilotError } = await supabase
+		.from("pilot_configs")
+		.select("room_id");
+	if (pilotError) return c.json({ data: null, error: "Pilot configuration unavailable" }, 503);
+	const pilotIds = new Set((pilotRooms ?? []).map((p) => p.room_id));
 	// Get all active equb members
 	const { data: activeRooms } = await supabase
 		.from("equb_rooms")
@@ -459,6 +480,7 @@ cron.post("/daily-reset", async (c) => {
 
 		if (members) {
 			for (const member of members) {
+				if (pilotIds.has(member.room_id)) continue;
 				// Check if yesterday was complete
 				const { data: summary } = await supabase
 					.from("daily_verification_summary")

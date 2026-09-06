@@ -135,7 +135,7 @@ function SupabaseSignIn({ client }: { client: SupabaseClient }) {
 		if (meRes.ok) {
 			const meJson = (await meRes.json()) as { data: User | null };
 			if (meJson.data) {
-				navigate("/", { replace: true });
+				navigate(safeReturnPath(), { replace: true });
 				return;
 			}
 		}
@@ -185,7 +185,7 @@ function SupabaseSignIn({ client }: { client: SupabaseClient }) {
 			return;
 		}
 
-		navigate("/", { replace: true });
+		navigate(safeReturnPath(), { replace: true });
 	}
 
 	return (
@@ -405,4 +405,14 @@ function SupabaseSignIn({ client }: { client: SupabaseClient }) {
 			)}
 		</div>
 	);
+}
+
+function safeReturnPath() {
+	const next = new URLSearchParams(window.location.search).get("next");
+	return next &&
+		/^\/pilot(?:\/|$|-admin$)/.test(next) &&
+		!next.includes("\\") &&
+		!next.includes("\n")
+		? next
+		: "/";
 }

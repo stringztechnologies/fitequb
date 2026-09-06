@@ -38,6 +38,14 @@ workouts.post("/", async (c) => {
 		return c.json<ApiResponse<null>>({ data: null, error: "User not found" }, 404);
 	}
 
+	const { data: pilot, error: pilotError } = await supabase
+		.from("pilot_configs")
+		.select("room_id")
+		.eq("room_id", parsed.data.room_id)
+		.maybeSingle();
+	if (pilotError)
+		return c.json({ data: null, error: "Verification configuration unavailable" }, 503);
+	if (pilot) return c.json({ data: null, error: "Pilot attendance requires assigned staff" }, 403);
 	// Verify user is a member of this room
 	const { data: membership } = await supabase
 		.from("equb_members")

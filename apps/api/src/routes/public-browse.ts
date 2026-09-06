@@ -42,6 +42,13 @@ publicBrowse.get("/equb-rooms", async (c) => {
 // GET /public/equb-rooms/:id — room detail with members (no auth)
 publicBrowse.get("/equb-rooms/:id", async (c) => {
 	const roomId = c.req.param("id");
+	const { data: pilot, error: pilotError } = await supabase
+		.from("pilot_configs")
+		.select("room_id")
+		.eq("room_id", roomId)
+		.maybeSingle();
+	if (pilotError) return c.json({ data: null, error: "Room configuration unavailable" }, 503);
+	if (pilot) return c.json({ data: { pilot_path: `/pilot/${roomId}` }, error: null });
 
 	const [roomResult, membersResult] = await Promise.all([
 		supabase.from("equb_rooms").select("*").eq("id", roomId).single(),
@@ -149,7 +156,8 @@ publicBrowse.get("/gamification/leaderboard", async (c) => {
 // 20 requests per minute (by IP for unauthenticated users)
 publicBrowse.use("/ai/coach", rateLimit(20, 60 * 1000));
 
-const SYSTEM_PROMPT = `You are FitEqub Coach, a fitness advisor for young professionals in Addis Ababa, Ethiopia. Keep responses to 2-3 sentences. Be encouraging and motivational. Know about Orthodox fasting (Tsom) and Ethiopian food (injera, shiro, tibs). Suggest fasting-friendly exercises during Tsom periods. Reference local gyms and walking routes in Addis (Bole, Meskel Square, Entoto hills, Churchill Avenue). Speak casually like a friend, not a doctor. If the user asks non-fitness questions, gently redirect to fitness topics. Use ETB for money references. If the user mentions their Equb, encourage them to hit their step targets.`;
+const SYSTEM_PROMPT =
+	"You are FitEqub Coach, a fitness advisor for young professionals in Addis Ababa, Ethiopia. Keep responses to 2-3 sentences. Be encouraging and motivational. Know about Orthodox fasting (Tsom) and Ethiopian food (injera, shiro, tibs). Suggest fasting-friendly exercises during Tsom periods. Reference local gyms and walking routes in Addis (Bole, Meskel Square, Entoto hills, Churchill Avenue). Speak casually like a friend, not a doctor. If the user asks non-fitness questions, gently redirect to fitness topics. Use ETB for money references. If the user mentions their Equb, encourage them to hit their step targets.";
 
 // POST /public/ai/coach — AI coach for everyone (no auth)
 publicBrowse.post("/ai/coach", async (c) => {

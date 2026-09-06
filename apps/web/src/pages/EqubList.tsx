@@ -189,15 +189,7 @@ function RealCard({
 		room.name.toLowerCase().includes("step") || room.name.toLowerCase().includes("run");
 
 	return (
-		<div
-			role="article"
-			onClick={onClick}
-			onKeyDown={(e) => {
-				if (e.key === "Enter") onClick();
-			}}
-			tabIndex={0}
-			className="w-full text-left bg-surface-container-low rounded-lg p-5 space-y-5 cursor-pointer active:scale-[0.98] transition-transform"
-		>
+		<article className="w-full text-left bg-surface-container-low rounded-lg p-5 space-y-5 cursor-pointer active:scale-[0.98] transition-transform">
 			{/* Top row: name + badge + requirement */}
 			<div className="space-y-1">
 				<div className="flex items-start justify-between gap-2">
@@ -288,7 +280,7 @@ function RealCard({
 			>
 				Join Now
 			</button>
-		</div>
+		</article>
 	);
 }
 

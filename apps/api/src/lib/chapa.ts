@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { z } from "zod";
 
 const CHAPA_BASE_URL = "https://api.chapa.co/v1";
 
@@ -62,6 +63,7 @@ export async function initializePayment(payload: ChapaInitPayload): Promise<Chap
 			"Content-Type": "application/json",
 		},
 		body: JSON.stringify(payload),
+		signal: AbortSignal.timeout(15000),
 	});
 
 	const body = (await readJson<Partial<ChapaInitResponse>>(res)) ?? {};
@@ -77,7 +79,8 @@ export async function initializePayment(payload: ChapaInitPayload): Promise<Chap
 }
 
 export async function verifyPayment(txRef: string): Promise<ChapaVerifyResponse> {
-	const res = await fetch(`${CHAPA_BASE_URL}/transaction/verify/${txRef}`, {
+	const res = await fetch(`${CHAPA_BASE_URL}/transaction/verify/${encodeURIComponent(txRef)}`, {
+		signal: AbortSignal.timeout(15000),
 		headers: {
 			Authorization: `Bearer ${getSecretKey()}`,
 		},
@@ -105,6 +108,7 @@ export async function initiateTransfer(
 			"Content-Type": "application/json",
 		},
 		body: JSON.stringify(payload),
+		signal: AbortSignal.timeout(15000),
 	});
 
 	let body: Partial<ChapaTransferResponse>;
@@ -115,7 +119,7 @@ export async function initiateTransfer(
 	}
 
 	return {
-		status: body.status ?? (res.ok ? "success" : "failed"),
+		status: body.status ?? "unknown",
 		message: body.message,
 		data: body.data,
 		http_status: res.status,
@@ -138,4 +142,55 @@ export function verifyChapaWebhook(body: string, signature: string): boolean {
 	const hash = createHmac("sha256", secret).update(body).digest("hex");
 	if (hash.length !== signature.length) return false;
 	return timingSafeEqual(Buffer.from(hash), Buffer.from(signature));
+}
+
+// Validate provider responses at the network boundary; ambiguous responses never imply success.
+export async function getBanks(): Promise<Array<{ id: string; name: string }>> {
+	const response = await fetch(`${CHAPA_BASE_URL}/banks`, {
+		headers: { Authorization: `Bearer ${getSecretKey()}` },
+		signal: AbortSignal.timeout(15000),
+	});
+	const body: unknown = await response.json();
+	const parsed = z
+		.object({
+			status: z.literal("success"),
+			data: z.array(
+				z.object({ id: z.union([z.number(), z.string()]).transform(String), name: z.string() }),
+			),
+		})
+		.safeParse(body);
+	if (!response.ok || !parsed.success) throw new Error("Unable to load payout banks");
+	return parsed.data.data;
+}
+export async function verifyTransfer(
+	reference: string,
+): Promise<{ status: "confirmed" | "failed" | "pending"; raw: unknown }> {
+	const response = await fetch(
+		`${CHAPA_BASE_URL}/transfers/verify/${encodeURIComponent(reference)}`,
+		{ headers: { Authorization: `Bearer ${getSecretKey()}` }, signal: AbortSignal.timeout(15000) },
+	);
+	const raw: unknown = await response.json();
+	const parsed = z
+		.object({
+			status: z.string(),
+			data: z.object({ status: z.string(), reference: z.string().optional() }),
+		})
+		.safeParse(raw);
+	if (
+		!response.ok ||
+		!parsed.success ||
+		parsed.data.status !== "success" ||
+		(parsed.data.data.reference && parsed.data.data.reference !== reference)
+	)
+		return { status: "pending", raw };
+	const status = parsed.data.data.status.toLowerCase();
+	return {
+		status:
+			status === "success" || status === "completed"
+				? "confirmed"
+				: status === "failed" || status === "reverted"
+					? "failed"
+					: "pending",
+		raw,
+	};
 }

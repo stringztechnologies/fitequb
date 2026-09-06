@@ -141,6 +141,13 @@ equbRooms.get("/", async (c) => {
 // GET /equb-rooms/:id — room detail with members
 equbRooms.get("/:id", async (c) => {
 	const roomId = c.req.param("id");
+	const { data: pilot, error: pilotError } = await supabase
+		.from("pilot_configs")
+		.select("room_id")
+		.eq("room_id", roomId)
+		.maybeSingle();
+	if (pilotError) return c.json({ data: null, error: "Enrollment configuration unavailable" }, 503);
+	if (pilot) return c.json({ data: { pilot_path: `/pilot/${roomId}` }, error: null });
 
 	const [roomResult, membersResult] = await Promise.all([
 		supabase.from("equb_rooms").select("*").eq("id", roomId).single(),
@@ -163,6 +170,13 @@ equbRooms.get("/:id", async (c) => {
 // POST /equb-rooms/:id/join — join a room
 equbRooms.post("/:id/join", async (c) => {
 	const roomId = c.req.param("id");
+	const { data: pilot, error: pilotError } = await supabase
+		.from("pilot_configs")
+		.select("room_id")
+		.eq("room_id", roomId)
+		.maybeSingle();
+	if (pilotError) return c.json({ data: null, error: "Enrollment configuration unavailable" }, 503);
+	if (pilot) return c.json({ data: null, error: "Use the pilot enrollment page" }, 409);
 	const telegramUser = c.get("telegramUser");
 
 	const userId = await resolveUserId(c);

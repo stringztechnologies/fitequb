@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { supabase } from "./supabase.js";
 
-export type PaymentIntentKind = "stake" | "daypass" | "duel" | "coach";
+export type PaymentIntentKind = "stake" | "daypass" | "duel" | "coach" | "pilot_enrollment";
 
 interface CreatePaymentIntentInput {
 	kind: PaymentIntentKind;

@@ -63,9 +63,7 @@ export function HowItWorks() {
 					className="text-on-surface p-1 bg-transparent border-none cursor-pointer"
 					aria-label="Go back"
 				>
-					<span className="material-symbols-outlined text-xl">
-						arrow_back
-					</span>
+					<span className="material-symbols-outlined text-xl">arrow_back</span>
 				</button>
 				<h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface m-0">
 					How It Works
@@ -77,10 +75,7 @@ export function HowItWorks() {
 				{items.map((item, i) => {
 					const isOpen = openIndex === i;
 					return (
-						<div
-							key={item.title}
-							className="bg-surface-container-low rounded-card overflow-hidden"
-						>
+						<div key={item.title} className="bg-surface-container-low rounded-card overflow-hidden">
 							<button
 								type="button"
 								onClick={() => setOpenIndex(isOpen ? null : i)}
