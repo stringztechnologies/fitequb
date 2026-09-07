@@ -31,12 +31,15 @@ The production database cutover completed on 2026-09-07 while payment collection
 | Evidence | Value |
 | --- | --- |
 | Prior deployed SHA | `7335eda24079c87d7742779254389c86ad6ab113` |
-| New deployed SHA | Pending |
+| New deployed SHA | `6c809fb0ebf7333f958ee83edf2aaf6d69d84aca` (merged PR #2) |
 | Applied migration versions | `20260323` (history marker only), `20260705120000`, `20260705210000`, `20260906120000`, `20260907193000` |
-| API liveness/readiness | Pending |
-| Web health and compiled API URL | Pending |
-| Native/Telegram route checks | Pending |
+| Coolify deployments | API `c15z143butqvczgtqxyuvcyw`, web `yv5g6ze3rxpdlizgjxqk61ea`, bot `kvk2yvtrtgwvs96ubljsqyxi`; all succeeded from the new deployed SHA |
+| API liveness/readiness | `/health` and database-backed `/health/ready` returned HTTP 200 after deployment |
+| Web health and compiled API URL | Static `/health` returned HTTP 200; the production bundle contains `https://api.fitequb.com` and no localhost API/Supabase fallback |
+| Native/Telegram route checks | `/signin?next=%2Fpilot-admin`, `/pilot-admin`, and the Telegram-source pilot route returned the application shell; Telegram `getMe` confirmed the deployed bot token resolves |
 | Sentry synthetic event IDs | API `11112dd3cd914d88b5b6ee1d22e9ab5d`; browser `8ffbff2a63a8491cbe24753b0f5b7e77` (ingestion HTTP 200) |
-| n8n schedules restored | Pending |
-| Financial queue counts | 0 payment intents, 0 payout jobs, 0 pilot enrollments, 0 ledger entries after migration |
-| Payment switches and cohort readiness | Coolify API environment has both switches false; 0 cohorts have `checkout_ready=true` |
+| n8n schedules restored | Settlement `wWD7P60LAVrsz1H8`, payout `29rjwkmXg9935WlO`, reminders `uFsv3Q0mSHzCQ5Wd`, and daily reset `5gnIsEvDfA2wSZGe` are active. n8n uses `https://api.fitequb.com`; its cron-secret fingerprint matches the API, and an authenticated payout smoke check processed/enqueued zero jobs. |
+| Financial queue counts | 0 payment intents, 0 payout jobs, 0 pilot enrollments, and 0 ledger entries after deployment |
+| Payment switches and cohort readiness | Runtime `PAYMENTS_ENABLED=false` and `PILOT_CHECKOUT_ENABLED=false`; 0 cohorts have `checkout_ready=true` |
+
+No Chapa payment, refund, or payout was performed during this rollout.
