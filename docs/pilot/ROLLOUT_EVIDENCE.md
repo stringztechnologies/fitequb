@@ -26,17 +26,17 @@ A second disposable restore received one row in `equb_members` before S2 ran. Th
 
 ## Production cutover
 
-The production database cutover completed on 2026-09-07 while payment collection remained disabled. Immediately before mutation, all 16 S2 guard targets were empty and the preserved counts were 5 rooms, 3 gyms, and 3 challenges. Migration `20260323` was marked applied without executing its historical SQL. The three rehearsed migrations then applied in order. Post-migration verification confirmed the preserved counts, empty financial tables and queues, service-role-only pilot RPC access, RLS, and append-only guards. A Supabase security-advisor pass identified three pilot trigger functions with mutable search paths; migration `20260907193000` fixes those paths before application deployment.
+The production database cutover completed on 2026-09-07 while payment collection remained disabled. Immediately before mutation, all 16 S2 guard targets were empty and the preserved counts were 5 rooms, 3 gyms, and 3 challenges. Migration `20260323` was marked applied without executing its historical SQL. The four rehearsed migrations then applied in order. Post-migration verification confirmed the preserved counts, empty financial tables and queues, service-role-only pilot RPC access, RLS, append-only guards, and fixed trigger-function search paths. The final Supabase security-advisor pass reported no warnings or errors.
 
 | Evidence | Value |
 | --- | --- |
 | Prior deployed SHA | `7335eda24079c87d7742779254389c86ad6ab113` |
 | New deployed SHA | Pending |
-| Applied migration versions | `20260323` (history marker only), `20260705120000`, `20260705210000`, `20260906120000`; rehearsed search-path follow-up pending production application |
+| Applied migration versions | `20260323` (history marker only), `20260705120000`, `20260705210000`, `20260906120000`, `20260907193000` |
 | API liveness/readiness | Pending |
 | Web health and compiled API URL | Pending |
 | Native/Telegram route checks | Pending |
-| Sentry synthetic event IDs | Pending |
+| Sentry synthetic event IDs | API `11112dd3cd914d88b5b6ee1d22e9ab5d`; browser `8ffbff2a63a8491cbe24753b0f5b7e77` (ingestion HTTP 200) |
 | n8n schedules restored | Pending |
 | Financial queue counts | 0 payment intents, 0 payout jobs, 0 pilot enrollments, 0 ledger entries after migration |
 | Payment switches and cohort readiness | Coolify API environment has both switches false; 0 cohorts have `checkout_ready=true` |
