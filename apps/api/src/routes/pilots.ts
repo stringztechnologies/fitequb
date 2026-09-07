@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { getBanks, initializePayment } from "../lib/chapa.js";
+import { paymentsEnabled, paymentsUnavailable } from "../lib/payment-switch.js";
 import { reconcilePilotReceipt } from "../lib/pilot-receipts.js";
 import {
 	getPilot,
@@ -31,7 +32,10 @@ publicPilots.get("/:id", async (c) => {
 			...data,
 			coach_name: coach.full_name,
 			checkout_enabled:
-				process.env.PILOT_CHECKOUT_ENABLED === "true" && data.checkout_ready && data.published,
+				paymentsEnabled() &&
+				process.env.PILOT_CHECKOUT_ENABLED === "true" &&
+				data.checkout_ready &&
+				data.published,
 		},
 		error: null,
 	});
@@ -103,6 +107,7 @@ pilots.get("/:id", async (c) => {
 	});
 });
 pilots.post("/:id/enroll", rateLimit(5, 60_000), async (c) => {
+	if (!paymentsEnabled()) return c.json(paymentsUnavailable, 503);
 	if (process.env.PILOT_CHECKOUT_ENABLED !== "true")
 		return c.json({ data: null, error: "Pilot checkout is not enabled" }, 503);
 	const room = uuid.parse(c.req.param("id"));

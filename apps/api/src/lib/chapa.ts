@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
+import { captureApiException } from "./sentry.js";
 
 const CHAPA_BASE_URL = "https://api.chapa.co/v1";
 
@@ -56,15 +57,24 @@ export interface ChapaTransferResponse {
 }
 
 export async function initializePayment(payload: ChapaInitPayload): Promise<ChapaInitResponse> {
-	const res = await fetch(`${CHAPA_BASE_URL}/transaction/initialize`, {
-		method: "POST",
-		headers: {
-			Authorization: `Bearer ${getSecretKey()}`,
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify(payload),
-		signal: AbortSignal.timeout(15000),
-	});
+	let res: Response;
+	try {
+		res = await fetch(`${CHAPA_BASE_URL}/transaction/initialize`, {
+			method: "POST",
+			headers: {
+				Authorization: `Bearer ${getSecretKey()}`,
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(payload),
+			signal: AbortSignal.timeout(15000),
+		});
+	} catch (error) {
+		captureApiException(error, {
+			operation: "chapa_initialize",
+			payment_reference: payload.tx_ref,
+		});
+		throw error;
+	}
 
 	const body = (await readJson<Partial<ChapaInitResponse>>(res)) ?? {};
 	if (!res.ok) {

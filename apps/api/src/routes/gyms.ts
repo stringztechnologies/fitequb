@@ -5,6 +5,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { initializePayment } from "../lib/chapa.js";
 import { createPaymentIntent, markPaymentIntentFailed } from "../lib/payment-intents.js";
+import { paymentsEnabled, paymentsUnavailable } from "../lib/payment-switch.js";
 import { generateDailyQR } from "../lib/qr.js";
 import { resolveUserId } from "../lib/resolve-user.js";
 import { supabase } from "../lib/supabase.js";
@@ -40,6 +41,7 @@ gyms.get("/", async (c) => {
 
 // POST /day-passes — purchase a day pass
 gyms.post("/day-passes", async (c) => {
+	if (!paymentsEnabled()) return c.json(paymentsUnavailable, 503);
 	const telegramUser = c.get("telegramUser");
 	const body = await c.req.json();
 	const parsed = dayPassSchema.safeParse(body);

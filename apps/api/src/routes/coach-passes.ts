@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { initializePayment } from "../lib/chapa.js";
 import { createPaymentIntent, markPaymentIntentFailed } from "../lib/payment-intents.js";
+import { paymentsEnabled, paymentsUnavailable } from "../lib/payment-switch.js";
 import { supabase } from "../lib/supabase.js";
 import type { AppVariables } from "../types/context.js";
 
@@ -175,6 +176,7 @@ coachPasses.get("/browse", async (c) => {
 
 // POST /coach-passes/purchase — buy a coach day pass
 coachPasses.post("/purchase", async (c) => {
+	if (!paymentsEnabled()) return c.json(paymentsUnavailable, 503);
 	const telegramUser = c.get("telegramUser");
 	const userId = await getUserId(telegramUser.id);
 	if (!userId) return c.json({ data: null, error: "User not found" }, 404);

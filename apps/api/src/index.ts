@@ -4,7 +4,7 @@ import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
 import { ZodError } from "zod";
-import { initSentry } from "./lib/sentry.js";
+import { captureApiException, initSentry } from "./lib/sentry.js";
 import { telegramAuth } from "./middleware/telegram-auth.js";
 import { admin } from "./routes/admin.js";
 import { ai } from "./routes/ai.js";
@@ -81,6 +81,10 @@ app.onError((error, c) => {
 		return c.json({ data: null, error: error.message }, error.status);
 	if (error instanceof ZodError)
 		return c.json({ data: null, error: error.issues.map((i) => i.message).join(", ") }, 400);
+	captureApiException(error, {
+		"http.method": c.req.method,
+		"http.route": c.req.path,
+	});
 	if (c.req.path.includes("pilot")) return c.json({ data: null, error: error.message }, 400);
 	return c.json({ data: null, error: "Request failed" }, 500);
 });

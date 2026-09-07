@@ -1,65 +1,77 @@
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
-export default defineConfig({
-	plugins: [
-		react(),
-		VitePWA({
-			registerType: "autoUpdate",
-			includeAssets: ["favicon.svg"],
-			manifest: {
-				name: "FitEqub",
-				short_name: "FitEqub",
-				description: "Stake. Sweat. Split the pot. Fitness accountability groups in Addis Ababa.",
-				theme_color: "#131313",
-				background_color: "#131313",
-				display: "standalone",
-				scope: "/",
-				start_url: "/",
-				icons: [
-					{
-						src: "/icons/icon-192.png",
-						sizes: "192x192",
-						type: "image/png",
-					},
-					{
-						src: "/icons/icon-512.png",
-						sizes: "512x512",
-						type: "image/png",
-					},
-					{
-						src: "/icons/icon-512.png",
-						sizes: "512x512",
-						type: "image/png",
-						purpose: "maskable",
-					},
-				],
-			},
-			workbox: {
-				globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
-				runtimeCaching: [
-					{
-						urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-						handler: "CacheFirst",
-						options: {
-							cacheName: "google-fonts-cache",
-							expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+export function requireProductionWebEnv(env: Record<string, string>) {
+	const required = ["VITE_API_URL", "VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY"];
+	const missing = required.filter((name) => !env[name]?.trim());
+	if (missing.length) throw new Error(`Missing production web variables: ${missing.join(", ")}`);
+	if (env.VITE_API_URL.includes("localhost") || env.VITE_SUPABASE_URL.includes("localhost"))
+		throw new Error("Production web variables must not use localhost");
+}
+
+export default defineConfig(({ command, mode }) => {
+	const env = loadEnv(mode, process.cwd(), "");
+	if (command === "build" && mode === "production") requireProductionWebEnv(env);
+	return {
+		plugins: [
+			react(),
+			VitePWA({
+				registerType: "autoUpdate",
+				includeAssets: ["favicon.svg"],
+				manifest: {
+					name: "FitEqub",
+					short_name: "FitEqub",
+					description: "Stake. Sweat. Split the pot. Fitness accountability groups in Addis Ababa.",
+					theme_color: "#131313",
+					background_color: "#131313",
+					display: "standalone",
+					scope: "/",
+					start_url: "/",
+					icons: [
+						{
+							src: "/icons/icon-192.png",
+							sizes: "192x192",
+							type: "image/png",
 						},
-					},
-					{
-						urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-						handler: "CacheFirst",
-						options: {
-							cacheName: "gstatic-fonts-cache",
-							expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+						{
+							src: "/icons/icon-512.png",
+							sizes: "512x512",
+							type: "image/png",
 						},
-					},
-				],
-			},
-		}),
-	],
-	server: {
-		port: 5173,
-	},
+						{
+							src: "/icons/icon-512.png",
+							sizes: "512x512",
+							type: "image/png",
+							purpose: "maskable",
+						},
+					],
+				},
+				workbox: {
+					globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
+					runtimeCaching: [
+						{
+							urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+							handler: "CacheFirst",
+							options: {
+								cacheName: "google-fonts-cache",
+								expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+							},
+						},
+						{
+							urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+							handler: "CacheFirst",
+							options: {
+								cacheName: "gstatic-fonts-cache",
+								expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+							},
+						},
+					],
+				},
+			}),
+		],
+		server: {
+			port: 5173,
+		},
+	};
 });

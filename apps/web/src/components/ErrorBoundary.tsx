@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/react";
 import { Component } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 
@@ -22,12 +23,9 @@ export class ErrorBoundary extends Component<Props, State> {
 
 	componentDidCatch(error: Error, info: ErrorInfo) {
 		console.error("ErrorBoundary caught:", error, info.componentStack);
-		// Report to Sentry if available
-		if (typeof window !== "undefined" && (window as unknown as Record<string, unknown>).Sentry) {
-			(
-				window as unknown as { Sentry: { captureException: (e: Error) => void } }
-			).Sentry.captureException(error);
-		}
+		Sentry.captureException(error, {
+			contexts: { react: { componentStack: info.componentStack } },
+		});
 	}
 
 	render() {

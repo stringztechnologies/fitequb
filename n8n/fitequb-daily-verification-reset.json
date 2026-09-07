@@ -19,7 +19,7 @@
 		},
 		{
 			"parameters": {
-				"url": "https://api.fitequb.com/cron/daily-reset",
+				"url": "={{ $env.FITEQUB_API_URL }}/cron/daily-reset",
 				"sendHeaders": true,
 				"headerParameters": {
 					"parameters": [

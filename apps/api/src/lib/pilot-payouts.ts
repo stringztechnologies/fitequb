@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { initiateTransfer, verifyTransfer } from "./chapa.js";
+import { captureApiException } from "./sentry.js";
 import { supabase } from "./supabase.js";
 
 const payout = z.object({
@@ -42,7 +43,12 @@ export async function reconcilePayouts() {
 				.select("id");
 			if (updateError) throw new Error(updateError.message);
 			if (result.status === "confirmed" && updated?.length) confirmed++;
-		} catch {
+		} catch (error) {
+			captureApiException(error, {
+				operation: "chapa_transfer_verify",
+				payment_reference: job.provider_reference ?? job.reference,
+				transfer_attempt: job.attempts,
+			});
 			await supabase
 				.from("payout_jobs")
 				.update({ last_error: "Provider verification unavailable; do not resend" })
@@ -108,7 +114,12 @@ export async function processPilotPayouts() {
 				.eq("status", "processing");
 			if (updateError) throw new Error(updateError.message);
 			submitted++;
-		} catch {
+		} catch (error) {
+			captureApiException(error, {
+				operation: "chapa_transfer",
+				payment_reference: providerReference,
+				transfer_attempt: attempt,
+			});
 			await supabase
 				.from("payout_jobs")
 				.update({ last_error: "Ambiguous transfer; verify before retry" })

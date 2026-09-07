@@ -19,8 +19,10 @@ const nativeFetch = globalThis.fetch;
 const verified = new Map<string, { amount: number; currency: string; status: string }>();
 let transferState = "pending";
 let transferCalls = 0;
+let initializeCalls = 0;
 let ambiguousTransfer = false;
 let ambiguousCheckout = false;
+let databaseAvailable = true;
 let renewalRoom = "";
 let verifyHook: ((reference: string) => Promise<Response | null>) | null = null;
 let app: typeof import("../apps/api/src/index.js").default;
@@ -29,6 +31,7 @@ const member = randomUUID();
 const webUid = randomUUID();
 const staff = randomUUID();
 const room = randomUUID();
+const paidRoom = randomUUID();
 const gym = randomUUID();
 function tma(id: number) {
 	const values = new URLSearchParams({
@@ -65,6 +68,7 @@ describe.skipIf(!database || !rest)("Pilot API with real PostgreSQL and PostgRES
 			sql(readFileSync(file, "utf8"));
 		sql(`grant usage on schema public to service_role; insert into users(id,full_name,telegram_id,supabase_uid) values('${admin}','Operator',100,null),('${member}','Member',101,'${webUid}'),('${staff}','Staff',102,null);insert into pilot_admins values('${admin}');insert into partner_gyms(id,name) values('${gym}','Pilot gym');
   insert into equb_rooms(id,name,stake_amount,start_date,end_date,duration_days,workout_target,completion_pct,min_members,max_members) values('${room}','API pilot',500,now()+interval '2 days',now()+interval '32 days',30,12,0.8,2,2);
+  insert into equb_rooms(id,name,stake_amount,start_date,end_date,duration_days,workout_target,completion_pct,min_members,max_members) values('${paidRoom}','Paid room',500,now()+interval '2 days',now()+interval '32 days',30,12,0.8,2,2);
   insert into pilot_configs(room_id,gym_id,coach_id,enrollment_deadline,published,checkout_ready) select '${room}','${gym}','${staff}',start_date,true,true from equb_rooms where id='${room}';insert into pilot_staff values('${room}','${staff}');notify pgrst,'reload schema';`);
 		process.env.SUPABASE_URL = rest;
 		process.env.SUPABASE_SERVICE_ROLE_KEY = serviceKey;
@@ -73,14 +77,18 @@ describe.skipIf(!database || !rest)("Pilot API with real PostgreSQL and PostgRES
 		process.env.CHAPA_SECRET_KEY = "test-only";
 		process.env.QR_SECRET = "test-qr-only";
 		process.env.CHAPA_WEBHOOK_SECRET = "pilot-hook";
+		process.env.PAYMENTS_ENABLED = "false";
 		process.env.PILOT_CHECKOUT_ENABLED = "false";
 		process.env.API_URL = "http://localhost:3000";
 		process.env.TELEGRAM_MINI_APP_URL = "http://localhost:5173";
 		vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
 			const req = new Request(input, init);
 			const url = new URL(req.url);
-			if (url.href.startsWith(`${rest}/rest/v1/`))
+			if (url.href.startsWith(`${rest}/rest/v1/`)) {
+				if (!databaseAvailable)
+					return Response.json({ message: "database unavailable" }, { status: 503 });
 				return nativeFetch(new Request(url.href.replace("/rest/v1/", "/"), req));
+			}
 			if (url.pathname === "/auth/v1/user")
 				return Response.json({
 					id: webUid,
@@ -91,6 +99,7 @@ describe.skipIf(!database || !rest)("Pilot API with real PostgreSQL and PostgRES
 			if (url.pathname === "/v1/banks")
 				return Response.json({ status: "success", data: [{ id: 123, name: "Telebirr" }] });
 			if (url.pathname.endsWith("/transaction/initialize")) {
+				initializeCalls++;
 				if (ambiguousCheckout) throw new Error("timeout");
 				return Response.json({
 					status: "success",
@@ -143,9 +152,43 @@ describe.skipIf(!database || !rest)("Pilot API with real PostgreSQL and PostgRES
 		expect(body.data.enrollments).toBeUndefined();
 	});
 	it("refuses checkout while the server switch is disabled", async () => {
-		expect((await request(`/api/pilots/${room}/enroll`, {})).status).toBe(503);
+		const before = initializeCalls;
+		for (const path of [
+			`/api/pilots/${room}/enroll`,
+			`/api/equb-rooms/${paidRoom}/join`,
+			"/api/gyms/day-passes",
+			"/api/coach-passes/purchase",
+		]) {
+			const response = await request(path, {});
+			expect(response.status).toBe(503);
+			expect(await response.json()).toEqual({
+				data: null,
+				error: "Payments are temporarily unavailable",
+			});
+		}
+		expect(initializeCalls).toBe(before);
+	});
+	it("requires both switches for pilot checkout", async () => {
+		process.env.PAYMENTS_ENABLED = "true";
+		const before = initializeCalls;
+		const response = await request(`/api/pilots/${room}/enroll`, {});
+		expect(response.status).toBe(503);
+		expect(initializeCalls).toBe(before);
+	});
+	it("reports database readiness and recovers without restarting", async () => {
+		let response = await app.request("http://localhost/health/ready");
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({ data: { status: "ready" }, error: null });
+		databaseAvailable = false;
+		response = await app.request("http://localhost/health/ready");
+		expect(response.status).toBe(503);
+		expect(await response.json()).toEqual({ data: null, error: "Service unavailable" });
+		databaseAvailable = true;
+		response = await app.request("http://localhost/health/ready");
+		expect(response.status).toBe(200);
 	});
 	it("accepts a combined server-priced checkout and reuses it", async () => {
+		process.env.PAYMENTS_ENABLED = "true";
 		process.env.PILOT_CHECKOUT_ENABLED = "true";
 		const input = {
 			terms_version: "pilot-v1",

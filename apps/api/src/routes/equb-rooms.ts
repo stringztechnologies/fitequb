@@ -10,6 +10,7 @@ import {
 import { Hono } from "hono";
 import { z } from "zod";
 import { createPaymentIntent, markPaymentIntentFailed } from "../lib/payment-intents.js";
+import { paymentsEnabled, paymentsUnavailable } from "../lib/payment-switch.js";
 import { resolveUserId } from "../lib/resolve-user.js";
 import { supabase } from "../lib/supabase.js";
 import { rateLimit } from "../middleware/rate-limit.js";
@@ -236,6 +237,7 @@ equbRooms.post("/:id/join", async (c) => {
 	}
 
 	// For paid Equbs — initialize Chapa payment
+	if (!paymentsEnabled()) return c.json(paymentsUnavailable, 503);
 	const { initializePayment } = await import("../lib/chapa.js");
 	let txRef: string;
 	try {
