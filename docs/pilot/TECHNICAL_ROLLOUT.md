@@ -35,7 +35,7 @@ This checklist deploys the paid-pilot schema and applications while keeping all 
 
 ## Evidence record
 
-Record the following in the rollout task or PR before closing it:
+Durable results are recorded in `docs/pilot/ROLLOUT_EVIDENCE.md`. Record the following before closing the rollout:
 
 | Evidence | Value |
 | --- | --- |

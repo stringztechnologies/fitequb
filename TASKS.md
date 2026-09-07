@@ -155,7 +155,7 @@
 - [ ] Apply S2 then the money migration in filename order.
 - [ ] Confirm `supabase migration list --db-url <branch-db-url>` shows `20260323`, `20260705120000`, and `20260705210000` applied.
 - [ ] Verify (see Phase 3 queries) on the branch. Fix, re-run, repeat until clean.
-- [ ] Re-confirm emptiness guard behaviour: seed one row into a rebuild target on the branch → S2 must ABORT.
+- [x] Re-confirm emptiness guard behaviour: seed one row into a rebuild target on a disposable production restore → S2 aborts atomically. Evidence: `docs/pilot/ROLLOUT_EVIDENCE.md`.
 - [ ] Paid-duel guard: `POST /api/duels/create` with `stake_amount > 0` returns 400; `stake_amount = 0` creates a free duel, auto-joins the creator, and accept activates it.
 
 ### Phase 2 — Pre-apply guards (run read-only against prod, immediately before apply)

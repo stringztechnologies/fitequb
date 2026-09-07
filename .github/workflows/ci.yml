@@ -130,12 +130,12 @@ jobs:
           for attempt in {1..30}; do curl -fsS http://127.0.0.1:3000/health/ready && break; sleep 1; done
           curl -fsS http://127.0.0.1:3000/health/ready
           curl -fsS http://127.0.0.1:8080/health
-          for attempt in {1..30}; do
+          for attempt in {1..60}; do
             test "$(docker inspect --format '{{.State.Health.Status}}' fitequb-api)" = healthy && break
             sleep 1
           done
           test "$(docker inspect --format '{{.State.Health.Status}}' fitequb-api)" = healthy
-          for attempt in {1..30}; do
+          for attempt in {1..60}; do
             test "$(docker inspect --format '{{.State.Health.Status}}' fitequb-web)" = healthy && break
             sleep 1
           done

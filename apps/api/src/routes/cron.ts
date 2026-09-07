@@ -122,7 +122,7 @@ async function probeEqubLedgerPaidAtColumn() {
 cron.post("/settle", async (c) => {
 	const secret = c.req.header("x-cron-secret");
 	if (!verifyCronSecret(secret)) {
-		return c.json({ error: "Unauthorized" }, 401);
+		return c.json({ data: null, error: "Unauthorized" }, 401);
 	}
 
 	const { error: lifecycleError } = await supabase.rpc("pilot_lifecycle");
@@ -226,7 +226,7 @@ cron.post("/settle", async (c) => {
 cron.post("/reminders", async (c) => {
 	const secret = c.req.header("x-cron-secret");
 	if (!verifyCronSecret(secret)) {
-		return c.json({ error: "Unauthorized" }, 401);
+		return c.json({ data: null, error: "Unauthorized" }, 401);
 	}
 
 	const today = new Date().toISOString().split("T")[0];
@@ -309,7 +309,7 @@ cron.post("/reminders", async (c) => {
 cron.post("/payouts", async (c) => {
 	const secret = c.req.header("x-cron-secret");
 	if (!verifyCronSecret(secret)) {
-		return c.json({ error: "Unauthorized" }, 401);
+		return c.json({ data: null, error: "Unauthorized" }, 401);
 	}
 
 	const { error: lifecycleError } = await supabase.rpc("pilot_lifecycle");
@@ -328,7 +328,7 @@ cron.post("/payouts", async (c) => {
 		.limit(50);
 
 	if (fetchError) {
-		return c.json({ error: fetchError.message }, 500);
+		return c.json({ data: null, error: fetchError.message }, 500);
 	}
 
 	if (!pendingJobs || pendingJobs.length === 0) {
@@ -460,7 +460,7 @@ cron.post("/payouts", async (c) => {
 cron.post("/daily-reset", async (c) => {
 	const secret = c.req.header("x-cron-secret");
 	if (!verifyCronSecret(secret)) {
-		return c.json({ error: "Unauthorized" }, 401);
+		return c.json({ data: null, error: "Unauthorized" }, 401);
 	}
 
 	const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
