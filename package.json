@@ -6,7 +6,7 @@
 		"build": "pnpm -r build",
 		"lint": "biome check .",
 		"format": "biome format --write .",
-		"typecheck": "pnpm -r typecheck",
+		"typecheck": "pnpm --filter @fitequb/shared build && pnpm --filter @fitequb/api typecheck && pnpm --filter @fitequb/bot typecheck && pnpm --filter @fitequb/web typecheck",
 		"test": "vitest",
 		"test:db": "node scripts/test-pilot-db.mjs",
 		"test:pilot-browser": "playwright test --config playwright.pilot.config.ts"
