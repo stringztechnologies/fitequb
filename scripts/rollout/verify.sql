@@ -29,9 +29,9 @@ order by table_name, column_name;
 
 with protected_tables(table_name) as (
   values
-    ('payment_intents'), ('payout_jobs'), ('pilot_configs'), ('pilot_staff'),
+    ('payment_intents'), ('payout_jobs'), ('pilot_admins'), ('pilot_configs'), ('pilot_staff'),
     ('pilot_enrollments'), ('pilot_attendance'), ('pilot_attendance_audit'),
-    ('pilot_disputes'), ('pilot_events'), ('pilot_cost_entries')
+    ('pilot_disputes'), ('pilot_prospects'), ('pilot_costs')
 )
 select
   p.table_name,
@@ -68,7 +68,7 @@ select
   exists (
     select 1 from pg_trigger
     where tgrelid = 'public.equb_ledger'::regclass
-      and tgname = 'guard_ledger'
+      and tgname = 'immutable_money'
       and not tgisinternal
   ) as ledger_append_only,
   exists (

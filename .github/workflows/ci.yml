@@ -123,6 +123,7 @@ jobs:
             -e SUPABASE_URL=http://host.docker.internal:55441 \
             -e SUPABASE_SERVICE_ROLE_KEY=fake-key \
             -e TELEGRAM_BOT_TOKEN=fake:token \
+            -e QR_SECRET=test-only-qr-secret \
             -e PAYMENTS_ENABLED=false \
             -p 3000:3000 fitequb-api:ci
           docker run -d --name fitequb-web -p 8080:80 fitequb-web:ci
