@@ -29,7 +29,7 @@ This checklist deploys the paid-pilot schema and applications while keeping all 
 1. Record the deployed SHA. Pause Coolify automatic deployment, n8n schedules, and both payment switches.
 2. Create encrypted schema/data backups outside the repository. Restore them into an empty disposable PostgreSQL database and record the restore evidence.
 3. Immediately rerun `scripts/rollout/preflight.sql`. Abort if any S2 guard count is nonzero or the preserved counts differ from the rehearsal.
-4. Mark `20260323` applied without running its SQL, then apply the three rehearsed migrations in order.
+4. Mark `20260323` applied without running its SQL, then apply the four rehearsed migrations in order.
 5. Run `scripts/rollout/verify.sql` and save the output.
 6. Merge and deploy the reviewed SHA. Verify API liveness/readiness, web health and compiled URLs, native web authentication, Telegram pilot deep links, `/pilot-admin`, cron authorization, and Sentry browser/API ingestion.
 7. Restore n8n schedules. Recheck all financial queues and keep every collection switch false.

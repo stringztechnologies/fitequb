@@ -8,7 +8,7 @@ This record tracks the production rollout that keeps payment collection disabled
 - Target: disposable PostgreSQL 16 databases on the local rollout cluster.
 - Baseline counts: 5 Equb rooms, 3 partner gyms, 3 challenges, and zero rows in all 16 S2 rebuild targets.
 - Historical migration `20260323` was marked applied without executing `20260323_coach_passes.sql`.
-- Applied in order: `20260705120000`, `20260705210000`, `20260906120000`.
+- Applied in order: `20260705120000`, `20260705210000`, `20260906120000`, then the security-advisor follow-up `20260907193000`.
 - Verification: preserved counts and room values matched the source; v2 columns, required functions, RLS, service-role RPC grants, and append-only ledger/receipt triggers passed `scripts/rollout/verify.sql`.
 - Financial result: `payment_intents`, `payout_jobs`, `pilot_enrollments`, and `equb_ledger` remained empty.
 
@@ -32,7 +32,7 @@ The production database cutover completed on 2026-09-07 while payment collection
 | --- | --- |
 | Prior deployed SHA | `7335eda24079c87d7742779254389c86ad6ab113` |
 | New deployed SHA | Pending |
-| Applied migration versions | `20260323` (history marker only), `20260705120000`, `20260705210000`, `20260906120000`; search-path follow-up pending |
+| Applied migration versions | `20260323` (history marker only), `20260705120000`, `20260705210000`, `20260906120000`; rehearsed search-path follow-up pending production application |
 | API liveness/readiness | Pending |
 | Web health and compiled API URL | Pending |
 | Native/Telegram route checks | Pending |
