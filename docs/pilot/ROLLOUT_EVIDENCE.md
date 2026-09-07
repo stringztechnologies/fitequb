@@ -26,17 +26,17 @@ A second disposable restore received one row in `equb_members` before S2 ran. Th
 
 ## Production cutover
 
-To be completed from live verification:
+The production database cutover completed on 2026-09-07 while payment collection remained disabled. Immediately before mutation, all 16 S2 guard targets were empty and the preserved counts were 5 rooms, 3 gyms, and 3 challenges. Migration `20260323` was marked applied without executing its historical SQL. The three rehearsed migrations then applied in order. Post-migration verification confirmed the preserved counts, empty financial tables and queues, service-role-only pilot RPC access, RLS, and append-only guards. A Supabase security-advisor pass identified three pilot trigger functions with mutable search paths; migration `20260907193000` fixes those paths before application deployment.
 
 | Evidence | Value |
 | --- | --- |
-| Prior deployed SHA | Pending |
+| Prior deployed SHA | `7335eda24079c87d7742779254389c86ad6ab113` |
 | New deployed SHA | Pending |
-| Applied migration versions | Pending |
+| Applied migration versions | `20260323` (history marker only), `20260705120000`, `20260705210000`, `20260906120000`; search-path follow-up pending |
 | API liveness/readiness | Pending |
 | Web health and compiled API URL | Pending |
 | Native/Telegram route checks | Pending |
 | Sentry synthetic event IDs | Pending |
 | n8n schedules restored | Pending |
-| Financial queue counts | Pending |
-| Payment switches and cohort readiness | Pending |
+| Financial queue counts | 0 payment intents, 0 payout jobs, 0 pilot enrollments, 0 ledger entries after migration |
+| Payment switches and cohort readiness | Coolify API environment has both switches false; 0 cohorts have `checkout_ready=true` |

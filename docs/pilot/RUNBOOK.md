@@ -27,7 +27,7 @@ Read-only connector checks on 2026-09-06 confirmed v1 `equb_id` / `entry_type` c
 
 1. Set `PAYMENTS_ENABLED=false` and `PILOT_CHECKOUT_ENABLED=false`, pause mutating crons, and pause automatic deployment for the cutover. Back up production and record current schema/migration history.
 2. Rehearse on an isolated copy of the current schema. Use the S2 runbook in TASKS.md; its emptiness guards must pass for every rebuild target. If any target contains data, stop this destructive reconciliation path and author a preservation migration. Never bypass a guard or use CASCADE.
-3. Baseline the historical unsafe coach file as instructed by S2; do not replay it. Apply S2, money hardening, then `20260906120000_paid_pilot.sql` in order. Already-applied migrations must not be rerun.
+3. Baseline the historical unsafe coach file as instructed by S2; do not replay it. Apply S2, money hardening, `20260906120000_paid_pilot.sql`, then `20260907193000_fix_pilot_trigger_search_paths.sql` in order. Already-applied migrations must not be rerun.
 4. Verify date conversion, decimal amounts, RLS, restricted function privileges, immutable ledger, frozen configuration, and preservation of seed/reference data. Run money, attendance, refund and duplicate-notification rehearsals.
 5. Deploy compatible API (`dist/server.js`), web and bot only after schema verification. Keep both payment switches false and every cohort's `checkout_ready` false.
 6. Set `ADMIN_TELEGRAM_ID` and/or `ADMIN_USER_ID` for the trusted operator, real API/web URLs, Chapa keys, QR secret and cron secret. Chapa wallet/bank codes come from its bank-list API, not a hardcoded name.

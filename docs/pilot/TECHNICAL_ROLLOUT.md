@@ -19,6 +19,7 @@ This checklist deploys the paid-pilot schema and applications while keeping all 
    - `20260705120000_s2_schema_reconciliation.sql`
    - `20260705210000_money_correctness_launch_hardening.sql`
    - `20260906120000_paid_pilot.sql`
+   - `20260907193000_fix_pilot_trigger_search_paths.sql`
 5. Run `scripts/rollout/verify.sql`. Preserve five rooms, three gyms, and three challenges. Confirm protected tables have RLS, only `service_role` can call money/pilot RPCs, and both ledger guards exist.
 6. On a second disposable database, insert one row into an S2 rebuild target and prove S2 aborts without changing the schema.
 7. Run lint, typecheck, production build, unit tests, database tests, browser journeys, and production-container health smoke against the migrated clone.
