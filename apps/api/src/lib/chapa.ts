@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
-import { captureApiException } from "./sentry.js";
+import { paymentsEnabled } from "./payment-switch.js";
+import { captureApiException, paymentReferenceTag } from "./sentry.js";
 
 const CHAPA_BASE_URL = "https://api.chapa.co/v1";
 
@@ -57,6 +58,7 @@ export interface ChapaTransferResponse {
 }
 
 export async function initializePayment(payload: ChapaInitPayload): Promise<ChapaInitResponse> {
+	if (!paymentsEnabled()) throw new Error("Payments are temporarily unavailable");
 	let res: Response;
 	try {
 		res = await fetch(`${CHAPA_BASE_URL}/transaction/initialize`, {
@@ -71,7 +73,7 @@ export async function initializePayment(payload: ChapaInitPayload): Promise<Chap
 	} catch (error) {
 		captureApiException(error, {
 			operation: "chapa_initialize",
-			payment_reference: payload.tx_ref,
+			payment_reference: paymentReferenceTag(payload.tx_ref),
 		});
 		throw error;
 	}

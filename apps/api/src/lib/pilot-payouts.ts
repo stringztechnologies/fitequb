@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { initiateTransfer, verifyTransfer } from "./chapa.js";
-import { captureApiException } from "./sentry.js";
+import { captureApiException, paymentReferenceTag } from "./sentry.js";
 import { supabase } from "./supabase.js";
 
 const payout = z.object({
@@ -46,7 +46,7 @@ export async function reconcilePayouts() {
 		} catch (error) {
 			captureApiException(error, {
 				operation: "chapa_transfer_verify",
-				payment_reference: job.provider_reference ?? job.reference,
+				payment_reference: paymentReferenceTag(job.provider_reference ?? job.reference),
 				transfer_attempt: job.attempts,
 			});
 			await supabase
@@ -117,7 +117,7 @@ export async function processPilotPayouts() {
 		} catch (error) {
 			captureApiException(error, {
 				operation: "chapa_transfer",
-				payment_reference: providerReference,
+				payment_reference: paymentReferenceTag(providerReference),
 				transfer_attempt: attempt,
 			});
 			await supabase

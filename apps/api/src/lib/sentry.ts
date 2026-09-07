@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import * as Sentry from "@sentry/node";
 
 export function initSentry() {
@@ -21,6 +22,10 @@ export function captureApiException(
 		}
 		Sentry.captureException(error);
 	});
+}
+
+export function paymentReferenceTag(reference: string) {
+	return createHash("sha256").update(reference).digest("hex").slice(0, 16);
 }
 
 export { Sentry };

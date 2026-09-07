@@ -135,7 +135,7 @@ cron.post("/settle", async (c) => {
 		.lte("end_date", new Date().toISOString());
 
 	if (fetchError) {
-		return c.json({ error: fetchError.message }, 500);
+		return c.json({ data: null, error: fetchError.message }, 500);
 	}
 
 	if (!expiredRooms || expiredRooms.length === 0) {

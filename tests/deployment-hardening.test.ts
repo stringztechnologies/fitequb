@@ -1,5 +1,40 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { initializePayment } from "../apps/api/src/lib/chapa.js";
+import { paymentReferenceTag } from "../apps/api/src/lib/sentry.js";
 import { requireProductionWebEnv } from "../apps/web/vite.config.js";
+
+afterEach(() => {
+	vi.unstubAllGlobals();
+	process.env.PAYMENTS_ENABLED = undefined;
+});
+
+describe("payment collection switch", () => {
+	it("blocks Chapa initialization at the provider boundary", async () => {
+		process.env.PAYMENTS_ENABLED = "false";
+		process.env.CHAPA_SECRET_KEY = "test-only";
+		const provider = vi.fn();
+		vi.stubGlobal("fetch", provider);
+		await expect(
+			initializePayment({
+				amount: 800,
+				currency: "ETB",
+				tx_ref: "pi_test_reference",
+				callback_url: "https://api.example.test/webhooks/chapa",
+				return_url: "https://example.test/payment",
+				first_name: "Test",
+			}),
+		).rejects.toThrow("Payments are temporarily unavailable");
+		expect(provider).not.toHaveBeenCalled();
+	});
+
+	it("uses a stable non-reversible payment reference tag", () => {
+		const raw = "pi_pilot_enrollment_sensitive-reference";
+		const tag = paymentReferenceTag(raw);
+		expect(tag).toHaveLength(16);
+		expect(tag).not.toContain(raw);
+		expect(tag).toBe(paymentReferenceTag(raw));
+	});
+});
 
 describe("production web configuration", () => {
 	it("requires API and Supabase build variables", () => {

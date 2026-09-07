@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { verifyChapaWebhook, verifyPayment } from "../lib/chapa.js";
 import type { ChapaVerifyResponse } from "../lib/chapa.js";
+import type { PaymentIntentKind } from "../lib/payment-intents.js";
 import { reconcilePilotReceipt } from "../lib/pilot-receipts.js";
 import { supabase } from "../lib/supabase.js";
 
@@ -12,8 +13,6 @@ const chapaWebhookSchema = z
 		amount: z.coerce.number().optional(),
 	})
 	.passthrough();
-
-type PaymentIntentKind = "stake" | "daypass" | "duel" | "coach" | "pilot_enrollment";
 
 interface PaymentIntentRow {
 	kind: PaymentIntentKind;
@@ -28,19 +27,19 @@ webhooks.post("/chapa", async (c) => {
 	const signature = c.req.header("x-chapa-signature") ?? "";
 
 	if (!verifyChapaWebhook(rawBody, signature)) {
-		return c.json({ error: "Invalid signature" }, 401);
+		return c.json({ data: null, error: "Invalid signature" }, 401);
 	}
 
 	let payloadJson: unknown;
 	try {
 		payloadJson = JSON.parse(rawBody);
 	} catch {
-		return c.json({ error: "Invalid JSON payload" }, 400);
+		return c.json({ data: null, error: "Invalid JSON payload" }, 400);
 	}
 
 	const parsed = chapaWebhookSchema.safeParse(payloadJson);
 	if (!parsed.success) {
-		return c.json({ error: "Invalid payload" }, 400);
+		return c.json({ data: null, error: "Invalid payload" }, 400);
 	}
 
 	const payload = parsed.data;
@@ -54,7 +53,7 @@ webhooks.post("/chapa", async (c) => {
 
 	if (!intent) {
 		// Unknown references should not create endless provider retries.
-		return c.json({ status: "ignored", reason: "unknown_tx_ref" });
+		return c.json({ data: { status: "ignored", reason: "unknown_tx_ref" }, error: null });
 	}
 
 	if (intent.kind === "pilot_enrollment") {
@@ -67,7 +66,7 @@ webhooks.post("/chapa", async (c) => {
 		}
 	}
 	if (intent.status === "credited") {
-		return c.json({ status: "already_processed" });
+		return c.json({ data: { status: "already_processed" }, error: null });
 	}
 
 	if (payload.status && payload.status !== "success") {
@@ -79,7 +78,10 @@ webhooks.post("/chapa", async (c) => {
 				provider_amount: payload.amount ?? null,
 			})
 			.eq("tx_ref", txRef);
-		return c.json({ status: "ignored", reason: "provider_status_not_success" });
+		return c.json({
+			data: { status: "ignored", reason: "provider_status_not_success" },
+			error: null,
+		});
 	}
 
 	let verified: ChapaVerifyResponse;
@@ -88,6 +90,7 @@ webhooks.post("/chapa", async (c) => {
 	} catch (error) {
 		return c.json(
 			{
+				data: null,
 				error: error instanceof Error ? error.message : "Unable to verify payment with Chapa",
 			},
 			503,
@@ -105,12 +108,16 @@ webhooks.post("/chapa", async (c) => {
 				mismatch_reason: verified.message ?? "payment_not_successful",
 			})
 			.eq("tx_ref", txRef);
-		return c.json({ status: "ignored", reason: "verified_payment_not_successful" });
+		return c.json({
+			data: { status: "ignored", reason: "verified_payment_not_successful" },
+			error: null,
+		});
 	}
 
 	if (verified.status !== "success" || verifiedStatus !== "success" || !verifiedData) {
 		return c.json(
 			{
+				data: null,
 				error: verified.message ?? "Unable to verify payment status with Chapa",
 			},
 			503,
@@ -126,14 +133,17 @@ webhooks.post("/chapa", async (c) => {
 				mismatch_reason: "verified_tx_ref_mismatch",
 			})
 			.eq("tx_ref", txRef);
-		return c.json({ status: "mismatch", reason: "verified_tx_ref_mismatch" });
+		return c.json({
+			data: { status: "mismatch", reason: "verified_tx_ref_mismatch" },
+			error: null,
+		});
 	}
 
 	if (verifiedData.currency !== "ETB")
 		return c.json({ data: null, error: "Unexpected payment currency" }, 400);
 	const paidAmount = Number(verifiedData.amount);
 	if (!Number.isFinite(paidAmount)) {
-		return c.json({ error: "Verified amount is invalid" }, 502);
+		return c.json({ data: null, error: "Verified amount is invalid" }, 502);
 	}
 
 	await supabase
@@ -152,10 +162,10 @@ webhooks.post("/chapa", async (c) => {
 	});
 
 	if (error) {
-		return c.json({ error: error.message }, 500);
+		return c.json({ data: null, error: error.message }, 500);
 	}
 
-	return c.json({ status: "ok", result: data });
+	return c.json({ data: { status: "ok", result: data }, error: null });
 });
 
 function getCreditRpc(kind: PaymentIntentKind) {
