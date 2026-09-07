@@ -174,24 +174,22 @@ export function EqubList() {
 	);
 }
 
-function RealCard({ room, onClick }: { room: EqubRoom; onClick: () => void }) {
+function RealCard({
+	room,
+	onClick,
+}: {
+	room: EqubRoom & { member_count?: number };
+	onClick: () => void;
+}) {
 	const payout = room.stake_amount * room.max_members;
 	const countdown = useCd(room.end_date);
-	const fillPct =
-		room.max_members > 0 ? Math.round((room.min_members / room.max_members) * 100) : 0;
+	const memberCount = (room as EqubRoom & { member_count?: number }).member_count ?? 0;
+	const fillPct = room.max_members > 0 ? Math.round((memberCount / room.max_members) * 100) : 0;
 	const isSteps =
 		room.name.toLowerCase().includes("step") || room.name.toLowerCase().includes("run");
 
 	return (
-		<div
-			role="article"
-			onClick={onClick}
-			onKeyDown={(e) => {
-				if (e.key === "Enter") onClick();
-			}}
-			tabIndex={0}
-			className="w-full text-left bg-surface-container-low rounded-lg p-5 space-y-5 cursor-pointer active:scale-[0.98] transition-transform"
-		>
+		<article className="w-full text-left bg-surface-container-low rounded-lg p-5 space-y-5 cursor-pointer active:scale-[0.98] transition-transform">
 			{/* Top row: name + badge + requirement */}
 			<div className="space-y-1">
 				<div className="flex items-start justify-between gap-2">
@@ -259,7 +257,7 @@ function RealCard({ room, onClick }: { room: EqubRoom; onClick: () => void }) {
 			<div>
 				<div className="flex justify-between items-center mb-1.5">
 					<span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">
-						{room.min_members}/{room.max_members} spots filled
+						{memberCount}/{room.max_members} spots filled
 					</span>
 					<span className="font-label text-[10px] text-on-surface-variant">{fillPct}%</span>
 				</div>
@@ -282,7 +280,7 @@ function RealCard({ room, onClick }: { room: EqubRoom; onClick: () => void }) {
 			>
 				Join Now
 			</button>
-		</div>
+		</article>
 	);
 }
 

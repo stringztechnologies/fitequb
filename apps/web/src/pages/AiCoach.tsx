@@ -33,10 +33,11 @@ export function AiCoach() {
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
-		scrollRef.current?.scrollTo({
-			top: scrollRef.current.scrollHeight,
-			behavior: "smooth",
-		});
+		if (messages.length || loading)
+			scrollRef.current?.scrollTo({
+				top: scrollRef.current.scrollHeight,
+				behavior: "smooth",
+			});
 	}, [messages, loading]);
 
 	async function send(text?: string) {
@@ -63,11 +64,9 @@ export function AiCoach() {
 			body: JSON.stringify({ message: msg, history }),
 		});
 
-		if (res.data?.reply) {
-			setMessages((prev) => [
-				...prev,
-				{ id: `c-${Date.now()}`, role: "coach", text: res.data!.reply },
-			]);
+		const reply = res.data?.reply;
+		if (reply) {
+			setMessages((prev) => [...prev, { id: `c-${Date.now()}`, role: "coach", text: reply }]);
 		} else {
 			setMessages((prev) => [
 				...prev,

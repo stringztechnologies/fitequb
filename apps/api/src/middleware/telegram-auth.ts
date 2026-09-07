@@ -10,6 +10,9 @@ const QA_TEST_USER: TelegramUser = {
 	username: "qa_test_user",
 };
 
+const MAX_INIT_DATA_AGE_SECONDS = 24 * 60 * 60;
+const MAX_INIT_DATA_FUTURE_SKEW_SECONDS = 5 * 60;
+
 /**
  * Dual auth middleware — accepts both Telegram and Supabase auth.
  *
@@ -72,8 +75,8 @@ export const telegramAuth = createMiddleware<{ Variables: AppVariables }>(async 
 	if (authHeader.startsWith("tma ")) {
 		const initData = authHeader.slice(4);
 
-		// QA test mode bypass — only in development
-		if (process.env.NODE_ENV === "development" && (initData === "" || initData === "test")) {
+		// QA test mode bypass must be explicitly enabled and never works in production.
+		if (isQaAuthAllowed() && (initData === "" || initData === "test")) {
 			c.set("telegramUser", QA_TEST_USER);
 			c.set("authenticatedUser", {
 				userId: "qa-test-user",
@@ -125,8 +128,10 @@ export const telegramAuth = createMiddleware<{ Variables: AppVariables }>(async 
 function validateInitData(initData: string, botToken: string): boolean {
 	const params = new URLSearchParams(initData);
 	const hash = params.get("hash");
+	const authDate = params.get("auth_date");
 
-	if (!hash) return false;
+	if (!hash || !authDate) return false;
+	if (!isFreshAuthDate(authDate)) return false;
 
 	params.delete("hash");
 	const entries = [...params.entries()].sort(([a], [b]) => a.localeCompare(b));
@@ -139,4 +144,17 @@ function validateInitData(initData: string, botToken: string): boolean {
 	const b = Buffer.from(hash, "hex");
 	if (a.length !== b.length) return false;
 	return timingSafeEqual(a, b);
+}
+
+function isFreshAuthDate(authDate: string): boolean {
+	const parsed = Number(authDate);
+	if (!Number.isInteger(parsed)) return false;
+
+	const nowSeconds = Math.floor(Date.now() / 1000);
+	if (parsed > nowSeconds + MAX_INIT_DATA_FUTURE_SKEW_SECONDS) return false;
+	return nowSeconds - parsed <= MAX_INIT_DATA_AGE_SECONDS;
+}
+
+function isQaAuthAllowed(): boolean {
+	return process.env.ALLOW_QA_AUTH === "true" && process.env.NODE_ENV !== "production";
 }

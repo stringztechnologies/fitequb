@@ -25,6 +25,9 @@ export function Home() {
 	const [profile, setProfile] = useState<ProfileSummary | null>(null);
 	const [rooms, setRooms] = useState<EqubRoom[]>([]);
 	const navigate = useNavigate();
+	const [bannerDismissed, setBannerDismissed] = useState(
+		() => localStorage.getItem("fitequb_guest_banner") === "dismissed",
+	);
 
 	useEffect(() => {
 		if (isGuest) {
@@ -114,15 +117,30 @@ export function Home() {
 			<div className="h-16" />
 
 			{/* Guest banner */}
-			{isGuest && (
-				<div className="mx-5 mt-3 px-3 py-2 rounded-lg bg-secondary-container/12 border border-secondary-container/30">
+			{isGuest && !bannerDismissed && (
+				<div className="mx-5 mt-3 px-3 py-2 rounded-lg bg-secondary-container/12 border border-secondary-container/30 flex items-center justify-between gap-2">
 					<p className="text-xs text-secondary-container font-medium">
 						Browsing as guest —{" "}
-						<a href="https://t.me/fitequb_bot" className="underline font-bold">
-							Open in Telegram
-						</a>{" "}
+						<button
+							type="button"
+							onClick={() => navigate("/signin")}
+							className="underline font-bold"
+						>
+							Sign in
+						</button>{" "}
 						to join rooms and track workouts
 					</p>
+					<button
+						type="button"
+						onClick={() => {
+							setBannerDismissed(true);
+							localStorage.setItem("fitequb_guest_banner", "dismissed");
+						}}
+						className="text-secondary-container text-base leading-none px-1 shrink-0"
+						aria-label="Dismiss"
+					>
+						&times;
+					</button>
 				</div>
 			)}
 

@@ -32,9 +32,13 @@ export function EqubDetail() {
 		if (!id) return;
 		const fetch = isGuest ? publicApi : api;
 		const path = isGuest ? `/public/equb-rooms/${id}` : `/api/equb-rooms/${id}`;
-		fetch<RoomDetail>(path)
+		fetch<RoomDetail | { pilot_path: string }>(path)
 			.then((res) => {
 				if (res.data) {
+					if ("pilot_path" in res.data) {
+						navigate(res.data.pilot_path, { replace: true });
+						return;
+					}
 					setDetail(res.data);
 				} else {
 					setNotFound(true);
@@ -44,7 +48,7 @@ export function EqubDetail() {
 				setNotFound(true);
 			})
 			.finally(() => setLoading(false));
-	}, [id, isGuest]);
+	}, [id, isGuest, navigate]);
 
 	if (loading) return <Loading />;
 
@@ -58,7 +62,7 @@ export function EqubDetail() {
 						className="text-on-surface active:scale-95 transition-transform"
 						aria-label="Go back"
 					>
-						<span className="material-symbols-rounded text-2xl">arrow_back</span>
+						<span className="material-symbols-outlined text-2xl">arrow_back</span>
 					</button>
 					<h1 className="font-headline font-bold text-xl tracking-tight text-primary-container">
 						Equb Room
@@ -115,7 +119,7 @@ export function EqubDetail() {
 					className="text-on-surface active:scale-95 transition-transform"
 					aria-label="Go back"
 				>
-					<span className="material-symbols-rounded text-2xl">arrow_back</span>
+					<span className="material-symbols-outlined text-2xl">arrow_back</span>
 				</button>
 				<h1 className="font-headline font-bold text-xl tracking-tight text-primary-container">
 					Equb Room
@@ -125,7 +129,7 @@ export function EqubDetail() {
 					className="text-on-surface-variant active:scale-95 transition-transform"
 					aria-label="Room info"
 				>
-					<span className="material-symbols-rounded text-2xl">info</span>
+					<span className="material-symbols-outlined text-2xl">info</span>
 				</button>
 			</header>
 
@@ -295,7 +299,7 @@ export function EqubDetail() {
 								>
 									{onTrack ? (
 										<span className="flex items-center gap-1">
-											<span className="material-symbols-rounded text-sm">check</span>
+											<span className="material-symbols-outlined text-sm">check</span>
 											On Track
 										</span>
 									) : (
@@ -330,7 +334,7 @@ export function EqubDetail() {
 					}}
 					className="w-full py-4 rounded-full border-2 border-secondary-container text-secondary-container font-headline font-bold text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
 				>
-					<span className="material-symbols-rounded text-xl">share</span>
+					<span className="material-symbols-outlined text-xl">share</span>
 					Invite Friends
 				</button>
 			</section>

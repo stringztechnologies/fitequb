@@ -49,9 +49,13 @@ export function useAuth() {
 
 		// Priority 1: Telegram initData
 		if (window.Telegram?.WebApp?.initData) {
-			const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+			const rawStartParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+			const startParam = typeof rawStartParam === "string" ? rawStartParam : undefined;
 			const urlParams = new URLSearchParams(window.location.search);
-			const trainerCode = startParam ?? urlParams.get("trainer_code") ?? undefined;
+			const trainerCode =
+				(startParam?.startsWith("pilot_") ? undefined : startParam) ??
+				urlParams.get("trainer_code") ??
+				undefined;
 
 			api<User>("/api/auth/login", {
 				method: "POST",

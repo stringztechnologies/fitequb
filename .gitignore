@@ -11,3 +11,8 @@ fitequb-design-spec.md
 test-results/
 .last-run.json
 .stitch/
+.codex/
+.mcp.json
+.agents/
+.claude/skills/
+skills-lock.json

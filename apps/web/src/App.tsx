@@ -89,6 +89,13 @@ const CoachList = lazy(() =>
 const LandingPage = lazy(() =>
 	import("./pages/LandingPage.js").then((m) => ({ default: m.LandingPage })),
 );
+const Pilot = lazy(() => import("./pages/Pilot.js").then((m) => ({ default: m.Pilot })));
+const PilotStaff = lazy(() =>
+	import("./pages/PilotStaff.js").then((m) => ({ default: m.PilotStaff })),
+);
+const PilotAdmin = lazy(() =>
+	import("./pages/PilotAdmin.js").then((m) => ({ default: m.PilotAdmin })),
+);
 const SignIn = lazy(() => import("./pages/SignIn.js").then((m) => ({ default: m.SignIn })));
 
 function RouteLoading() {
@@ -100,6 +107,10 @@ function RouteLoading() {
 }
 
 export function App() {
+	const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+	const pilotStart = /^pilot_([a-f0-9-]{36})$/.exec(
+		typeof startParam === "string" ? startParam : "",
+	)?.[1];
 	return (
 		<ErrorBoundary>
 			<BrowserRouter>
@@ -132,11 +143,16 @@ export function App() {
 								<div className="min-h-screen bg-background max-w-[430px] mx-auto relative">
 									<Suspense fallback={<RouteLoading />}>
 										<Routes>
+											<Route path="/pilot/:roomId" element={<Pilot />} />
+											<Route path="/pilot/:roomId/staff" element={<PilotStaff />} />
+											<Route path="/pilot-admin" element={<PilotAdmin />} />
 											<Route path="/onboarding" element={<Onboarding />} />
 											<Route
 												path="/"
 												element={
-													isOnboarded() || !window.Telegram?.WebApp?.initData ? (
+													pilotStart ? (
+														<Navigate to={`/pilot/${pilotStart}?source=telegram`} replace />
+													) : isOnboarded() || !window.Telegram?.WebApp?.initData ? (
 														<Home />
 													) : (
 														<Navigate to="/onboarding" replace />

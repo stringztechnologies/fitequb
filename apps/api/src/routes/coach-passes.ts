@@ -2,10 +2,12 @@ import { randomUUID } from "node:crypto";
 import { Hono } from "hono";
 import { z } from "zod";
 import { initializePayment } from "../lib/chapa.js";
+import { createPaymentIntent, markPaymentIntentFailed } from "../lib/payment-intents.js";
+import { paymentsEnabled, paymentsUnavailable } from "../lib/payment-switch.js";
 import { supabase } from "../lib/supabase.js";
 import type { AppVariables } from "../types/context.js";
 
-const PLATFORM_FEE_PCT = 0.20; // 20% platform fee on coach sessions
+const PLATFORM_FEE_PCT = 0.2; // 20% platform fee on coach sessions
 
 const coachPasses = new Hono<{ Variables: AppVariables }>();
 
@@ -42,7 +44,12 @@ async function getUserId(telegramId: number): Promise<string | null> {
 }
 
 async function getTrainerId(userId: string): Promise<string | null> {
-	const { data } = await supabase.from("trainers").select("id").eq("user_id", userId).eq("status", "active").single();
+	const { data } = await supabase
+		.from("trainers")
+		.select("id")
+		.eq("user_id", userId)
+		.eq("status", "active")
+		.single();
 	return data?.id ?? null;
 }
 
@@ -60,7 +67,11 @@ coachPasses.post("/sessions", async (c) => {
 	if (!trainerId) return c.json({ data: null, error: "Not a registered trainer" }, 403);
 
 	const parsed = createSessionSchema.safeParse(await c.req.json());
-	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" }, 400);
+	if (!parsed.success)
+		return c.json(
+			{ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" },
+			400,
+		);
 
 	const { data: session, error } = await supabase
 		.from("coach_sessions")
@@ -102,7 +113,11 @@ coachPasses.patch("/sessions/:id", async (c) => {
 	if (!trainerId) return c.json({ data: null, error: "Not a registered trainer" }, 403);
 
 	const parsed = updateSessionSchema.safeParse(await c.req.json());
-	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" }, 400);
+	if (!parsed.success)
+		return c.json(
+			{ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" },
+			400,
+		);
 
 	const { data: session, error } = await supabase
 		.from("coach_sessions")
@@ -112,7 +127,8 @@ coachPasses.patch("/sessions/:id", async (c) => {
 		.select()
 		.single();
 
-	if (error || !session) return c.json({ data: null, error: "Session not found or not yours" }, 404);
+	if (error || !session)
+		return c.json({ data: null, error: "Session not found or not yours" }, 404);
 
 	return c.json({ data: session, error: null });
 });
@@ -160,12 +176,17 @@ coachPasses.get("/browse", async (c) => {
 
 // POST /coach-passes/purchase — buy a coach day pass
 coachPasses.post("/purchase", async (c) => {
+	if (!paymentsEnabled()) return c.json(paymentsUnavailable, 503);
 	const telegramUser = c.get("telegramUser");
 	const userId = await getUserId(telegramUser.id);
 	if (!userId) return c.json({ data: null, error: "User not found" }, 404);
 
 	const parsed = purchaseSchema.safeParse(await c.req.json());
-	if (!parsed.success) return c.json({ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" }, 400);
+	if (!parsed.success)
+		return c.json(
+			{ data: null, error: parsed.error.issues[0]?.message ?? "Validation error" },
+			400,
+		);
 
 	// Get session details
 	const { data: session } = await supabase
@@ -210,7 +231,29 @@ coachPasses.post("/purchase", async (c) => {
 	if (error) return c.json({ data: null, error: error.message }, 500);
 
 	// Init Chapa payment
-	const txRef = `coach-${pass.id}-${Date.now()}`;
+	let txRef: string;
+	try {
+		txRef = await createPaymentIntent({
+			kind: "coach",
+			targetId: pass.id,
+			userId,
+			expectedAmount: pricePaid,
+			metadata: {
+				session_id: parsed.data.session_id,
+				trainer_id: trainer.id as string,
+			},
+		});
+	} catch (intentError) {
+		await supabase.from("coach_passes").delete().eq("id", pass.id);
+		return c.json(
+			{
+				data: null,
+				error:
+					intentError instanceof Error ? intentError.message : "Payment intent creation failed",
+			},
+			500,
+		);
+	}
 
 	const chapaRes = await initializePayment({
 		amount: pricePaid,
@@ -223,14 +266,18 @@ coachPasses.post("/purchase", async (c) => {
 	});
 
 	if (chapaRes.status !== "success") {
+		await markPaymentIntentFailed(txRef, "chapa_initialize_failed");
 		await supabase.from("coach_passes").delete().eq("id", pass.id);
 		return c.json({ data: null, error: "Payment initialization failed" }, 500);
 	}
 
-	return c.json({
-		data: { pass, checkout_url: chapaRes.data.checkout_url },
-		error: null,
-	}, 201);
+	return c.json(
+		{
+			data: { pass, checkout_url: chapaRes.data.checkout_url },
+			error: null,
+		},
+		201,
+	);
 });
 
 // GET /coach-passes/mine — user's purchased coach passes
@@ -298,7 +345,8 @@ coachPasses.post("/:id/confirm", async (c) => {
 		.select()
 		.single();
 
-	if (error || !pass) return c.json({ data: null, error: "Pass not found or already completed" }, 400);
+	if (error || !pass)
+		return c.json({ data: null, error: "Pass not found or already completed" }, 400);
 
 	// Credit trainer's pending balance
 	await supabase.rpc("increment_trainer_balance", {

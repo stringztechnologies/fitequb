@@ -6,19 +6,29 @@ interface RateLimitEntry {
 }
 
 const store = new Map<string, RateLimitEntry>();
+let limiterSequence = 0;
 
 // Clean up expired entries every 5 minutes
-setInterval(() => {
-	const now = Date.now();
-	for (const [key, entry] of store) {
-		if (now > entry.resetAt) store.delete(key);
-	}
-}, 5 * 60 * 1000);
+setInterval(
+	() => {
+		const now = Date.now();
+		for (const [key, entry] of store) {
+			if (now > entry.resetAt) store.delete(key);
+		}
+	},
+	5 * 60 * 1000,
+);
 
 export function rateLimit(maxRequests: number, windowMs: number) {
+	const limiterId = ++limiterSequence;
 	return async (c: Context, next: Next) => {
 		const telegramUser = c.get("telegramUser");
-		const key = `${c.req.path}:${telegramUser?.id ?? c.req.header("x-forwarded-for") ?? "anon"}`;
+		const actor =
+			c.get("authenticatedUser")?.userId ||
+			telegramUser?.id ||
+			c.req.header("x-forwarded-for") ||
+			"anon";
+		const key = `${limiterId}:${c.req.path}:${actor}`;
 		const now = Date.now();
 
 		const entry = store.get(key);

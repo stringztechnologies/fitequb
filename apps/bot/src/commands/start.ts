@@ -8,6 +8,12 @@ export async function startCommand(ctx: Context) {
 		return;
 	}
 
+	const command = ctx.message && "text" in ctx.message ? ctx.message.text : "";
+	const match = /^\/start(?:@\w+)?\s+pilot_([a-f0-9-]{36})$/.exec(command);
+	const destination = match
+		? `${miniAppUrl.replace(/\/$/, "")}/pilot/${match[1]}?source=telegram`
+		: miniAppUrl;
+
 	await ctx.reply(
 		"Welcome to FitEqub! 💪\n\n" +
 			"Join fitness accountability groups, buy gym day passes, " +
@@ -19,7 +25,7 @@ export async function startCommand(ctx: Context) {
 					[
 						{
 							text: "Open FitEqub",
-							web_app: { url: miniAppUrl },
+							web_app: { url: destination },
 						},
 					],
 				],

@@ -48,6 +48,17 @@ function TelegramOnlySignIn() {
 	);
 }
 
+function friendlyError(msg: string): string {
+	const lower = msg.toLowerCase();
+	if (lower.includes("unsupported") && lower.includes("phone"))
+		return "Phone sign-in is being set up. Please use Email or Telegram instead.";
+	if (lower.includes("invalid") && lower.includes("email"))
+		return "Please enter a valid email address.";
+	if (lower.includes("rate") || lower.includes("limit"))
+		return "Too many attempts. Please wait a moment and try again.";
+	return msg;
+}
+
 /** Full sign-in form with phone/email OTP via Supabase Auth */
 function SupabaseSignIn({ client }: { client: SupabaseClient }) {
 	const navigate = useNavigate();
@@ -66,7 +77,7 @@ function SupabaseSignIn({ client }: { client: SupabaseClient }) {
 		const { error: err } = await client.auth.signInWithOtp({ phone });
 		setLoading(false);
 		if (err) {
-			setError(err.message);
+			setError(friendlyError(err.message));
 			return;
 		}
 		setMethod("phone");
@@ -79,11 +90,16 @@ function SupabaseSignIn({ client }: { client: SupabaseClient }) {
 		const { error: err } = await client.auth.signInWithOtp({ email });
 		setLoading(false);
 		if (err) {
-			setError(err.message);
+			setError(friendlyError(err.message));
 			return;
 		}
 		setMethod("email");
 		setStep("otp");
+	}
+
+	function goToStep(s: Step) {
+		setError("");
+		setStep(s);
 	}
 
 	async function handleVerifyOtp() {
@@ -119,7 +135,7 @@ function SupabaseSignIn({ client }: { client: SupabaseClient }) {
 		if (meRes.ok) {
 			const meJson = (await meRes.json()) as { data: User | null };
 			if (meJson.data) {
-				navigate("/", { replace: true });
+				navigate(safeReturnPath(), { replace: true });
 				return;
 			}
 		}
@@ -169,7 +185,7 @@ function SupabaseSignIn({ client }: { client: SupabaseClient }) {
 			return;
 		}
 
-		navigate("/", { replace: true });
+		navigate(safeReturnPath(), { replace: true });
 	}
 
 	return (
@@ -186,7 +202,7 @@ function SupabaseSignIn({ client }: { client: SupabaseClient }) {
 				<div className="w-full max-w-sm space-y-3">
 					<button
 						type="button"
-						onClick={() => setStep("phone")}
+						onClick={() => goToStep("phone")}
 						className="w-full py-4 rounded-2xl bg-primary text-on-primary font-headline font-bold text-base flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-transform"
 					>
 						<span className="material-symbols-outlined text-xl">phone_iphone</span>
@@ -195,7 +211,7 @@ function SupabaseSignIn({ client }: { client: SupabaseClient }) {
 
 					<button
 						type="button"
-						onClick={() => setStep("email")}
+						onClick={() => goToStep("email")}
 						className="w-full py-4 rounded-2xl bg-surface-container border border-outline-variant/30 text-on-surface font-headline font-bold text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
 					>
 						<span className="material-symbols-outlined text-xl">mail</span>
@@ -236,7 +252,7 @@ function SupabaseSignIn({ client }: { client: SupabaseClient }) {
 				<div className="w-full max-w-sm space-y-4">
 					<button
 						type="button"
-						onClick={() => setStep("choose")}
+						onClick={() => goToStep("choose")}
 						className="flex items-center gap-1 text-on-surface-variant text-sm mb-2"
 					>
 						<span className="material-symbols-outlined text-lg">arrow_back</span>
@@ -277,7 +293,7 @@ function SupabaseSignIn({ client }: { client: SupabaseClient }) {
 				<div className="w-full max-w-sm space-y-4">
 					<button
 						type="button"
-						onClick={() => setStep("choose")}
+						onClick={() => goToStep("choose")}
 						className="flex items-center gap-1 text-on-surface-variant text-sm mb-2"
 					>
 						<span className="material-symbols-outlined text-lg">arrow_back</span>
@@ -318,7 +334,7 @@ function SupabaseSignIn({ client }: { client: SupabaseClient }) {
 				<div className="w-full max-w-sm space-y-4">
 					<button
 						type="button"
-						onClick={() => setStep(method)}
+						onClick={() => goToStep(method)}
 						className="flex items-center gap-1 text-on-surface-variant text-sm mb-2"
 					>
 						<span className="material-symbols-outlined text-lg">arrow_back</span>
@@ -389,4 +405,14 @@ function SupabaseSignIn({ client }: { client: SupabaseClient }) {
 			)}
 		</div>
 	);
+}
+
+function safeReturnPath() {
+	const next = new URLSearchParams(window.location.search).get("next");
+	return next &&
+		/^\/pilot(?:\/|$|-admin$)/.test(next) &&
+		!next.includes("\\") &&
+		!next.includes("\n")
+		? next
+		: "/";
 }

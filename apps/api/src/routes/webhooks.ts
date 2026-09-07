@@ -1,135 +1,189 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { verifyChapaWebhook } from "../lib/chapa.js";
+import { verifyChapaWebhook, verifyPayment } from "../lib/chapa.js";
+import type { ChapaVerifyResponse } from "../lib/chapa.js";
+import type { PaymentIntentKind } from "../lib/payment-intents.js";
+import { reconcilePilotReceipt } from "../lib/pilot-receipts.js";
 import { supabase } from "../lib/supabase.js";
 
-const chapaWebhookSchema = z.object({
-	tx_ref: z.string().min(1),
-	status: z.string(),
-	amount: z.number(),
-});
+const chapaWebhookSchema = z
+	.object({
+		tx_ref: z.string().min(1),
+		status: z.string().optional(),
+		amount: z.coerce.number().optional(),
+	})
+	.passthrough();
+
+interface PaymentIntentRow {
+	kind: PaymentIntentKind;
+	status: string;
+}
 
 const webhooks = new Hono();
 
-// POST /webhooks/chapa — Chapa payment webhook
+// POST /webhooks/chapa - Chapa payment webhook
 webhooks.post("/chapa", async (c) => {
 	const rawBody = await c.req.text();
 	const signature = c.req.header("x-chapa-signature") ?? "";
 
 	if (!verifyChapaWebhook(rawBody, signature)) {
-		return c.json({ error: "Invalid signature" }, 401);
+		return c.json({ data: null, error: "Invalid signature" }, 401);
 	}
 
-	const parsed = chapaWebhookSchema.safeParse(JSON.parse(rawBody));
+	let payloadJson: unknown;
+	try {
+		payloadJson = JSON.parse(rawBody);
+	} catch {
+		return c.json({ data: null, error: "Invalid JSON payload" }, 400);
+	}
+
+	const parsed = chapaWebhookSchema.safeParse(payloadJson);
 	if (!parsed.success) {
-		return c.json({ error: "Invalid payload" }, 400);
+		return c.json({ data: null, error: "Invalid payload" }, 400);
 	}
+
 	const payload = parsed.data;
-
-	if (payload.status !== "success") {
-		return c.json({ status: "ignored" });
-	}
-
 	const txRef = payload.tx_ref;
 
-	// Parse tx_ref: equb-{roomId}-{userId}-{timestamp}
-	const parts = txRef.split("-");
-	if (parts[0] !== "equb" || parts.length < 4) {
-		// Could be a day pass payment — handle below
-		if (txRef.startsWith("daypass-")) {
-			return handleDayPassWebhook(txRef, payload.amount);
-		}
-		return c.json({ error: "Unknown tx_ref format" }, 400);
-	}
-
-	const roomId = parts[1];
-	const userId = parts[2];
-
-	if (!roomId || !userId) {
-		return c.json({ error: "Invalid tx_ref" }, 400);
-	}
-
-	// Check idempotency — don't double-credit
-	const { data: existingEntry } = await supabase
-		.from("equb_ledger")
-		.select("id")
+	const { data: intent } = await supabase
+		.from("payment_intents")
+		.select("kind, status")
 		.eq("tx_ref", txRef)
-		.single();
+		.single<PaymentIntentRow>();
 
-	if (existingEntry) {
-		return c.json({ status: "already_processed" });
+	if (!intent) {
+		// Unknown references should not create endless provider retries.
+		return c.json({ data: { status: "ignored", reason: "unknown_tx_ref" }, error: null });
 	}
 
-	// Verify payment amount matches room stake
-	const { data: room } = await supabase
-		.from("equb_rooms")
-		.select("stake_amount, min_members, status")
-		.eq("id", roomId)
-		.single();
-
-	if (!room) {
-		return c.json({ error: "Room not found" }, 404);
+	if (intent.kind === "pilot_enrollment") {
+		if (["credited", "mismatch", "refund_requested", "refunded"].includes(intent.status))
+			return c.json({ data: { status: intent.status }, error: null });
+		try {
+			return c.json({ data: await reconcilePilotReceipt(txRef), error: null });
+		} catch {
+			return c.json({ data: null, error: "Provider verification is unresolved" }, 503);
+		}
+	}
+	if (intent.status === "credited") {
+		return c.json({ data: { status: "already_processed" }, error: null });
 	}
 
-	if (payload.amount < room.stake_amount) {
-		return c.json({ error: "Payment amount below required stake" }, 400);
-	}
-
-	// Create member + ledger entry in parallel
-	const [memberResult, ledgerResult] = await Promise.all([
-		supabase
-			.from("equb_members")
-			.insert({ room_id: roomId, user_id: userId, completed_days: 0 })
-			.select()
-			.single(),
-		supabase.from("equb_ledger").insert({
-			room_id: roomId,
-			user_id: userId,
-			type: "stake",
-			amount: room.stake_amount,
-			tx_ref: txRef,
-		}),
-	]);
-
-	if (memberResult.error) {
-		return c.json({ error: memberResult.error.message }, 500);
-	}
-
-	// Check if room should activate (min_members reached)
-	const { count } = await supabase
-		.from("equb_members")
-		.select("*", { count: "exact", head: true })
-		.eq("room_id", roomId);
-
-	if (room.status === "pending" && count !== null && count >= room.min_members) {
-		await supabase.from("equb_rooms").update({ status: "active" }).eq("id", roomId);
-	}
-
-	return c.json({
-		status: "ok",
-		ledger: ledgerResult.error ? "failed" : "created",
-	});
-});
-
-async function handleDayPassWebhook(txRef: string, _amount: number) {
-	// Parse: daypass-{passId}-{timestamp}
-	const parts = txRef.split("-");
-	const passId = parts[1];
-
-	if (!passId) {
-		return new Response(JSON.stringify({ error: "Invalid daypass tx_ref" }), {
-			status: 400,
+	if (payload.status && payload.status !== "success") {
+		await supabase
+			.from("payment_intents")
+			.update({
+				status: "failed",
+				provider_status: payload.status,
+				provider_amount: payload.amount ?? null,
+			})
+			.eq("tx_ref", txRef);
+		return c.json({
+			data: { status: "ignored", reason: "provider_status_not_success" },
+			error: null,
 		});
 	}
 
-	// Mark pass as active (payment confirmed)
-	await supabase
-		.from("day_passes")
-		.update({ status: "active" })
-		.eq("id", passId)
-		.eq("status", "pending" as string);
+	let verified: ChapaVerifyResponse;
+	try {
+		verified = await verifyPayment(txRef);
+	} catch (error) {
+		return c.json(
+			{
+				data: null,
+				error: error instanceof Error ? error.message : "Unable to verify payment with Chapa",
+			},
+			503,
+		);
+	}
 
-	return new Response(JSON.stringify({ status: "ok" }));
+	const verifiedData = verified.data;
+	const verifiedStatus = verifiedData?.status ?? verified.status;
+	if (isFinalPaymentFailure(verifiedStatus)) {
+		await supabase
+			.from("payment_intents")
+			.update({
+				status: "failed",
+				provider_status: verifiedStatus,
+				mismatch_reason: verified.message ?? "payment_not_successful",
+			})
+			.eq("tx_ref", txRef);
+		return c.json({
+			data: { status: "ignored", reason: "verified_payment_not_successful" },
+			error: null,
+		});
+	}
+
+	if (verified.status !== "success" || verifiedStatus !== "success" || !verifiedData) {
+		return c.json(
+			{
+				data: null,
+				error: verified.message ?? "Unable to verify payment status with Chapa",
+			},
+			503,
+		);
+	}
+
+	if (verifiedData.tx_ref !== txRef) {
+		await supabase
+			.from("payment_intents")
+			.update({
+				status: "mismatch",
+				provider_status: verifiedStatus,
+				mismatch_reason: "verified_tx_ref_mismatch",
+			})
+			.eq("tx_ref", txRef);
+		return c.json({
+			data: { status: "mismatch", reason: "verified_tx_ref_mismatch" },
+			error: null,
+		});
+	}
+
+	if (verifiedData.currency !== "ETB")
+		return c.json({ data: null, error: "Unexpected payment currency" }, 400);
+	const paidAmount = Number(verifiedData.amount);
+	if (!Number.isFinite(paidAmount)) {
+		return c.json({ data: null, error: "Verified amount is invalid" }, 502);
+	}
+
+	await supabase
+		.from("payment_intents")
+		.update({
+			status: "paid",
+			provider_status: verifiedStatus,
+			provider_amount: paidAmount,
+		})
+		.eq("tx_ref", txRef);
+
+	const rpcName = getCreditRpc(intent.kind);
+	const { data, error } = await supabase.rpc(rpcName, {
+		p_tx_ref: txRef,
+		p_paid_amount: paidAmount,
+	});
+
+	if (error) {
+		return c.json({ data: null, error: error.message }, 500);
+	}
+
+	return c.json({ data: { status: "ok", result: data }, error: null });
+});
+
+function getCreditRpc(kind: PaymentIntentKind) {
+	switch (kind) {
+		case "stake":
+		case "duel":
+			return "apply_stake_payment";
+		case "daypass":
+			return "activate_day_pass_payment";
+		case "coach":
+			return "activate_coach_pass_payment";
+		case "pilot_enrollment":
+			throw new Error("Pilot uses verified allocation");
+	}
+}
+
+function isFinalPaymentFailure(status: string | undefined) {
+	return status === "failed" || status === "cancelled" || status === "canceled";
 }
 
 export { webhooks };

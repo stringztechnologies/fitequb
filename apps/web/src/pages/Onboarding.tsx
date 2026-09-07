@@ -25,7 +25,7 @@ const screens = [
 		colorClass: "text-secondary-container",
 		glowClass: "bg-secondary-container/30",
 	},
-];
+] as const;
 
 // SVG illustrations need raw hex values — pull from the design tokens
 const svgColors = {
@@ -41,7 +41,7 @@ export function Onboarding() {
 	const [current, setCurrent] = useState(0);
 	const [direction, setDirection] = useState(0); // -1 left, 0 none, 1 right
 	const isLast = current === screens.length - 1;
-	const screen = screens[current]!;
+	const screen = screens[current] ?? screens[0];
 
 	const complete = useCallback(() => {
 		localStorage.setItem(STORAGE_KEY, "true");
@@ -88,7 +88,7 @@ export function Onboarding() {
 			<div
 				className={`absolute top-[20%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full pointer-events-none transition-all duration-500 ${screen.glowClass}`}
 				style={{
-					background: `radial-gradient(circle, currentColor 0%, transparent 70%)`,
+					background: "radial-gradient(circle, currentColor 0%, transparent 70%)",
 				}}
 			/>
 

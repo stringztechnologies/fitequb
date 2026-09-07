@@ -132,9 +132,7 @@ export function WinCelebration() {
 				{displayAmount.toLocaleString()} ETB
 			</p>
 
-			{result?.room_name && (
-				<p className="text-[15px] text-[#aaa] mt-2">{result.room_name}</p>
-			)}
+			{result?.room_name && <p className="text-[15px] text-[#aaa] mt-2">{result.room_name}</p>}
 
 			<p className="text-[13px] text-[#8E8E93] text-center mt-4 max-w-[280px] leading-relaxed">
 				Fitness pays off! Your payout is being transferred to your Telebirr account.

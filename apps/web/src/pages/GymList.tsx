@@ -51,7 +51,7 @@ export function GymList() {
 
 			{/* Search bar */}
 			<div className="mx-5 mb-4 flex items-center gap-3 bg-surface-container border border-outline-variant rounded-full px-4 py-3">
-				<span className="material-symbols-rounded text-on-surface-variant text-lg shrink-0">
+				<span className="material-symbols-outlined text-on-surface-variant text-lg shrink-0">
 					search
 				</span>
 				<input
@@ -64,22 +64,24 @@ export function GymList() {
 			</div>
 
 			{/* Filter chips */}
-			<div className="flex gap-3 overflow-x-auto pb-6 px-5 no-scrollbar">
-				{FILTERS.map((f) => (
-					<button
-						key={f}
-						type="button"
-						onClick={() => setFilter(f)}
-						className={
-							filter === f
-								? "px-5 py-2 bg-primary-container text-on-primary-container font-label font-bold rounded-full shadow-[0_4px_15px_rgba(0,200,83,0.3)] shrink-0 transition-all"
-								: "px-5 py-2 bg-surface-container text-on-surface-variant font-label font-bold rounded-full shrink-0 transition-all"
-						}
-					>
-						{f}
-					</button>
-				))}
-			</div>
+			{gyms.length > 0 && (
+				<div className="flex gap-3 overflow-x-auto pb-6 px-5 no-scrollbar">
+					{FILTERS.map((f) => (
+						<button
+							key={f}
+							type="button"
+							onClick={() => setFilter(f)}
+							className={
+								filter === f
+									? "px-5 py-2 bg-primary-container text-on-primary-container font-label font-bold rounded-full shadow-[0_4px_15px_rgba(0,200,83,0.3)] shrink-0 transition-all"
+									: "px-5 py-2 bg-surface-container text-on-surface-variant font-label font-bold rounded-full shrink-0 transition-all"
+							}
+						>
+							{f}
+						</button>
+					))}
+				</div>
+			)}
 
 			{/* Equb Eligible explainer */}
 			<p className="text-xs font-body text-on-surface-variant px-5 pb-4">

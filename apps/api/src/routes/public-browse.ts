@@ -1,4 +1,4 @@
-import type { ApiResponse, Challenge, EqubRoom, PartnerGym } from "@fitequb/shared";
+import type { ApiResponse, Challenge, PartnerGym } from "@fitequb/shared";
 import { Hono } from "hono";
 import { supabase } from "../lib/supabase.js";
 import { rateLimit } from "../middleware/rate-limit.js";
@@ -7,13 +7,13 @@ const publicBrowse = new Hono();
 
 // --- Equb Rooms ---
 
-// GET /public/equb-rooms — list all active/pending rooms (no auth)
+// GET /public/equb-rooms — list all active/pending rooms with member counts (no auth)
 publicBrowse.get("/equb-rooms", async (c) => {
 	const status = c.req.query("status");
 
 	let query = supabase
 		.from("equb_rooms")
-		.select("*")
+		.select("*, equb_members(count)")
 		.order("created_at", { ascending: false })
 		.limit(50);
 
@@ -27,15 +27,28 @@ publicBrowse.get("/equb-rooms", async (c) => {
 		return c.json<ApiResponse<null>>({ data: null, error: error.message }, 500);
 	}
 
-	return c.json<ApiResponse<EqubRoom[]>>({
-		data: data as EqubRoom[],
-		error: null,
+	// Flatten member count into each room object
+	const rooms = (data ?? []).map((room) => {
+		const memberCount = Array.isArray(room.equb_members)
+			? room.equb_members.length
+			: ((room.equb_members as unknown as { count: number })?.count ?? 0);
+		const { equb_members: _, ...rest } = room;
+		return { ...rest, member_count: memberCount };
 	});
+
+	return c.json({ data: rooms, error: null });
 });
 
 // GET /public/equb-rooms/:id — room detail with members (no auth)
 publicBrowse.get("/equb-rooms/:id", async (c) => {
 	const roomId = c.req.param("id");
+	const { data: pilot, error: pilotError } = await supabase
+		.from("pilot_configs")
+		.select("room_id")
+		.eq("room_id", roomId)
+		.maybeSingle();
+	if (pilotError) return c.json({ data: null, error: "Room configuration unavailable" }, 503);
+	if (pilot) return c.json({ data: { pilot_path: `/pilot/${roomId}` }, error: null });
 
 	const [roomResult, membersResult] = await Promise.all([
 		supabase.from("equb_rooms").select("*").eq("id", roomId).single(),
@@ -59,11 +72,19 @@ publicBrowse.get("/equb-rooms/:id", async (c) => {
 
 // GET /public/gyms — list active partner gyms (no auth)
 publicBrowse.get("/gyms", async (c) => {
-	const { data, error } = await supabase
+	// Try both column names — DB may use "active" or "is_active"
+	let { data, error } = await supabase
 		.from("partner_gyms")
 		.select("*")
-		.neq("active", false)
+		.eq("active", true)
 		.order("name");
+
+	// Fallback: if no results, try without filter (all gyms)
+	if (!error && (!data || data.length === 0)) {
+		const fallback = await supabase.from("partner_gyms").select("*").order("name");
+		data = fallback.data;
+		error = fallback.error;
+	}
 
 	if (error) {
 		return c.json<ApiResponse<null>>({ data: null, error: error.message }, 500);
@@ -135,7 +156,8 @@ publicBrowse.get("/gamification/leaderboard", async (c) => {
 // 20 requests per minute (by IP for unauthenticated users)
 publicBrowse.use("/ai/coach", rateLimit(20, 60 * 1000));
 
-const SYSTEM_PROMPT = `You are FitEqub Coach, a fitness advisor for young professionals in Addis Ababa, Ethiopia. Keep responses to 2-3 sentences. Be encouraging and motivational. Know about Orthodox fasting (Tsom) and Ethiopian food (injera, shiro, tibs). Suggest fasting-friendly exercises during Tsom periods. Reference local gyms and walking routes in Addis (Bole, Meskel Square, Entoto hills, Churchill Avenue). Speak casually like a friend, not a doctor. If the user asks non-fitness questions, gently redirect to fitness topics. Use ETB for money references. If the user mentions their Equb, encourage them to hit their step targets.`;
+const SYSTEM_PROMPT =
+	"You are FitEqub Coach, a fitness advisor for young professionals in Addis Ababa, Ethiopia. Keep responses to 2-3 sentences. Be encouraging and motivational. Know about Orthodox fasting (Tsom) and Ethiopian food (injera, shiro, tibs). Suggest fasting-friendly exercises during Tsom periods. Reference local gyms and walking routes in Addis (Bole, Meskel Square, Entoto hills, Churchill Avenue). Speak casually like a friend, not a doctor. If the user asks non-fitness questions, gently redirect to fitness topics. Use ETB for money references. If the user mentions their Equb, encourage them to hit their step targets.";
 
 // POST /public/ai/coach — AI coach for everyone (no auth)
 publicBrowse.post("/ai/coach", async (c) => {
